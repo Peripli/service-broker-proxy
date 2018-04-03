@@ -1,0 +1,24 @@
+# these are env vars + config file properties + flag options (flag > env > config)
+# the application.yml file should be part of the wrapper module
+server:
+  port: 8080
+  logLevel: debug
+  logFormat: text
+  tLSKey: "/etc/tlskey"
+  tLSCert: "etc/tlscrt"
+  timeoutSeconds: 5
+  reg:
+    user: admin
+    password: admin
+    host: http://127.0.0.1:8080/proxy
+sm:
+  user: admin
+  password: admin
+  host: http://127.0.0.1:8080/sm
+  timeoutSeconds: 10
+cf:
+  api: http://127.0.0.1:8080/cf
+  clientID: sm-client
+  clientSecret: sm-secret
+  skipSSLVerify: true
+  timeoutSeconds: 10
