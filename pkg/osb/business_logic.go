@@ -99,18 +99,18 @@ func (b *BusinessLogic) ValidateBrokerAPIVersion(version string) error {
 
 func osbClient(request *http.Request, config osbc.ClientConfiguration, createFunc osbc.CreateFunc) (osbc.Client, error) {
 	vars := mux.Vars(request)
-	brokerName, ok := vars["brokerName"]
+	brokerID, ok := vars["brokerID"]
 	if !ok {
-		errMsg := fmt.Sprintf("brokerId path parameter missing from %brokerName", request.Host)
+		errMsg := fmt.Sprintf("brokerId path parameter missing from %s", request.Host)
 		logrus.Error("Error building OSB client for proxy business logic: ", errMsg)
 		return nil, osbc.HTTPStatusCodeError{
 			StatusCode:  http.StatusBadRequest,
 			Description: &errMsg,
 		}
 	}
-	// assuming that we decide that osb api of SM is accessible with brokerName path parameter
-	config.URL = config.URL + "/" + brokerName
-	config.Name = config.Name + "-" + brokerName
+	// assuming that we decide that osb api of SM is accessible with brokerID path parameter
+	config.URL = config.URL + "/" + brokerID
+	config.Name = config.Name + "-" + brokerID
 	logrus.Debug("Building OSB client for broker with name: ", config.Name, "accesible at: ", config.URL)
 	return createFunc(&config)
 }
