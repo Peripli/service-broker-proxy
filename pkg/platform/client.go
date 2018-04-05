@@ -2,7 +2,7 @@ package platform
 
 type Client interface {
 	GetBrokers() (*ServiceBrokerList, error)
-	CreateBrokers(r *CreateServiceBrokerRequest) (*ServiceBroker, error)
-	DeleteBrokers(r *DeleteServiceBrokerRequest) error
-	UpdateBrokers(r *UpdateServiceBrokerRequest) (*ServiceBroker, error)
+	CreateBroker(r *CreateServiceBrokerRequest) (*ServiceBroker, error)
+	DeleteBroker(r *DeleteServiceBrokerRequest) error
+	UpdateBroker(r *UpdateServiceBrokerRequest) (*ServiceBroker, error)
 }

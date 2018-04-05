@@ -1,8 +1,6 @@
 package task
 
 import (
-	"reflect"
-
 	"sync"
 
 	"fmt"
@@ -51,77 +49,46 @@ func (r SBProxyRegistration) run() {
 		logrus.Error("An error occurred while obtaining already registered brokers: ", err)
 		return
 	}
-	newBrokers, err := r.smClient.GetBrokers()
-	for _, broker := range newBrokers.ServiceBrokers {
-		broker.Username = r.details.User
-		broker.Password = r.details.Password
-		broker.BrokerURL = r.details.Host + "/" + broker.Guid
-	}
+
+	proxyBrokers, err := r.smClient.GetBrokers()
 	if err != nil {
 		logrus.Error("An error occurred while obtaining brokers that have to be registered at the platform: ", err)
 		return
 	}
 
-	brokersToRegister, brokersToUpdate := difference(newBrokers.ServiceBrokers, registeredBrokers.ServiceBrokers)
-	brokersToDelete, _ := difference(registeredBrokers.ServiceBrokers, newBrokers.ServiceBrokers)
-
-	r.createBrokerRegistrations(brokersToRegister)
-	r.updateBrokerRegistrations(brokersToUpdate)
-	r.deleteBrokerRegistrations(brokersToDelete)
+	updateBrokerRegistrations(r.createBrokerRegistration, proxyBrokers.ServiceBrokers, registeredBrokers.ServiceBrokers)
+	updateBrokerRegistrations(r.deleteBrokerRegistration, registeredBrokers.ServiceBrokers, proxyBrokers.ServiceBrokers)
 }
 
-func (r SBProxyRegistration) deleteBrokerRegistrations(brokersToDelete []platform.ServiceBroker) {
-	for _, broker := range brokersToDelete {
-		deleteRequest := &platform.DeleteServiceBrokerRequest{Guid: broker.Guid}
-		if err := r.platformClient.DeleteBrokers(deleteRequest); err != nil {
-			logrus.Error("Error during broker Update: ", err)
-			//TODO on delete failure hook? what should we do if delete fails
-		}
+func (r SBProxyRegistration) deleteBrokerRegistration(broker *platform.ServiceBroker) {
+	deleteRequest := &platform.DeleteServiceBrokerRequest{
+		Guid: broker.Guid,
 	}
-}
-func (r SBProxyRegistration) updateBrokerRegistrations(brokersToUpdate []platform.ServiceBroker) {
-	for _, broker := range brokersToUpdate {
-		updateRequest := &platform.UpdateServiceBrokerRequest{
-			Guid:      broker.Guid,
-			Name:      broker.Name,
-			Username:  broker.Username,
-			Password:  broker.Password,
-			BrokerURL: broker.BrokerURL,
-		}
-		if _, err := r.platformClient.UpdateBrokers(updateRequest); err != nil {
-			logrus.Error("Error during broker Update: ", err)
-			//TODO on update failure hook? what should we do if update fails
-		}
-	}
-}
-func (r SBProxyRegistration) createBrokerRegistrations(brokersToRegister []platform.ServiceBroker) {
-	for _, broker := range brokersToRegister {
-		createRequest := &platform.CreateServiceBrokerRequest{Name: broker.Name,
-			Username:  broker.Username,
-			Password:  broker.Password,
-			BrokerURL: broker.BrokerURL}
-		if _, err := r.platformClient.CreateBrokers(createRequest); err != nil {
-			logrus.Error("Error during broker registration: ", err)
-			//TODO on registration failure hook? what should we do if reg fails
-		}
+	if err := r.platformClient.DeleteBroker(deleteRequest); err != nil {
+		logrus.Error("Error during broker deletion: ", err)
 	}
 }
 
-func difference(a, b []platform.ServiceBroker) ([]platform.ServiceBroker, []platform.ServiceBroker) {
+func (r SBProxyRegistration) createBrokerRegistration(broker *platform.ServiceBroker) {
+	createRequest := &platform.CreateServiceBrokerRequest{
+		Name:      "sm-proxy-" + broker.Name,
+		Username:  r.details.User,
+		Password:  r.details.Password,
+		BrokerURL: r.details.Host + "/" + broker.Guid,
+	}
+	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
+		logrus.Error("Error during broker registration: ", err)
+	}
+}
+
+func updateBrokerRegistrations(updateOp func(broker *platform.ServiceBroker), a, b []platform.ServiceBroker) {
 	mb := make(map[string]platform.ServiceBroker)
-	newBrokers := make([]platform.ServiceBroker, len(a))
-	modifiedBrokers := make([]platform.ServiceBroker, len(a))
-
 	for _, broker := range b {
 		mb[broker.Guid] = broker
 	}
 	for _, broker := range a {
 		if _, ok := mb[broker.Guid]; !ok {
-			newBrokers = append(newBrokers, broker)
-		}
-		if val, ok := mb[broker.Guid]; ok && !reflect.DeepEqual(val, broker) {
-			modifiedBrokers = append(modifiedBrokers, broker)
+			updateOp(&broker)
 		}
 	}
-	return newBrokers, modifiedBrokers
 }

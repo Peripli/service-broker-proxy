@@ -10,6 +10,16 @@ import (
 	"github.com/spf13/viper"
 )
 
+func init() {
+	viper.SetConfigName("application")
+	viper.SetConfigType("yml")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		logrus.Fatal("Failed to read the configuration file: ", err)
+	}
+}
+
 type configuration struct {
 	Sbproxy  *sbproxy.ServerConfiguration
 	Osb      *osb.ClientConfiguration
@@ -47,16 +57,6 @@ func (c *configuration) Validate() error {
 		return err
 	}
 	return c.Platform.Validate()
-}
-
-func init() {
-	viper.SetConfigName("application")
-	viper.SetConfigType("yml")
-	viper.AddConfigPath("../../../github.com/Peripli/service-broker-proxy")
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err != nil {
-		logrus.Fatal("Failed to read the configuration file: ", err)
-	}
 }
 
 func New(

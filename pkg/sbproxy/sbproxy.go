@@ -15,6 +15,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/middleware"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/task"
+	"github.com/gorilla/mux"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
 	"github.com/pmorie/osb-broker-lib/pkg/rest"
 	"github.com/pmorie/osb-broker-lib/pkg/server"
@@ -117,8 +118,8 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
 
 	osbServer := server.New(api, reg)
 
-	router := osbServer.Router.PathPrefix("/{brokerName}").Subrouter()
-	router.Handle("/*", osbServer.Router)
+	router := mux.NewRouter()
+	router.Handle("/{brokerID}", osbServer.Router)
 	osbServer.Router = router
 	return osbServer, nil
 }

@@ -48,7 +48,7 @@ func (b PlatformClient) GetBrokers() (*platform.ServiceBrokerList, error) {
 	return &platform.ServiceBrokerList{ServiceBrokers: clientBrokers}, nil
 }
 
-func (b PlatformClient) CreateBrokers(r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+func (b PlatformClient) CreateBroker(r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 	logrus.Debugf("Creating broker with name [%s]...", r.Name)
 	logrus.Debug("Obtaining CF API access token...")
 	_, err := b.cfClient.GetToken()
@@ -81,7 +81,7 @@ func (b PlatformClient) CreateBrokers(r *platform.CreateServiceBrokerRequest) (*
 	return response, nil
 }
 
-func (b PlatformClient) DeleteBrokers(r *platform.DeleteServiceBrokerRequest) error {
+func (b PlatformClient) DeleteBroker(r *platform.DeleteServiceBrokerRequest) error {
 	logrus.Debugf("Deleting broker with GUID [%s]...", r.Guid)
 	logrus.Debug("Obtaining CF API access token...")
 	_, err := b.cfClient.GetToken()
@@ -95,7 +95,7 @@ func (b PlatformClient) DeleteBrokers(r *platform.DeleteServiceBrokerRequest) er
 	return nil
 }
 
-func (b PlatformClient) UpdateBrokers(r *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+func (b PlatformClient) UpdateBroker(r *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 	logrus.Debugf("Updating broker with name [%s]...", r.Name)
 	logrus.Debug("Obtaining CF API access token...")
 	_, err := b.cfClient.GetToken()
