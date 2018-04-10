@@ -117,11 +117,34 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
 	}
 
 	osbServer := server.New(api, reg)
-
 	router := mux.NewRouter()
-	router.Handle("/{brokerID}", osbServer.Router)
+
+	err = moveRoutes("/{brokerID}", osbServer.Router, router)
+	if err != nil {
+		return nil, err
+	}
+
 	osbServer.Router = router
 	return osbServer, nil
+}
+
+func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) error {
+	subRouter := toRouter.PathPrefix(prefix).Subrouter()
+	return fromRouter.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+
+		path, err := route.GetPathTemplate()
+		if err != nil {
+			return err
+		}
+
+		methods, err := route.GetMethods()
+		if err != nil {
+			return err
+		}
+		logrus.Info("Adding route with methods: ", methods, " and path: ", path)
+		subRouter.Handle(path, route.GetHandler()).Methods(methods...)
+		return nil
+	})
 }
 
 func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, details *task.RegistrationDetails) (cron.Job, error) {

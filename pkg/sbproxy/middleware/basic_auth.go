@@ -27,6 +27,6 @@ func BasicAuth(username, password string) func(handler http.Handler) http.Handle
 }
 
 func authorized(r *http.Request, username, password string) bool {
-	username, password, isOk := r.BasicAuth()
-	return isOk && username == username && password == password
+	u, p, isOk := r.BasicAuth()
+	return isOk && username == u && password == p
 }

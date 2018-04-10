@@ -3,7 +3,7 @@ package httputils
 import "fmt"
 
 type HTTPErrorResponse struct {
-	StatusCode   int
+	StatusCode   int    `json:"-"`
 	ErrorMessage string `json:"description,omitempty"`
 	ErrorKey     string `json:"error,omitempty"`
 }

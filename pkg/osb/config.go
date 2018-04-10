@@ -12,7 +12,6 @@ type ClientConfiguration struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
-//TODO  Add TLS config ?
 func DefaultConfig() *ClientConfiguration {
 	var settings struct {
 		User           string

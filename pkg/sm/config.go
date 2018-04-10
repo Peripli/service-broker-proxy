@@ -34,6 +34,7 @@ func (c *ClientConfiguration) Validate() error {
 }
 
 func DefaultConfig() *ClientConfiguration {
+	//TODO https://github.com/spf13/viper/issues/239
 	config := &ClientConfiguration{
 		User:           "admin",
 		Password:       "admin",
