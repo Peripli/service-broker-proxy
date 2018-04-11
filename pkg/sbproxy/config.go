@@ -50,8 +50,8 @@ func (c *ServerConfiguration) Validate() error {
 	return nil
 }
 
-func DefaultConfig() *ServerConfiguration {
-	serverConfig := &ServerConfiguration{
+func DefaultConfig() (*ServerConfiguration, error) {
+	config := &ServerConfiguration{
 		Port:       8080,
 		LogLevel:   "debug",
 		LogFormat:  "text",
@@ -64,9 +64,14 @@ func DefaultConfig() *ServerConfiguration {
 			Host:     "http://localhost:8080/proxy",
 		},
 	}
-	viperServer := viper.Sub("server")
-	viperServer.SetEnvPrefix("server")
-	viperServer.Unmarshal(serverConfig)
-
-	return serverConfig
+	serverConfig := &struct {
+		Server *ServerConfiguration
+	}{
+		Server: config,
+	}
+	//TODO BindEnv
+	if err := viper.Unmarshal(serverConfig); err != nil {
+		return nil, err
+	}
+	return config, nil
 }

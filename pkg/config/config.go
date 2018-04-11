@@ -5,6 +5,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 
+	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -18,6 +19,22 @@ func init() {
 	if err := viper.ReadInConfig(); err != nil {
 		logrus.Fatal("Failed to read the configuration file: ", err)
 	}
+}
+
+func New(
+	SbproxyConfig *sbproxy.ServerConfiguration,
+	OsbConfig *osb.ClientConfiguration,
+	SmConfig *sm.ClientConfiguration,
+	PlatformConfig platform.ClientConfiguration,
+) (*configuration, error) {
+	config := &configuration{
+		Sbproxy:  SbproxyConfig,
+		Osb:      OsbConfig,
+		Sm:       SmConfig,
+		Platform: PlatformConfig,
+	}
+
+	return config, nil
 }
 
 type configuration struct {
@@ -48,32 +65,16 @@ func (c *configuration) PlatformConfig() platform.ClientConfiguration {
 func (c *configuration) Validate() error {
 
 	if err := c.Sbproxy.Validate(); err != nil {
-		return err
+		return fmt.Errorf("config validation error: %s", err)
 	}
 	if err := c.Osb.Validate(); err != nil {
-		return err
+		return fmt.Errorf("config validation error: %s", err)
 	}
 	if err := c.Sm.Validate(); err != nil {
-		return err
+		return fmt.Errorf("config validation error: %s", err)
 	}
-	return c.Platform.Validate()
-}
-
-func New(
-	SbproxyConfig *sbproxy.ServerConfiguration,
-	OsbConfig *osb.ClientConfiguration,
-	SmConfig *sm.ClientConfiguration,
-	PlatformConfig platform.ClientConfiguration,
-) (*configuration, error) {
-	config := &configuration{
-		Sbproxy:  SbproxyConfig,
-		Osb:      OsbConfig,
-		Sm:       SmConfig,
-		Platform: PlatformConfig,
+	if err := c.Platform.Validate(); err != nil {
+		return fmt.Errorf("config validation error: %s", err)
 	}
-
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-	return config, nil
+	return nil
 }

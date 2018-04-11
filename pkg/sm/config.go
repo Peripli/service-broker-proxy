@@ -9,7 +9,7 @@ import (
 type ClientConfiguration struct {
 	User           string
 	Password       string
-	Uri            string
+	Host           string
 	TimeoutSeconds int
 	CreateFunc     func(config *ClientConfiguration) (Client, error)
 }
@@ -21,8 +21,8 @@ func (c *ClientConfiguration) Validate() error {
 	if len(c.Password) == 0 {
 		return fmt.Errorf("SM Config error: Password missing")
 	}
-	if len(c.Uri) == 0 {
-		return fmt.Errorf("SM Config error: Uri missing")
+	if len(c.Host) == 0 {
+		return fmt.Errorf("SM Config error: Host missing")
 	}
 	if c.TimeoutSeconds == 0 {
 		return fmt.Errorf("SM Config error: TimeoutSeconds missing")
@@ -33,17 +33,24 @@ func (c *ClientConfiguration) Validate() error {
 	return nil
 }
 
-func DefaultConfig() *ClientConfiguration {
-	//TODO https://github.com/spf13/viper/issues/239
+//TODO https://github.com/spf13/viper/issues/239
+func DefaultConfig() (*ClientConfiguration, error) {
 	config := &ClientConfiguration{
 		User:           "admin",
 		Password:       "admin",
-		Uri:            "http://localhost:8080/sm",
+		Host:           "http://localhost:8080/sm",
 		TimeoutSeconds: 10,
 		CreateFunc:     NewClient,
 	}
-	viperServer := viper.Sub("sm")
-	viperServer.SetEnvPrefix("sm")
-	viperServer.Unmarshal(config)
-	return config
+	smConfig := &struct {
+		Sm *ClientConfiguration
+	}{
+		Sm: config,
+		}
+		//TODO BindEnv
+	if err := viper.Unmarshal(smConfig); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

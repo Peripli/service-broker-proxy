@@ -16,6 +16,9 @@ type PlatformClient struct {
 var _ platform.Client = &PlatformClient{}
 
 func NewClient(config *PlatformClientConfiguration) (platform.Client, error) {
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("config validation error: ", err)
+	}
 	cfClient, err := config.createFunc(config.Config)
 	if err != nil {
 		return nil, err

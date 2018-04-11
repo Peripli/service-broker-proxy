@@ -12,41 +12,47 @@ type ClientConfiguration struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
-func DefaultConfig() *ClientConfiguration {
-	var settings struct {
-		User           string
-		Password       string
-		Host           string
-		TimeoutSeconds int
-	}
+//TODO combine these settings with sm config somehow?
+type settings struct {
+	User           string
+	Password       string
+	Host           string
+	TimeoutSeconds int
+}
 
-	viperServer := viper.Sub("sm")
-	viperServer.SetEnvPrefix("sm")
-	viperServer.Unmarshal(&settings)
+func DefaultConfig() (*ClientConfiguration, error) {
+	osbConfig := &struct {
+		Sm *settings
+	}{
+		Sm: &settings{},
+	}
+	//TODO BindEnv
+	if err := viper.Unmarshal(osbConfig); err != nil {
+		return nil, err
+	}
 
 	clientConfig := osbc.DefaultClientConfiguration()
-
 	clientConfig.Name = "sm"
 
-	if len(settings.Host) != 0 {
-		clientConfig.URL = settings.Host + "/osb"
+	if len(osbConfig.Sm.Host) != 0 {
+		clientConfig.URL = osbConfig.Sm.Host + "/osb"
 	}
 
-	if len(settings.User) != 0 && len(settings.Password) != 0 {
+	if len(osbConfig.Sm.User) != 0 && len(osbConfig.Sm.Password) != 0 {
 		clientConfig.AuthConfig = &osbc.AuthConfig{
 			BasicAuthConfig: &osbc.BasicAuthConfig{
-				Username: settings.User,
-				Password: settings.Password,
+				Username: osbConfig.Sm.User,
+				Password: osbConfig.Sm.Password,
 			}}
 	}
-	if settings.TimeoutSeconds != 0 {
-		clientConfig.TimeoutSeconds = settings.TimeoutSeconds
+	if osbConfig.Sm.TimeoutSeconds != 0 {
+		clientConfig.TimeoutSeconds = osbConfig.Sm.TimeoutSeconds
 	}
 
 	return &ClientConfiguration{
 		ClientConfiguration: clientConfig,
 		CreateFunc:          osbc.NewClient,
-	}
+	}, nil
 }
 
 func (c *ClientConfiguration) Validate() error {

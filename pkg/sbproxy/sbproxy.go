@@ -22,6 +22,7 @@ import (
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
+	"fmt"
 )
 
 var (
@@ -31,8 +32,8 @@ var (
 )
 
 type Configuration interface {
-	Validate() error
 
+	Validate() error
 	SbproxyConfig() *ServerConfiguration
 	OsbConfig() *osb.ClientConfiguration
 	SmConfig() *sm.ClientConfiguration
@@ -46,14 +47,22 @@ type SBProxy struct {
 }
 
 func New(config Configuration) (*SBProxy, error) {
-	setUpLogging(config.SbproxyConfig().LogLevel, config.SbproxyConfig().LogFormat)
+	if config == nil {
+		return nil, fmt.Errorf("config cannot be nil")
+	}
+	if  err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	sbproxyConfig := config.SbproxyConfig()
+	setUpLogging(sbproxyConfig.LogLevel, sbproxyConfig.LogFormat)
 
 	osbServer, err := defaultOSBServer(config.OsbConfig())
 	if err != nil {
 		return nil, err
 	}
 
-	details := config.SbproxyConfig().Reg
+	details := sbproxyConfig.Reg
 	osbServer.Router.Use(middleware.LogRequest())
 	osbServer.Router.Use(middleware.BasicAuth(details.User, details.Password))
 

@@ -42,39 +42,46 @@ func (c *PlatformClientConfiguration) Validate() error {
 	return nil
 }
 
-func DefaultConfig() *PlatformClientConfiguration {
-	var settings struct {
-		Api            string
-		ClientID       string
-		ClientSecret   string
-		SkipSSLVerify  bool
-		TimeoutSeconds int
+type settings struct {
+	Api            string
+	ClientID       string
+	ClientSecret   string
+	SkipSSLVerify  bool
+	TimeoutSeconds int
+}
+
+func DefaultConfig() (*PlatformClientConfiguration, error) {
+	platformConfig := &struct {
+		Cf *settings
+	}{
+		Cf: &settings{},
 	}
-	viperServer := viper.Sub("cf")
-	viperServer.SetEnvPrefix("cf")
-	viperServer.Unmarshal(&settings)
+	//TODO BindEnv
+	if err := viper.Unmarshal(platformConfig); err != nil {
+		return nil, err
+	}
 
 	clientConfig := cfclient.DefaultConfig()
 
-	if len(settings.Api) != 0 {
-		clientConfig.ApiAddress = settings.Api
+	if len(platformConfig.Cf.Api) != 0 {
+		clientConfig.ApiAddress = platformConfig.Cf.Api
 	}
-	if len(settings.ClientID) != 0 {
-		clientConfig.ClientID = settings.ClientID
+	if len(platformConfig.Cf.ClientID) != 0 {
+		clientConfig.ClientID = platformConfig.Cf.ClientID
 	}
-	if len(settings.ClientSecret) != 0 {
-		clientConfig.ClientSecret = settings.ClientSecret
+	if len(platformConfig.Cf.ClientSecret) != 0 {
+		clientConfig.ClientSecret = platformConfig.Cf.ClientSecret
 	}
-	if settings.SkipSSLVerify {
-		clientConfig.SkipSslValidation = settings.SkipSSLVerify
+	if platformConfig.Cf.SkipSSLVerify {
+		clientConfig.SkipSslValidation = platformConfig.Cf.SkipSSLVerify
 	}
-	if settings.TimeoutSeconds != 0 {
+	if platformConfig.Cf.TimeoutSeconds != 0 {
 		clientConfig.HttpClient = &http.Client{
-			Timeout: time.Duration(settings.TimeoutSeconds) * time.Second,
+			Timeout: time.Duration(platformConfig.Cf.TimeoutSeconds) * time.Second,
 		}
 	}
 	return &PlatformClientConfiguration{
 		Config:     clientConfig,
 		createFunc: cfclient.NewClient,
-	}
+	}, nil
 }

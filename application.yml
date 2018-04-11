@@ -1,11 +1,13 @@
 # these are env vars + config file properties + flag options (flag > env > config)
 # the application.yml file should be part of the wrapper module
+
+# Any of the below config properties can be provided via Environment Variables prefixed  by PROXY_
 server:
   port: 8080
   logLevel: debug
   logFormat: text
   tLSKey: "/etc/tlskey"
-  tLSCert: "etc/tlscrt"
+  tLSCert: "/etc/tlscrt"
   timeoutSeconds: 5
   reg:
     user: admin

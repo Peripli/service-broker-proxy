@@ -9,14 +9,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//TODO This package should be seperate repository (CF Wrapper Module) for the proxy
+//TODO This package should be separate repository (CF Wrapper Module) for the proxy
 func main() {
-	cfg, err := config.New(
-		sbproxy.DefaultConfig(),
-		osb.DefaultConfig(),
-		sm.DefaultConfig(),
-		cf.DefaultConfig(),
-	)
+	sbproxyConfig, err := sbproxy.DefaultConfig() //asd
+	if err != nil {
+		logrus.Fatal("Error loading configuration: ", err)
+	}
+
+	osbConfig, err := osb.DefaultConfig()
+	if err != nil {
+		logrus.Fatal("Error loading configuration: ", err)
+	}
+
+	smConfig, err := sm.DefaultConfig()
+	if err != nil {
+		logrus.Fatal("Error loading configuration: ", err)
+	}
+
+	cfConfig, err := cf.DefaultConfig()
+	if err != nil {
+		logrus.Fatal("Error loading configuration: ", err)
+	}
+
+	cfg, err := config.New(sbproxyConfig, osbConfig, smConfig, cfConfig)
 	if err != nil {
 		logrus.Fatal("Error loading configuration: ", err)
 	}

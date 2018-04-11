@@ -26,10 +26,10 @@ type serviceManagerClient struct {
 var _ Client = &serviceManagerClient{}
 
 func NewClient(config *ClientConfiguration) (Client, error) {
-	defConfig := DefaultConfig()
-	if config.TimeoutSeconds == 0 {
-		config.TimeoutSeconds = defConfig.TimeoutSeconds
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("config validation error: ", err)
 	}
+
 	httpClient := &http.Client{
 		Timeout: time.Duration(config.TimeoutSeconds) * time.Second,
 	}
@@ -51,8 +51,8 @@ func NewClient(config *ClientConfiguration) (Client, error) {
 }
 
 func (c *serviceManagerClient) GetBrokers() (*platform.ServiceBrokerList, error) {
-	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Uri)
-	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Uri)
+	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
+	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
 	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting brokers from Service Manager: %s", err)
