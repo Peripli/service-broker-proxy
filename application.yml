@@ -9,8 +9,6 @@ server:
   port: 8081
   logLevel: debug
   logFormat: text
-  tLSKey: "/etc/tlskey"
-  tLSCert: "/etc/tlscrt"
   timeoutSeconds: 5
   reg:
     user: admin
@@ -19,10 +17,10 @@ server:
 sm:
   user: admin
   password: admin
-  host: http://127.0.0.1:8080
+  host: http://127.0.0.1:8082
   timeoutSeconds: 10
 cf:
-  api: http://api.bosh-lite.com
+  api: "http://localhost:8080"
   username: DL_595406317BCF840FD00005E8@global.sap.corp
   password: Test1234
 #  clientID: sm-client

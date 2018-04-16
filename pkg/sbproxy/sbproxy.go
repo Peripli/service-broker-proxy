@@ -32,7 +32,6 @@ var (
 )
 
 type Configuration interface {
-
 	Validate() error
 	SbproxyConfig() *ServerConfiguration
 	OsbConfig() *osb.ClientConfiguration
@@ -50,7 +49,7 @@ func New(config Configuration) (*SBProxy, error) {
 	if config == nil {
 		return nil, fmt.Errorf("config cannot be nil")
 	}
-	if  err := config.Validate(); err != nil {
+	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -80,6 +79,7 @@ func New(config Configuration) (*SBProxy, error) {
 	return &SBProxy{
 		Server:        osbServer,
 		CronScheduler: cronScheduler,
+		ServerConfig:  sbproxyConfig,
 	}, nil
 }
 
@@ -128,7 +128,7 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
 	osbServer := server.New(api, reg)
 	router := mux.NewRouter()
 
-	err = moveRoutes("/{brokerID}", osbServer.Router, router)
+	err = moveRoutes("/osb/{brokerID}", osbServer.Router, router)
 	if err != nil {
 		return nil, err
 	}
@@ -209,9 +209,9 @@ func waitWithTimeout(group *sync.WaitGroup, timeout time.Duration) {
 	}()
 	select {
 	case <-c:
-		logrus.Fatal("Shutdown took more than ", timeout)
-	case <-time.After(timeout):
 		logrus.Debug("Timeout WaitGroup ", group, " finished successfully")
+	case <-time.After(timeout):
+		logrus.Fatal("Shutdown took more than ", timeout)
 		close(c)
 	}
-	}
+}
