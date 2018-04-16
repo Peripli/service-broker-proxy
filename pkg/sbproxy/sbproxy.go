@@ -86,7 +86,7 @@ func New(config Configuration) (*SBProxy, error) {
 func (s SBProxy) Run() {
 	var err error
 	ctx, cancel = context.WithCancel(context.Background())
-	defer waitWithTimeout(group, time.Duration(s.ServerConfig.TimeoutSec)*time.Second)
+	defer waitWithTimeout(&group, time.Duration(s.ServerConfig.TimeoutSec)*time.Second)
 	defer cancel()
 
 	handleInterrupts()
@@ -165,7 +165,7 @@ func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.Cli
 	if err != nil {
 		return nil, err
 	}
-	regTask := task.New(group, platformClient, smClient, details)
+	regTask := task.New(&group, platformClient, smClient, details)
 
 	return regTask, nil
 }
@@ -200,7 +200,8 @@ func handleInterrupts() {
 }
 
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards
-func waitWithTimeout(group sync.WaitGroup, timeout time.Duration) {
+// WaitGroup parameter should be pointer or else the copy won't get notified about .Done() calls
+func waitWithTimeout(group *sync.WaitGroup, timeout time.Duration) {
 	c := make(chan struct{})
 	go func() {
 		defer close(c)
@@ -211,5 +212,6 @@ func waitWithTimeout(group sync.WaitGroup, timeout time.Duration) {
 		logrus.Fatal("Shutdown took more than ", timeout)
 	case <-time.After(timeout):
 		logrus.Debug("Timeout WaitGroup ", group, " finished successfully")
+		close(c)
 	}
-}
+	}

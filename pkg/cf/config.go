@@ -33,12 +33,6 @@ func (c *PlatformClientConfiguration) Validate() error {
 	if len(c.Config.ApiAddress) == 0 {
 		return fmt.Errorf("Platform config error: CF ApiAddress missing")
 	}
-	if len(c.Config.ClientID) == 0 {
-		return fmt.Errorf("Platform config error: CF ClientID missing")
-	}
-	if len(c.Config.ClientSecret) == 0 {
-		return fmt.Errorf("Platform config error: CF ClientSecret missing")
-	}
 	return nil
 }
 
@@ -46,6 +40,8 @@ type settings struct {
 	Api            string
 	ClientID       string
 	ClientSecret   string
+	Username       string
+	Password       string
 	SkipSSLVerify  bool
 	TimeoutSeconds int
 }
@@ -70,6 +66,12 @@ func DefaultConfig() (*PlatformClientConfiguration, error) {
 		clientConfig.ClientID = platformConfig.Cf.ClientID
 	}
 	if len(platformConfig.Cf.ClientSecret) != 0 {
+		clientConfig.ClientSecret = platformConfig.Cf.ClientSecret
+	}
+	if len(platformConfig.Cf.Username) != 0 {
+		clientConfig.ClientID = platformConfig.Cf.ClientID
+	}
+	if len(platformConfig.Cf.Password) != 0 {
 		clientConfig.ClientSecret = platformConfig.Cf.ClientSecret
 	}
 	if platformConfig.Cf.SkipSSLVerify {

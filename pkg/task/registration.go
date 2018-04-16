@@ -21,13 +21,13 @@ func (rd RegistrationDetails) String() string {
 }
 
 type SBProxyRegistration struct {
-	group          sync.WaitGroup
+	group          *sync.WaitGroup
 	platformClient platform.Client
 	smClient       sm.Client
 	details        *RegistrationDetails
 }
 
-func New(group sync.WaitGroup, platoformClient platform.Client, smClient sm.Client, details *RegistrationDetails) *SBProxyRegistration {
+func New(group *sync.WaitGroup, platoformClient platform.Client, smClient sm.Client, details *RegistrationDetails) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
 		platformClient: platoformClient,
@@ -75,6 +75,7 @@ func (r SBProxyRegistration) createBrokerRegistration(broker *platform.ServiceBr
 		Username:  r.details.User,
 		Password:  r.details.Password,
 		BrokerURL: r.details.Host + "/" + broker.Guid,
+		SpaceGUID: broker.Guid,
 	}
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
 		logrus.Error("Error during broker registration: ", err)

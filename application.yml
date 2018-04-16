@@ -2,8 +2,11 @@
 # the application.yml file should be part of the wrapper module
 
 # Any of the below config properties can be provided via Environment Variables prefixed  by PROXY_
+# If any of the provided env variables are supposed to be "Unmarshaled" via viper, they need to have default values
+# specified here so that viper may know for these env vars' existence and use them during unmarshaling
+
 server:
-  port: 8080
+  port: 8081
   logLevel: debug
   logFormat: text
   tLSKey: "/etc/tlskey"
@@ -12,15 +15,17 @@ server:
   reg:
     user: admin
     password: admin
-    host: http://127.0.0.1:8080/proxy
+    host: http://127.0.0.1:8081
 sm:
   user: admin
   password: admin
-  host: http://127.0.0.1:8080/sm
+  host: http://127.0.0.1:8080
   timeoutSeconds: 10
 cf:
-  api: http://127.0.0.1:8080/cf
-  clientID: sm-client
-  clientSecret: sm-secret
+  api: http://api.bosh-lite.com
+  username: DL_595406317BCF840FD00005E8@global.sap.corp
+  password: Test1234
+#  clientID: sm-client
+#  clientSecret: sm-secret
   skipSSLVerify: true
   timeoutSeconds: 10

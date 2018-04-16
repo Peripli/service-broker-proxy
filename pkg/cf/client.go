@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//TODO This package should be in seperate repository (CF Wrapper Module) for the proxy
+//TODO This package should be in separate repository (CF Wrapper Module) for the proxy
 type PlatformClient struct {
 	cfClient *cfclient.Client
 }

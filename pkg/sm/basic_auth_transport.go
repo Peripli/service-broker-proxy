@@ -8,7 +8,8 @@ import (
 
 // BasicAuthTransport intercepts that request that is being sent, adds basic authorization
 // and delegates back to the original transport
-//TODO https://github.com/ernesto-jimenez/httplogger
+//TODO Middleware ideas and resources
+// TODO https://github.com/ernesto-jimenez/httplogger
 //TODO https://github.com/h2non/gentleman#examples
 type BasicAuthTransport struct {
 	username string

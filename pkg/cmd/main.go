@@ -11,7 +11,7 @@ import (
 
 //TODO This package should be separate repository (CF Wrapper Module) for the proxy
 func main() {
-	sbproxyConfig, err := sbproxy.DefaultConfig() //asd
+	sbproxyConfig, err := sbproxy.DefaultConfig()
 	if err != nil {
 		logrus.Fatal("Error loading configuration: ", err)
 	}
