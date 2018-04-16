@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const APIInternalBrokers = "%s/api/internal/service_brokers"
+const APIInternalBrokers = "%s/api/v1/service_brokers"
 
 type Client interface {
 	GetBrokers() (*platform.ServiceBrokerList, error)

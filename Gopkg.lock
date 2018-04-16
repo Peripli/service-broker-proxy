@@ -85,6 +85,51 @@
   revision = "00c29f56e2386353d58c599509e8dc3801b0d716"
 
 [[projects]]
+  name = "github.com/onsi/ginkgo"
+  packages = [
+    ".",
+    "config",
+    "extensions/table",
+    "internal/codelocation",
+    "internal/containernode",
+    "internal/failer",
+    "internal/leafnodes",
+    "internal/remote",
+    "internal/spec",
+    "internal/spec_iterator",
+    "internal/specrunner",
+    "internal/suite",
+    "internal/testingtproxy",
+    "internal/writer",
+    "reporters",
+    "reporters/stenographer",
+    "reporters/stenographer/support/go-colorable",
+    "reporters/stenographer/support/go-isatty",
+    "types"
+  ]
+  revision = "9eda700730cba42af70d53180f9dcce9266bc2bc"
+  version = "v1.4.0"
+
+[[projects]]
+  name = "github.com/onsi/gomega"
+  packages = [
+    ".",
+    "format",
+    "internal/assertion",
+    "internal/asyncassertion",
+    "internal/oraclematcher",
+    "internal/testingtsupport",
+    "matchers",
+    "matchers/support/goraph/bipartitegraph",
+    "matchers/support/goraph/edge",
+    "matchers/support/goraph/node",
+    "matchers/support/goraph/util",
+    "types"
+  ]
+  revision = "003f63b7f4cff3fc95357005358af2de0f5fe152"
+  version = "v1.3.0"
+
+[[projects]]
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   revision = "acdc4509485b587f5e675510c4f2c63e90ff68a8"
@@ -205,7 +250,10 @@
   name = "golang.org/x/net"
   packages = [
     "context",
-    "context/ctxhttp"
+    "context/ctxhttp",
+    "html",
+    "html/atom",
+    "html/charset"
   ]
   revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
 
@@ -231,9 +279,23 @@
 [[projects]]
   name = "golang.org/x/text"
   packages = [
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
     "internal/gen",
+    "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "internal/utf8internal",
+    "language",
+    "runes",
     "transform",
     "unicode/cldr",
     "unicode/norm"
@@ -264,6 +326,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2b1b1e66c1969f9f0f441f14336f75593ede463dd7b6036de23a8e0ded089c25"
+  inputs-digest = "5b92dbee5743ee410de1883f5067e880e280411757cc8ccc50410a42bebac5f6"
   solver-name = "gps-cdcl"
   solver-version = 1
