@@ -111,6 +111,6 @@ func osbClient(request *http.Request, config osbc.ClientConfiguration, createFun
 	// assuming that we decide that osb api of SM is accessible with brokerID path parameter
 	config.URL = config.URL + "/" + brokerID
 	config.Name = config.Name + "-" + brokerID
-	logrus.Debug("Building OSB client for broker with name: ", config.Name, "accesible at: ", config.URL)
+	logrus.Debug("Building OSB client for broker with name: ", config.Name, " accesible at: ", config.URL)
 	return createFunc(&config)
 }

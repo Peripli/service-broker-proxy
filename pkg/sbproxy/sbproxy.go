@@ -80,6 +80,7 @@ func New(config Configuration) (*SBProxy, error) {
 	return &SBProxy{
 		Server:        osbServer,
 		CronScheduler: cronScheduler,
+		ServerConfig:  sbproxyConfig,
 	}, nil
 }
 
@@ -128,7 +129,7 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
 	osbServer := server.New(api, reg)
 	router := mux.NewRouter()
 
-	err = moveRoutes("/{brokerID}", osbServer.Router, router)
+	err = moveRoutes("/osb/{brokerID}", osbServer.Router, router)
 	if err != nil {
 		return nil, err
 	}
