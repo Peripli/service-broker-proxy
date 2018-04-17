@@ -29,60 +29,108 @@ func NewBusinessLogic(config *ClientConfiguration) (*BusinessLogic, error) {
 	}, nil
 }
 
-func (b *BusinessLogic) GetCatalog(c *broker.RequestContext) (*osbc.CatalogResponse, error) {
+func (b *BusinessLogic) GetCatalog(c *broker.RequestContext) (*broker.CatalogResponse, error) {
 	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
 	if err != nil {
 		return nil, err
 	}
-	return client.GetCatalog()
+	response, err := client.GetCatalog()
+	if err != nil {
+		return nil, err
+	}
+
+	return &broker.CatalogResponse{
+		CatalogResponse: *response,
+	}, nil
 }
 
-func (b *BusinessLogic) Provision(request *osbc.ProvisionRequest, c *broker.RequestContext) (*osbc.ProvisionResponse, error) {
+func (b *BusinessLogic) Provision(request *osbc.ProvisionRequest, c *broker.RequestContext) (*broker.ProvisionResponse, error) {
 	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
 	if err != nil {
 		return nil, err
 	}
-	return client.ProvisionInstance(request)
+	response, err := client.ProvisionInstance(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return &broker.ProvisionResponse{
+		ProvisionResponse: *response,
+	}, nil
 }
 
-func (b *BusinessLogic) Deprovision(request *osbc.DeprovisionRequest, c *broker.RequestContext) (*osbc.DeprovisionResponse, error) {
+func (b *BusinessLogic) Deprovision(request *osbc.DeprovisionRequest, c *broker.RequestContext) (*broker.DeprovisionResponse, error) {
 	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
 	if err != nil {
 		return nil, err
 	}
-	return client.DeprovisionInstance(request)
+	response, err := client.DeprovisionInstance(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return &broker.DeprovisionResponse{
+		DeprovisionResponse: *response,
+	}, nil
 }
 
-func (b *BusinessLogic) LastOperation(request *osbc.LastOperationRequest, c *broker.RequestContext) (*osbc.LastOperationResponse, error) {
+func (b *BusinessLogic) LastOperation(request *osbc.LastOperationRequest, c *broker.RequestContext) (*broker.LastOperationResponse, error) {
 	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
 	if err != nil {
 		return nil, err
 	}
-	return client.PollLastOperation(request)
+	response, err := client.PollLastOperation(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return &broker.LastOperationResponse{
+		LastOperationResponse: *response,
+	}, nil
+}
+func (b *BusinessLogic) Bind(request *osbc.BindRequest, c *broker.RequestContext) (*broker.BindResponse, error) {
+	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
+	if err != nil {
+		return nil, err
+	}
+	response, err := client.Bind(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return &broker.BindResponse{
+		BindResponse: *response,
+	}, nil
+
+}
+func (b *BusinessLogic) Unbind(request *osbc.UnbindRequest, c *broker.RequestContext) (*broker.UnbindResponse, error) {
+	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
+	if err != nil {
+		return nil, err
+	}
+	response, err := client.Unbind(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return &broker.UnbindResponse{
+		UnbindResponse: *response,
+	}, nil
 }
 
-func (b *BusinessLogic) Bind(request *osbc.BindRequest, c *broker.RequestContext) (*osbc.BindResponse, error) {
+func (b *BusinessLogic) Update(request *osbc.UpdateInstanceRequest, c *broker.RequestContext) (*broker.UpdateInstanceResponse, error) {
 	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
 	if err != nil {
 		return nil, err
 	}
-	return client.Bind(request)
-}
+	response, err := client.UpdateInstance(request)
+	if err != nil {
+		return nil, err
+	}
 
-func (b *BusinessLogic) Unbind(request *osbc.UnbindRequest, c *broker.RequestContext) (*osbc.UnbindResponse, error) {
-	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
-	if err != nil {
-		return nil, err
-	}
-	return client.Unbind(request)
-}
-
-func (b *BusinessLogic) Update(request *osbc.UpdateInstanceRequest, c *broker.RequestContext) (*osbc.UpdateInstanceResponse, error) {
-	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
-	if err != nil {
-		return nil, err
-	}
-	return client.UpdateInstance(request)
+	return &broker.UpdateInstanceResponse{
+		UpdateInstanceResponse: *response,
+	}, nil
 }
 
 func (b *BusinessLogic) ValidateBrokerAPIVersion(version string) error {
