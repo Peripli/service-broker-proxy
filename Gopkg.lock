@@ -8,18 +8,6 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cloudfoundry-community/go-cfclient"
-  packages = ["."]
-  revision = "992119ebf08b760f9836b9eddc52721d9318c060"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/cloudfoundry/gofileutils"
-  packages = ["fileutils"]
-  revision = "4d0c80011a0f37da1711c184028bc40137cd45af"
-
-[[projects]]
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
@@ -89,7 +77,6 @@
   packages = [
     ".",
     "config",
-    "extensions/table",
     "internal/codelocation",
     "internal/containernode",
     "internal/failer",
@@ -134,12 +121,6 @@
   packages = ["."]
   revision = "acdc4509485b587f5e675510c4f2c63e90ff68a8"
   version = "v1.1.0"
-
-[[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmorie/go-open-service-broker-client"
@@ -249,23 +230,11 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = [
-    "context",
-    "context/ctxhttp",
     "html",
     "html/atom",
     "html/charset"
   ]
   revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "clientcredentials",
-    "internal"
-  ]
-  revision = "fdc9e635145ae97e6c2cb777c48305600cf515cb"
 
 [[projects]]
   branch = "master"
@@ -304,20 +273,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  name = "google.golang.org/appengine"
-  packages = [
-    "internal",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "urlfetch"
-  ]
-  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
-  version = "v1.0.0"
-
-[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -326,6 +281,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5b92dbee5743ee410de1883f5067e880e280411757cc8ccc50410a42bebac5f6"
+  inputs-digest = "ee035ea8756259e1c627bf633317d2c7f1818bf4d62fa41bd31bcfd558a7f35e"
   solver-name = "gps-cdcl"
   solver-version = 1
