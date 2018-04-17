@@ -11,14 +11,13 @@ server:
   logFormat: text
   timeoutSeconds: 5
   host: http://127.0.0.1:8081
-
 sm:
   user: admin
   password: admin
   host: http://127.0.0.1:8082
   timeoutSeconds: 10
 cf:
-  api: "http://localhost:8080"
+  api: http://localhost:8080
   username: DL_595406317BCF840FD00005E8@global.sap.corp
   password: Test1234
 #  clientID: sm-client
