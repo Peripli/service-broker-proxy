@@ -9,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//TODO This package should be separate repository (CF Wrapper Module) for the proxy
 func main() {
 	sbproxyConfig, err := sbproxy.DefaultConfig()
 	if err != nil {
@@ -40,6 +39,8 @@ func main() {
 	if err != nil {
 		logrus.Fatal("Error creating SBProxy: ", err)
 	}
+
+	sbProxy.Use(cf.BasicAuth(cfConfig.Reg.User, cfConfig.Reg.Password))
 
 	sbProxy.Run()
 }

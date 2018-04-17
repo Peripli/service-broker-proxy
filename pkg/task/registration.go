@@ -3,36 +3,24 @@ package task
 import (
 	"sync"
 
-	"fmt"
-
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/sirupsen/logrus"
 )
 
-type RegistrationDetails struct {
-	User     string
-	Password string
-	Host     string
-}
-
-func (rd RegistrationDetails) String() string {
-	return fmt.Sprintf("User: %s Host: %s", rd.User, rd.Host)
-}
-
 type SBProxyRegistration struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
 	smClient       sm.Client
-	details        *RegistrationDetails
+	smHost         string
 }
 
-func New(group *sync.WaitGroup, platoformClient platform.Client, smClient sm.Client, details *RegistrationDetails) *SBProxyRegistration {
+func New(group *sync.WaitGroup, platoformClient platform.Client, smClient sm.Client, smHost string) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
 		platformClient: platoformClient,
 		smClient:       smClient,
-		details:        details,
+		smHost:         smHost,
 	}
 }
 
@@ -43,7 +31,7 @@ func (r SBProxyRegistration) Run() {
 }
 
 func (r SBProxyRegistration) run() {
-	logrus.Debug("Running broker registration task with details: ", r.details)
+	logrus.Debug("Running broker registration task...")
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
 		logrus.Error("An error occurred while obtaining already registered brokers: ", err)
@@ -56,8 +44,8 @@ func (r SBProxyRegistration) run() {
 		return
 	}
 
-	updateBrokerRegistrations(r.createBrokerRegistration, proxyBrokers.ServiceBrokers, registeredBrokers.ServiceBrokers)
-	updateBrokerRegistrations(r.deleteBrokerRegistration, registeredBrokers.ServiceBrokers, proxyBrokers.ServiceBrokers)
+	updateBrokerRegistrations(r.createBrokerRegistration, proxyBrokers, registeredBrokers)
+	updateBrokerRegistrations(r.deleteBrokerRegistration, registeredBrokers, proxyBrokers)
 }
 
 func (r SBProxyRegistration) deleteBrokerRegistration(broker *platform.ServiceBroker) {
@@ -72,9 +60,7 @@ func (r SBProxyRegistration) deleteBrokerRegistration(broker *platform.ServiceBr
 func (r SBProxyRegistration) createBrokerRegistration(broker *platform.ServiceBroker) {
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      "sm-proxy-" + broker.Name,
-		Username:  r.details.User,
-		Password:  r.details.Password,
-		BrokerURL: r.details.Host + "/" + broker.Guid,
+		BrokerURL: r.smHost + "/" + broker.Guid,
 		SpaceGUID: broker.Guid,
 	}
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {

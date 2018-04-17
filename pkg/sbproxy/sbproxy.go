@@ -12,6 +12,8 @@ import (
 
 	"fmt"
 
+	"net/http"
+
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/middleware"
@@ -24,6 +26,11 @@ import (
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	BrokerPathParam = "brokerID"
+	ApiPrefix       = "/v1/osb/{" + BrokerPathParam + "}"
 )
 
 var (
@@ -62,12 +69,10 @@ func New(config Configuration) (*SBProxy, error) {
 		return nil, err
 	}
 
-	details := sbproxyConfig.Reg
 	osbServer.Router.Use(middleware.LogRequest())
-	osbServer.Router.Use(middleware.BasicAuth(details.User, details.Password))
 
 	cronScheduler := cron.New()
-	regJob, err := defaultRegJob(config.PlatformConfig(), config.SmConfig(), details)
+	regJob, err := defaultRegJob(config.PlatformConfig(), config.SmConfig(), config.SbproxyConfig().Host)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +87,10 @@ func New(config Configuration) (*SBProxy, error) {
 		CronScheduler: cronScheduler,
 		ServerConfig:  sbproxyConfig,
 	}, nil
+}
+
+func (s SBProxy) Use(middleware func(handler http.Handler) http.Handler) {
+	s.Server.Router.Use(middleware)
 }
 
 func (s SBProxy) Run() {
@@ -129,7 +138,7 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
 	osbServer := server.New(api, reg)
 	router := mux.NewRouter()
 
-	err = moveRoutes("/osb/{brokerID}", osbServer.Router, router)
+	err = moveRoutes(ApiPrefix, osbServer.Router, router)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +166,7 @@ func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) err
 	})
 }
 
-func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, details *task.RegistrationDetails) (cron.Job, error) {
+func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, smHost string) (cron.Job, error) {
 	platformClient, err := platformConfig.CreateFunc()
 	if err != nil {
 		return nil, err
@@ -166,7 +175,7 @@ func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.Cli
 	if err != nil {
 		return nil, err
 	}
-	regTask := task.New(&group, platformClient, smClient, details)
+	regTask := task.New(&group, platformClient, smClient, smHost)
 
 	return regTask, nil
 }

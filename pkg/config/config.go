@@ -6,11 +6,13 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 
 	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
+//TODO: abstract logic so that different file names and locations can be used
 func init() {
 	viper.SetConfigName("application")
 	viper.SetConfigType("yml")

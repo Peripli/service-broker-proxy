@@ -1,4 +1,4 @@
-package middleware_test
+package cf
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -9,8 +9,6 @@ import (
 	"net/http/httptest"
 
 	"encoding/json"
-
-	. "github.com/Peripli/service-broker-proxy/pkg/sbproxy/middleware"
 )
 
 var _ = Describe("Basic Authentication wrapper", func() {

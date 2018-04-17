@@ -10,10 +10,8 @@ server:
   logLevel: debug
   logFormat: text
   timeoutSeconds: 5
-  reg:
-    user: admin
-    password: admin
-    host: http://127.0.0.1:8081
+  host: http://127.0.0.1:8081
+
 sm:
   user: admin
   password: admin
@@ -27,3 +25,7 @@ cf:
 #  clientSecret: sm-secret
   skipSSLVerify: true
   timeoutSeconds: 10
+  # Reg contains info about the credentials that will be used when proxy registers itself as a broker
+  reg:
+    user: admin
+    password: admin

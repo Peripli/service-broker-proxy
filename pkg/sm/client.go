@@ -15,7 +15,7 @@ import (
 const APIInternalBrokers = "%s/api/v1/service_brokers"
 
 type Client interface {
-	GetBrokers() (*platform.ServiceBrokerList, error)
+	GetBrokers() ([]platform.ServiceBroker, error)
 }
 
 type serviceManagerClient struct {
@@ -50,14 +50,14 @@ func NewClient(config *ClientConfiguration) (Client, error) {
 	return client, nil
 }
 
-func (c *serviceManagerClient) GetBrokers() (*platform.ServiceBrokerList, error) {
+func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
 	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting brokers from Service Manager: %s", err)
+		return nil, fmt.Errorf("error getting brokers from Service Manager: %s", err)
 	}
-	list := &platform.ServiceBrokerList{}
+	list := &BrokerList{}
 	switch response.StatusCode {
 	case http.StatusOK:
 		if err = httputils.GetContent(list, response.Body); err != nil {
@@ -66,5 +66,19 @@ func (c *serviceManagerClient) GetBrokers() (*platform.ServiceBrokerList, error)
 	default:
 		return nil, httputils.HandleResponseError(response)
 	}
-	return list, nil
+
+	return c.packResponse(list), nil
+}
+
+func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.ServiceBroker {
+	brokers := make([]platform.ServiceBroker, len(list.Brokers))
+	for _, broker := range list.Brokers {
+		b := platform.ServiceBroker{
+			Guid:      broker.ID,
+			Name:      broker.Name,
+			BrokerURL: broker.BrokerURL,
+		}
+		brokers = append(brokers, b)
+	}
+	return brokers
 }

@@ -11,9 +11,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-//TODO This package should be in seperate repository (CF Wrapper Module) for the proxy
+type RegistrationDetails struct {
+	User     string
+	Password string
+}
+
+func (rd RegistrationDetails) String() string {
+	return fmt.Sprintf("User: %s Host: %s", rd.User)
+}
+
 type PlatformClientConfiguration struct {
 	*cfclient.Config
+
+	Reg        *RegistrationDetails
 	createFunc func(*cfclient.Config) (*cfclient.Client, error)
 }
 
@@ -25,13 +35,22 @@ func (c *PlatformClientConfiguration) CreateFunc() (platform.Client, error) {
 
 func (c *PlatformClientConfiguration) Validate() error {
 	if c.createFunc == nil {
-		return fmt.Errorf("Platform config error: createFunc missing")
+		return fmt.Errorf("platform config error: createFunc missing")
 	}
 	if c.Config == nil {
-		return fmt.Errorf("Platform config error: CF config missing")
+		return fmt.Errorf("platform config error: CF config missing")
 	}
 	if len(c.Config.ApiAddress) == 0 {
-		return fmt.Errorf("Platform config error: CF ApiAddress missing")
+		return fmt.Errorf("platform config error: CF ApiAddress missing")
+	}
+	if c.Reg == nil {
+		return fmt.Errorf("platform config error: Registration credentials missing")
+	}
+	if len(c.Reg.User) == 0 {
+		return fmt.Errorf("platform config error: Registration details user missing")
+	}
+	if len(c.Reg.Password) == 0 {
+		return fmt.Errorf("platform config error: Registration details password missing")
 	}
 	return nil
 }
@@ -44,46 +63,48 @@ type settings struct {
 	Password       string
 	SkipSSLVerify  bool
 	TimeoutSeconds int
+	Reg            *RegistrationDetails
 }
 
 func DefaultConfig() (*PlatformClientConfiguration, error) {
-	platformConfig := &struct {
+	platformSettings := &struct {
 		Cf *settings
 	}{
 		Cf: &settings{},
 	}
 	//TODO BindEnv
-	if err := viper.Unmarshal(platformConfig); err != nil {
+	if err := viper.Unmarshal(platformSettings); err != nil {
 		return nil, err
 	}
 
 	clientConfig := cfclient.DefaultConfig()
 
-	if len(platformConfig.Cf.Api) != 0 {
-		clientConfig.ApiAddress = platformConfig.Cf.Api
+	if len(platformSettings.Cf.Api) != 0 {
+		clientConfig.ApiAddress = platformSettings.Cf.Api
 	}
-	if len(platformConfig.Cf.ClientID) != 0 {
-		clientConfig.ClientID = platformConfig.Cf.ClientID
+	if len(platformSettings.Cf.ClientID) != 0 {
+		clientConfig.ClientID = platformSettings.Cf.ClientID
 	}
-	if len(platformConfig.Cf.ClientSecret) != 0 {
-		clientConfig.ClientSecret = platformConfig.Cf.ClientSecret
+	if len(platformSettings.Cf.ClientSecret) != 0 {
+		clientConfig.ClientSecret = platformSettings.Cf.ClientSecret
 	}
-	if len(platformConfig.Cf.Username) != 0 {
-		clientConfig.ClientID = platformConfig.Cf.ClientID
+	if len(platformSettings.Cf.Username) != 0 {
+		clientConfig.ClientID = platformSettings.Cf.ClientID
 	}
-	if len(platformConfig.Cf.Password) != 0 {
-		clientConfig.ClientSecret = platformConfig.Cf.ClientSecret
+	if len(platformSettings.Cf.Password) != 0 {
+		clientConfig.ClientSecret = platformSettings.Cf.ClientSecret
 	}
-	if platformConfig.Cf.SkipSSLVerify {
-		clientConfig.SkipSslValidation = platformConfig.Cf.SkipSSLVerify
+	if platformSettings.Cf.SkipSSLVerify {
+		clientConfig.SkipSslValidation = platformSettings.Cf.SkipSSLVerify
 	}
-	if platformConfig.Cf.TimeoutSeconds != 0 {
+	if platformSettings.Cf.TimeoutSeconds != 0 {
 		clientConfig.HttpClient = &http.Client{
-			Timeout: time.Duration(platformConfig.Cf.TimeoutSeconds) * time.Second,
+			Timeout: time.Duration(platformSettings.Cf.TimeoutSeconds) * time.Second,
 		}
 	}
 	return &PlatformClientConfiguration{
 		Config:     clientConfig,
+		Reg:        platformSettings.Cf.Reg,
 		createFunc: cfclient.NewClient,
 	}, nil
 }

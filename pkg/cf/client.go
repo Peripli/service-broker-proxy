@@ -8,47 +8,51 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//TODO This package should be in separate repository (CF Wrapper Module) for the proxy
 type PlatformClient struct {
 	cfClient *cfclient.Client
+	reg      *RegistrationDetails
 }
 
 var _ platform.Client = &PlatformClient{}
 
 func NewClient(config *PlatformClientConfiguration) (platform.Client, error) {
 	if err := config.Validate(); err != nil {
-		return nil, fmt.Errorf("config validation error: ", err)
+		return nil, fmt.Errorf("config validation error: %s", err)
 	}
 	cfClient, err := config.createFunc(config.Config)
 	if err != nil {
 		return nil, err
 	}
-	return &PlatformClient{cfClient: cfClient}, nil
+	return &PlatformClient{
+		cfClient: cfClient,
+		reg:      config.Reg,
+	}, nil
 }
 
-func (b PlatformClient) GetBrokers() (*platform.ServiceBrokerList, error) {
+func (b PlatformClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debug("Getting platform brokers...")
 	logrus.Debug("Obtaining CF API access token...")
 	_, err := b.cfClient.GetToken()
 	if err != nil {
-		return nil, fmt.Errorf("Error obtaining CF access token: %s", err)
+		return nil, fmt.Errorf("error obtaining CF access token: %s", err)
 	}
 	logrus.Debug("Listing brokers via CF client...")
 	brokers, err := b.cfClient.ListServiceBrokers()
 	if err != nil {
-		return nil, fmt.Errorf("Error listing service brokers via CF client: %s", err)
+		return nil, fmt.Errorf("error listing service brokers via CF client: %s", err)
 	}
+
 	var clientBrokers []platform.ServiceBroker
 	for _, broker := range brokers {
-		serviceBroker := platform.ServiceBroker{Guid: broker.Guid,
+		serviceBroker := platform.ServiceBroker{
+			Guid:      broker.Guid,
 			Name:      broker.Name,
-			Username:  broker.Username,
-			Password:  broker.Password,
 			BrokerURL: broker.BrokerURL,
+			SpaceGUID: broker.SpaceGUID,
 		}
 		clientBrokers = append(clientBrokers, serviceBroker)
 	}
-	return &platform.ServiceBrokerList{ServiceBrokers: clientBrokers}, nil
+	return clientBrokers, nil
 }
 
 func (b PlatformClient) CreateBroker(r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
@@ -56,13 +60,13 @@ func (b PlatformClient) CreateBroker(r *platform.CreateServiceBrokerRequest) (*p
 	logrus.Debug("Obtaining CF API access token...")
 	_, err := b.cfClient.GetToken()
 	if err != nil {
-		return nil, fmt.Errorf("Error obtaining CF access token: %s", err)
+		return nil, fmt.Errorf("error obtaining CF access token: %s", err)
 	}
 
 	request := cfclient.CreateServiceBrokerRequest{
+		Username:  b.reg.User,
+		Password:  b.reg.Password,
 		Name:      r.Name,
-		Username:  r.Username,
-		Password:  r.Password,
 		BrokerURL: r.BrokerURL,
 		SpaceGUID: r.SpaceGUID,
 	}
@@ -70,14 +74,12 @@ func (b PlatformClient) CreateBroker(r *platform.CreateServiceBrokerRequest) (*p
 	logrus.Debugf("Creating broker with name [%s] via CF client", request.Name)
 	broker, err := b.cfClient.CreateServiceBroker(request)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating broker: %s", err)
+		return nil, fmt.Errorf("error creating broker: %s", err)
 	}
 
 	response := &platform.ServiceBroker{
 		Guid:      broker.Guid,
 		Name:      broker.Name,
-		Username:  broker.Username,
-		Password:  broker.Password,
 		BrokerURL: broker.BrokerURL,
 	}
 
@@ -93,7 +95,7 @@ func (b PlatformClient) DeleteBroker(r *platform.DeleteServiceBrokerRequest) err
 	}
 	logrus.Debugf("Deleting broker with guid [%s] via CF client", r.Guid)
 	if err = b.cfClient.DeleteServiceBroker(r.Guid); err != nil {
-		return fmt.Errorf("Error deleting broker: %s", err)
+		return fmt.Errorf("error deleting broker: %s", err)
 	}
 	return nil
 }
@@ -103,25 +105,23 @@ func (b PlatformClient) UpdateBroker(r *platform.UpdateServiceBrokerRequest) (*p
 	logrus.Debug("Obtaining CF API access token...")
 	_, err := b.cfClient.GetToken()
 	if err != nil {
-		return nil, fmt.Errorf("Error obtaining CF access token: %s", err)
+		return nil, fmt.Errorf("error obtaining CF access token: %s", err)
 	}
 	request := cfclient.UpdateServiceBrokerRequest{
+		Username:  b.reg.User,
+		Password:  b.reg.Password,
 		Name:      r.Name,
-		Username:  r.Username,
-		Password:  r.Password,
 		BrokerURL: r.BrokerURL,
 	}
 
 	logrus.Debugf("Updating broker with GUID [%s]", r.Guid)
 	broker, err := b.cfClient.UpdateServiceBroker(r.Guid, request)
 	if err != nil {
-		return nil, fmt.Errorf("Error updating broker: %s", err)
+		return nil, fmt.Errorf("error updating broker: %s", err)
 	}
 	response := &platform.ServiceBroker{
 		Guid:      broker.Guid,
 		Name:      broker.Name,
-		Username:  broker.Username,
-		Password:  broker.Password,
 		BrokerURL: broker.BrokerURL,
 	}
 	return response, nil

@@ -12,7 +12,7 @@ type ClientConfiguration struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
-//TODO combine these settings with sm config somehow?
+//TODO combine these settings with sm config maybe?
 type settings struct {
 	User           string
 	Password       string
