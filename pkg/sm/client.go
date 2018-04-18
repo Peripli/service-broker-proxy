@@ -50,6 +50,7 @@ func NewClient(config *ClientConfiguration) (Client, error) {
 	return client, nil
 }
 
+//TODO paging
 func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)

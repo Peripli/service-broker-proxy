@@ -3,10 +3,14 @@ package task
 import (
 	"sync"
 
+	"strings"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/sirupsen/logrus"
 )
+
+const ProxyBrokerPrefix = "sm-proxy-"
 
 type SBProxyRegistration struct {
 	group          *sync.WaitGroup
@@ -15,10 +19,15 @@ type SBProxyRegistration struct {
 	smHost         string
 }
 
-func New(group *sync.WaitGroup, platoformClient platform.Client, smClient sm.Client, smHost string) *SBProxyRegistration {
+type serviceBrokerReg struct {
+	*platform.ServiceBroker
+	SmID string
+}
+
+func New(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, smHost string) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
-		platformClient: platoformClient,
+		platformClient: platformClient,
 		smClient:       smClient,
 		smHost:         smHost,
 	}
@@ -38,44 +47,88 @@ func (r SBProxyRegistration) run() {
 		return
 	}
 
+	brokersFromPlatform := make([]serviceBrokerReg, len(registeredBrokers))
+	for _, broker := range registeredBrokers {
+		if !r.isBrokerProxy(broker) {
+			logrus.WithFields(logFields(&broker)).Debug("Registration task SKIPPING registered broker as is not recognized to be proxy broker...")
+			continue
+		}
+		brokerReg := serviceBrokerReg{
+			ServiceBroker: &broker,
+			SmID:          broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:],
+		}
+		brokersFromPlatform = append(brokersFromPlatform, brokerReg)
+	}
+
 	proxyBrokers, err := r.smClient.GetBrokers()
 	if err != nil {
 		logrus.Error("An error occurred while obtaining brokers that have to be registered at the platform: ", err)
 		return
 	}
 
-	updateBrokerRegistrations(r.createBrokerRegistration, proxyBrokers, registeredBrokers)
-	updateBrokerRegistrations(r.deleteBrokerRegistration, registeredBrokers, proxyBrokers)
+	brokersFromSM := make([]serviceBrokerReg, len(proxyBrokers))
+	for _, broker := range proxyBrokers {
+		brokerReg := serviceBrokerReg{
+			ServiceBroker: &broker,
+			SmID:          broker.Guid,
+		}
+		brokersFromSM = append(brokersFromSM, brokerReg)
+	}
+
+	updateBrokerRegistrations(r.createBrokerRegistration, brokersFromSM, brokersFromPlatform)
+	updateBrokerRegistrations(r.deleteBrokerRegistration, brokersFromPlatform, brokersFromSM)
 }
 
 func (r SBProxyRegistration) deleteBrokerRegistration(broker *platform.ServiceBroker) {
+	logrus.WithFields(logFields(broker)).Info("Registration task will attempt to delete broker...")
+
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		Guid: broker.Guid,
 	}
 	if err := r.platformClient.DeleteBroker(deleteRequest); err != nil {
-		logrus.Error("Error during broker deletion: ", err)
+		logrus.WithFields(logFields(broker)).Error("Error during broker deletion: ", err)
+		//TODO how do we recover from that? Maybe atleast send email / slack notification?
+	} else {
+		logrus.WithFields(logFields(broker)).Info("Registration task broker deletion successful")
+
 	}
 }
 
 func (r SBProxyRegistration) createBrokerRegistration(broker *platform.ServiceBroker) {
+	logrus.WithFields(logFields(broker)).Info("Registration task will attempt to create broker...")
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      "sm-proxy-" + broker.Name,
+		Name:      ProxyBrokerPrefix + broker.Guid,
 		BrokerURL: r.smHost + "/" + broker.Guid,
-		SpaceGUID: broker.Guid,
+		SpaceGUID: broker.SpaceGUID,
 	}
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
-		logrus.Error("Error during broker registration: ", err)
+		logrus.WithFields(logFields(broker)).Error("Error during broker creation: ", err)
+		//TODO how do we recover from that? Maybe atleast send email / slack notification?
+	} else {
+		logrus.WithFields(logFields(broker)).Info("Registration task broker creation successful")
 	}
 }
 
-func updateBrokerRegistrations(updateOp func(broker *platform.ServiceBroker), a, b []platform.ServiceBroker) {
-	mb := make(map[string]platform.ServiceBroker)
+func (r SBProxyRegistration) isBrokerProxy(broker platform.ServiceBroker) bool {
+	return strings.HasPrefix(broker.BrokerURL, r.smHost)
+}
+
+func updateBrokerRegistrations(updateOp func(broker *platform.ServiceBroker), a, b []serviceBrokerReg) {
+	mb := make(map[string]serviceBrokerReg)
 	for _, broker := range b {
-		mb[broker.Guid] = broker
+		mb[broker.SmID] = broker
 	}
 	for _, broker := range a {
-		if _, ok := mb[broker.Guid]; !ok {
-			updateOp(&broker)
+		if _, ok := mb[broker.SmID]; !ok {
+			updateOp(broker.ServiceBroker)
 		}
+	}
+}
+
+func logFields(broker *platform.ServiceBroker) logrus.Fields {
+	return logrus.Fields{
+		"guid": broker.Guid,
+		"name": broker.Name,
+		"url":  broker.BrokerURL,
 	}
 }
