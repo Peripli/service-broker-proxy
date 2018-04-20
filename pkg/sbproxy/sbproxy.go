@@ -166,7 +166,7 @@ func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) err
 	})
 }
 
-func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, smHost string) (cron.Job, error) {
+func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, proxyHost string) (cron.Job, error) {
 	platformClient, err := platformConfig.CreateFunc()
 	if err != nil {
 		return nil, err
@@ -175,7 +175,7 @@ func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.Cli
 	if err != nil {
 		return nil, err
 	}
-	regTask := task.New(&group, platformClient, smClient, smHost)
+	regTask := task.New(&group, platformClient, smClient, proxyHost)
 
 	return regTask, nil
 }

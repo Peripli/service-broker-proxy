@@ -72,7 +72,7 @@ func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 }
 
 func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.ServiceBroker {
-	brokers := make([]platform.ServiceBroker, len(list.Brokers))
+	brokers := make([]platform.ServiceBroker, 0, len(list.Brokers))
 	for _, broker := range list.Brokers {
 		b := platform.ServiceBroker{
 			Guid:      broker.ID,

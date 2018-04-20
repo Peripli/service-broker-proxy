@@ -16,20 +16,20 @@ type SBProxyRegistration struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
 	smClient       sm.Client
-	smHost         string
+	proxyHost      string
 }
 
 type serviceBrokerReg struct {
-	*platform.ServiceBroker
+	platform.ServiceBroker
 	SmID string
 }
 
-func New(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, smHost string) *SBProxyRegistration {
+func New(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyHost string) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
 		platformClient: platformClient,
 		smClient:       smClient,
-		smHost:         smHost,
+		proxyHost:      proxyHost,
 	}
 }
 
@@ -47,14 +47,14 @@ func (r SBProxyRegistration) run() {
 		return
 	}
 
-	brokersFromPlatform := make([]serviceBrokerReg, len(registeredBrokers))
+	brokersFromPlatform := make([]serviceBrokerReg, 0, len(registeredBrokers))
 	for _, broker := range registeredBrokers {
 		if !r.isBrokerProxy(broker) {
-			logrus.WithFields(logFields(&broker)).Debug("Registration task SKIPPING registered broker as is not recognized to be proxy broker...")
+			logrus.WithFields(logFields(broker)).Debug("Registration task SKIPPING registered broker as is not recognized to be proxy broker...")
 			continue
 		}
 		brokerReg := serviceBrokerReg{
-			ServiceBroker: &broker,
+			ServiceBroker: broker,
 			SmID:          broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:],
 		}
 		brokersFromPlatform = append(brokersFromPlatform, brokerReg)
@@ -66,10 +66,10 @@ func (r SBProxyRegistration) run() {
 		return
 	}
 
-	brokersFromSM := make([]serviceBrokerReg, len(proxyBrokers))
+	brokersFromSM := make([]serviceBrokerReg, 0, len(proxyBrokers))
 	for _, broker := range proxyBrokers {
 		brokerReg := serviceBrokerReg{
-			ServiceBroker: &broker,
+			ServiceBroker: broker,
 			SmID:          broker.Guid,
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
@@ -79,7 +79,7 @@ func (r SBProxyRegistration) run() {
 	updateBrokerRegistrations(r.deleteBrokerRegistration, brokersFromPlatform, brokersFromSM)
 }
 
-func (r SBProxyRegistration) deleteBrokerRegistration(broker *platform.ServiceBroker) {
+func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(broker)).Info("Registration task will attempt to delete broker...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
@@ -94,11 +94,11 @@ func (r SBProxyRegistration) deleteBrokerRegistration(broker *platform.ServiceBr
 	}
 }
 
-func (r SBProxyRegistration) createBrokerRegistration(broker *platform.ServiceBroker) {
+func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(broker)).Info("Registration task will attempt to create broker...")
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      ProxyBrokerPrefix + broker.Guid,
-		BrokerURL: r.smHost + "/" + broker.Guid,
+		BrokerURL: r.proxyHost + "/" + broker.Guid,
 		SpaceGUID: broker.SpaceGUID,
 	}
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
@@ -110,10 +110,10 @@ func (r SBProxyRegistration) createBrokerRegistration(broker *platform.ServiceBr
 }
 
 func (r SBProxyRegistration) isBrokerProxy(broker platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.smHost)
+	return strings.HasPrefix(broker.BrokerURL, r.proxyHost)
 }
 
-func updateBrokerRegistrations(updateOp func(broker *platform.ServiceBroker), a, b []serviceBrokerReg) {
+func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, b []serviceBrokerReg) {
 	mb := make(map[string]serviceBrokerReg)
 	for _, broker := range b {
 		mb[broker.SmID] = broker
@@ -125,7 +125,7 @@ func updateBrokerRegistrations(updateOp func(broker *platform.ServiceBroker), a,
 	}
 }
 
-func logFields(broker *platform.ServiceBroker) logrus.Fields {
+func logFields(broker platform.ServiceBroker) logrus.Fields {
 	return logrus.Fields{
 		"guid": broker.Guid,
 		"name": broker.Name,
