@@ -96,6 +96,7 @@ func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBro
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		Guid: broker.Guid,
+		Name: broker.Name,
 	}
 	if err := r.platformClient.DeleteBroker(deleteRequest); err != nil {
 		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker deletion")

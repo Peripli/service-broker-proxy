@@ -13,6 +13,7 @@ type UpdateServiceBrokerRequest struct {
 
 type DeleteServiceBrokerRequest struct {
 	Guid string `json:"guid"`
+	Name string `json:"name"`
 }
 
 type ServiceBroker struct {
