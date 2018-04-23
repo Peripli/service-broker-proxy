@@ -43,16 +43,23 @@ func (r SBProxyRegistration) run() {
 	logrus.Debug("Running broker registration task...")
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
-		logrus.Error("An error occurred while obtaining already registered brokers: ", err)
+		logrus.WithError(err).Error("An error occurred while obtaining already registered brokers")
 		return
 	}
 
 	brokersFromPlatform := make([]serviceBrokerReg, 0, len(registeredBrokers))
 	for _, broker := range registeredBrokers {
 		if !r.isBrokerProxy(broker) {
-			logrus.WithFields(logFields(broker)).Debug("Registration task SKIPPING registered broker as is not recognized to be proxy broker...")
+			logrus.WithFields(logFields(&broker)).Debug("Registration task SKIPPING registered broker as is not recognized to be proxy broker...")
 			continue
 		}
+
+		if f, isFetcher := r.platformClient.(platform.Fetcher); isFetcher {
+			if err := f.Fetch(&broker); err != nil {
+				logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during fetching catalog...")
+			}
+		}
+
 		brokerReg := serviceBrokerReg{
 			ServiceBroker: broker,
 			SmID:          broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:],
@@ -62,7 +69,7 @@ func (r SBProxyRegistration) run() {
 
 	proxyBrokers, err := r.smClient.GetBrokers()
 	if err != nil {
-		logrus.Error("An error occurred while obtaining brokers that have to be registered at the platform: ", err)
+		logrus.WithError(err).Error("An error occurred while obtaining brokers that have to be registered at the platform")
 		return
 	}
 
@@ -75,42 +82,65 @@ func (r SBProxyRegistration) run() {
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
 
+	// register brokers that are present in SM and missing from platform
 	updateBrokerRegistrations(r.createBrokerRegistration, brokersFromSM, brokersFromPlatform)
+
+	// unregister brokers that are no longer in SM but are still in platform
 	updateBrokerRegistrations(r.deleteBrokerRegistration, brokersFromPlatform, brokersFromSM)
+
 }
 
 func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBroker) {
-	logrus.WithFields(logFields(broker)).Info("Registration task will attempt to delete broker...")
+
+	logrus.WithFields(logFields(&broker)).Info("Registration task will attempt to delete broker...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		Guid: broker.Guid,
 	}
 	if err := r.platformClient.DeleteBroker(deleteRequest); err != nil {
-		logrus.WithFields(logFields(broker)).Error("Error during broker deletion: ", err)
+		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker deletion")
 		//TODO how do we recover from that? Maybe atleast send email / slack notification?
 	} else {
-		logrus.WithFields(logFields(broker)).Info("Registration task broker deletion successful")
+		logrus.WithFields(logFields(&broker)).Info("Registration task broker deletion successful")
+
+	}
+}
+
+func (r SBProxyRegistration) updateBrokerRegistration(broker platform.ServiceBroker) {
+
+	logrus.WithFields(logFields(&broker)).Info("Registration task will attempt to update broker...")
+
+	updateRequest := &platform.UpdateServiceBrokerRequest{
+		Guid:      broker.Guid,
+		Name:      broker.Name,
+		BrokerURL: broker.BrokerURL,
+	}
+	updatedBroker, err := r.platformClient.UpdateBroker(updateRequest)
+	if err != nil {
+		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker update")
+		//TODO how do we recover from that? Maybe atleast send email / slack notification?
+	} else {
+		logrus.WithFields(logFields(updatedBroker)).Info("Registration task broker update successful")
 
 	}
 }
 
 func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBroker) {
-	logrus.WithFields(logFields(broker)).Info("Registration task will attempt to create broker...")
+	logrus.WithFields(logFields(&broker)).Info("Registration task will attempt to create broker...")
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      ProxyBrokerPrefix + broker.Guid,
 		BrokerURL: r.proxyHost + "/" + broker.Guid,
-		SpaceGUID: broker.SpaceGUID,
 	}
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
-		logrus.WithFields(logFields(broker)).Error("Error during broker creation: ", err)
+		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker creation")
 		//TODO how do we recover from that? Maybe atleast send email / slack notification?
 	} else {
-		logrus.WithFields(logFields(broker)).Info("Registration task broker creation successful")
+		logrus.WithFields(logFields(&broker)).Info("Registration task broker creation successful")
 	}
 }
 
 func (r SBProxyRegistration) isBrokerProxy(broker platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.proxyHost)
+	return strings.HasPrefix(broker.BrokerURL, r.proxyHost) || strings.HasPrefix(broker.BrokerURL, "http://host.pcfdev.io:8083")
 }
 
 func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, b []serviceBrokerReg) {
@@ -120,12 +150,13 @@ func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, 
 	}
 	for _, broker := range a {
 		if _, ok := mb[broker.SmID]; !ok {
+			//TODO at some point we will be hitting platform rate limits... how should we handle that?
 			updateOp(broker.ServiceBroker)
 		}
 	}
 }
 
-func logFields(broker platform.ServiceBroker) logrus.Fields {
+func logFields(broker *platform.ServiceBroker) logrus.Fields {
 	return logrus.Fields{
 		"guid": broker.Guid,
 		"name": broker.Name,

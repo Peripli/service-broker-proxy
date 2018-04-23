@@ -1,8 +1,7 @@
 package sm
 
 import (
-	"fmt"
-
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -10,25 +9,29 @@ type ClientConfiguration struct {
 	User           string
 	Password       string
 	Host           string
+	OsbApi         string
 	TimeoutSeconds int
 	CreateFunc     func(config *ClientConfiguration) (Client, error)
 }
 
 func (c *ClientConfiguration) Validate() error {
 	if len(c.User) == 0 {
-		return fmt.Errorf("SM Config error: User missing")
+		return errors.New("SM configuration User missing")
 	}
 	if len(c.Password) == 0 {
-		return fmt.Errorf("SM Config error: Password missing")
+		return errors.New("SM configuration Password missing")
 	}
 	if len(c.Host) == 0 {
-		return fmt.Errorf("SM Config error: Host missing")
+		return errors.New("SM configuration Host missing")
+	}
+	if len(c.OsbApi) == 0 {
+		return errors.New("SM configuration OSB API missing")
 	}
 	if c.TimeoutSeconds == 0 {
-		return fmt.Errorf("SM Config error: TimeoutSeconds missing")
+		return errors.New("SM configuration TimeoutSeconds missing")
 	}
 	if c.CreateFunc == nil {
-		return fmt.Errorf("SM Config error: CreateFunc missing")
+		return errors.New("SM configuration CreateFunc missing")
 	}
 	return nil
 }
@@ -38,7 +41,7 @@ func DefaultConfig() (*ClientConfiguration, error) {
 	config := &ClientConfiguration{
 		User:           "admin",
 		Password:       "admin",
-		Host:           "http://localhost:8080/sm",
+		Host:           "",
 		TimeoutSeconds: 10,
 		CreateFunc:     NewClient,
 	}
@@ -46,10 +49,10 @@ func DefaultConfig() (*ClientConfiguration, error) {
 		Sm *ClientConfiguration
 	}{
 		Sm: config,
-		}
-		//TODO BindEnv
+	}
+	//TODO BindEnv
 	if err := viper.Unmarshal(smConfig); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error unmarshaling SM configuration")
 	}
 
 	return config, nil

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,7 +61,7 @@ func HandleResponseError(response *http.Response) error {
 	brokerResponse := make(map[string]interface{})
 	if err := GetContent(&brokerResponse, response.Body); err != nil {
 		httpErr.ErrorMessage = err.Error()
-		return httpErr
+		return errors.Wrap(err, "error handling failure response")
 	}
 
 	if errorKey, ok := brokerResponse["error"].(string); ok {

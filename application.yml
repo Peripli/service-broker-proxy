@@ -1,0 +1,32 @@
+# these are env vars + server file properties + flag options (flag > env > server)
+# the application.yml file should be part of the wrapper module
+
+# Any of the below server properties can be provided via Environment Variables prefixed  by PROXY_
+# If any of the provided env variables are supposed to be "Unmarshaled" from env via viper,
+# they need to have default values specified here so that viper may know for these env vars'
+# existence and use them during unmarshaling
+
+app:
+  port: 8082
+  logLevel: debug
+  logFormat: text
+  timeoutSeconds: 500
+  host: http://localhost:8082
+sm:
+  user: admin
+  password: admin
+  host: http://localhost:8081
+  osbApi: /v1/osb
+  timeoutSeconds: 1000
+cf:
+  api: https://api.local.pcfdev.io
+  username: admin
+  password: admin
+#  clientID: sm-client
+#  clientSecret: sm-secret
+  skipSSLVerify: true
+  timeoutSeconds: 1000
+  # Reg contains info about the credentials that will be used when proxy registers itself as a broker
+  reg:
+    user: admin
+    password: admin

@@ -1,63 +1,62 @@
 package sbproxy
 
 import (
-	"fmt"
-
+	"github.com/Peripli/service-broker-proxy/pkg/osb"
+	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/server"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-type ServerConfiguration struct {
-	Port       int
-	LogLevel   string
-	LogFormat  string
-	TimeoutSec int
-	TLSKey     string
-	TLSCert    string
-	Host       string
+//TODO: abstract logic so that different file names and locations can be used
+func init() {
+	viper.SetConfigName("application")
+	viper.SetConfigType("yml")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		logrus.WithError(errors.WithStack(err)).Fatal("Failed to read the Configuration file")
+	}
 }
 
-func (c *ServerConfiguration) Validate() error {
-	if c.Port == 0 {
-		return fmt.Errorf("server Config error: Port missing")
-	}
-	if len(c.LogLevel) == 0 {
-		return fmt.Errorf("server Config error: LogLevel missing")
-	}
-	if len(c.LogFormat) == 0 {
-		return fmt.Errorf("server Config error: LogFormat missing")
-	}
-	if c.TimeoutSec == 0 {
-		return fmt.Errorf("server Config error: TimeoutSec missing")
-	}
-	if (c.TLSCert != "" || c.TLSKey != "") &&
-		(c.TLSCert == "" || c.TLSKey == "") {
-		return fmt.Errorf("server Config error: To use TLS both TLSCert and TLSKey must be provided")
+func NewConfig(
+	AppConfig *server.AppConfiguration,
+	OsbConfig *osb.ClientConfiguration,
+	SmConfig *sm.ClientConfiguration,
+	PlatformConfig platform.ClientConfiguration,
+) (*Configuration, error) {
+	config := &Configuration{
+		App:      AppConfig,
+		Osb:      OsbConfig,
+		Sm:       SmConfig,
+		Platform: PlatformConfig,
 	}
 
-	if len(c.Host) == 0 {
-		return fmt.Errorf("server Config error: Host missing")
+	return config, nil
+}
+
+type Configuration struct {
+	App      *server.AppConfiguration
+	Osb      *osb.ClientConfiguration
+	Sm       *sm.ClientConfiguration
+	Platform platform.ClientConfiguration
+}
+
+func (c *Configuration) Validate() error {
+
+	if err := c.App.Validate(); err != nil {
+		return err
+	}
+	if err := c.Osb.Validate(); err != nil {
+		return err
+	}
+	if err := c.Sm.Validate(); err != nil {
+		return err
+	}
+	if err := c.Platform.Validate(); err != nil {
+		return err
 	}
 	return nil
-}
-
-func DefaultConfig() (*ServerConfiguration, error) {
-	config := &ServerConfiguration{
-		Port:       8080,
-		LogLevel:   "debug",
-		LogFormat:  "text",
-		TimeoutSec: 15,
-		TLSKey:     "",
-		TLSCert:    "",
-		Host:       "http://localhost:8080/proxy",
-	}
-	serverConfig := &struct {
-		Server *ServerConfiguration
-	}{
-		Server: config,
-	}
-	//TODO BindEnv
-	if err := viper.Unmarshal(serverConfig); err != nil {
-		return nil, err
-	}
-	return config, nil
 }

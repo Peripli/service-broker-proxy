@@ -10,19 +10,20 @@ import (
 
 	"time"
 
-	"fmt"
-
 	"net/http"
 
+	"github.com/Peripli/service-broker-proxy/pkg/logger"
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/middleware"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/server"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/task"
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
 	"github.com/pmorie/osb-broker-lib/pkg/rest"
-	"github.com/pmorie/osb-broker-lib/pkg/server"
+	osbserver "github.com/pmorie/osb-broker-lib/pkg/server"
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
@@ -34,37 +35,25 @@ const (
 )
 
 var (
-	ctx    context.Context
-	cancel context.CancelFunc
-	group  sync.WaitGroup
+	group sync.WaitGroup
 )
-
-type Configuration interface {
-	Validate() error
-	SbproxyConfig() *ServerConfiguration
-	OsbConfig() *osb.ClientConfiguration
-	SmConfig() *sm.ClientConfiguration
-	PlatformConfig() platform.ClientConfiguration
-}
 
 type SBProxy struct {
 	CronScheduler *cron.Cron
-	Server        *server.Server
-	ServerConfig  *ServerConfiguration
+	Server        *osbserver.Server
+	AppConfig     *server.AppConfiguration
 }
 
-func New(config Configuration) (*SBProxy, error) {
-	if config == nil {
-		return nil, fmt.Errorf("config cannot be nil")
-	}
+func New(config *Configuration) (*SBProxy, error) {
+
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
-	sbproxyConfig := config.SbproxyConfig()
-	setUpLogging(sbproxyConfig.LogLevel, sbproxyConfig.LogFormat)
+	appConfig := config.App
+	setUpLogging(appConfig.LogLevel, appConfig.LogFormat)
 
-	osbServer, err := defaultOSBServer(config.OsbConfig())
+	osbServer, err := defaultOSBServer(config.Osb)
 	if err != nil {
 		return nil, err
 	}
@@ -72,20 +61,20 @@ func New(config Configuration) (*SBProxy, error) {
 	osbServer.Router.Use(middleware.LogRequest())
 
 	cronScheduler := cron.New()
-	regJob, err := defaultRegJob(config.PlatformConfig(), config.SmConfig(), config.SbproxyConfig().Host)
-	if err != nil {
-		return nil, err
-	}
-	cronScheduler.AddJob("@every 1m", regJob)
 
+	regJob, err := defaultRegJob(&group, config.Platform, config.Sm, config.App.Host)
 	if err != nil {
 		return nil, err
 	}
 
+	//if err := cronScheduler.AddJob("0-59/120 * * * *", regJob); err != nil {
+	//	return nil, errors.Wrap(err, "error adding registration job")
+	//}
+	regJob.Run()
 	return &SBProxy{
 		Server:        osbServer,
 		CronScheduler: cronScheduler,
-		ServerConfig:  sbproxyConfig,
+		AppConfig:     appConfig,
 	}, nil
 }
 
@@ -95,24 +84,25 @@ func (s SBProxy) Use(middleware func(handler http.Handler) http.Handler) {
 
 func (s SBProxy) Run() {
 	var err error
-	ctx, cancel = context.WithCancel(context.Background())
-	defer waitWithTimeout(&group, time.Duration(s.ServerConfig.TimeoutSec)*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer waitWithTimeout(&group, time.Duration(s.AppConfig.TimeoutSec)*time.Second)
 	defer cancel()
 
-	handleInterrupts()
+	handleInterrupts(ctx, cancel)
 
 	s.CronScheduler.Start()
 	defer s.CronScheduler.Stop()
 
-	addr := ":" + strconv.Itoa(s.ServerConfig.Port)
+	addr := ":" + strconv.Itoa(s.AppConfig.Port)
 
-	if s.ServerConfig.TLSKey != "" && s.ServerConfig.TLSCert != "" {
-		err = s.Server.RunTLS(ctx, addr, s.ServerConfig.TLSCert, s.ServerConfig.TLSKey)
+	logrus.Info("Running SBProxy server...")
+	if s.AppConfig.TLSKey != "" && s.AppConfig.TLSCert != "" {
+		err = s.Server.RunTLS(ctx, addr, s.AppConfig.TLSCert, s.AppConfig.TLSKey)
 	} else {
 		err = s.Server.Run(ctx, addr)
 	}
 	if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
-		logrus.Errorln("Error occurred while sbproxy was running: ", err)
+		logrus.WithError(errors.WithStack(err)).Errorln("Error occurred while sbproxy was running")
 	}
 }
 
@@ -120,7 +110,7 @@ func (s *SBProxy) AddJob(schedule string, job cron.Job) {
 	s.CronScheduler.AddJob(schedule, job)
 }
 
-func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
+func defaultOSBServer(config *osb.ClientConfiguration) (*osbserver.Server, error) {
 	businessLogic, err := osb.NewBusinessLogic(config)
 	if err != nil {
 		return nil, err
@@ -132,10 +122,10 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*server.Server, error) {
 
 	api, err := rest.NewAPISurface(businessLogic, osbMetrics)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error creating OSB API surface")
 	}
 
-	osbServer := server.New(api, reg)
+	osbServer := osbserver.New(api, reg)
 	router := mux.NewRouter()
 
 	err = moveRoutes(ApiPrefix, osbServer.Router, router)
@@ -153,12 +143,12 @@ func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) err
 
 		path, err := route.GetPathTemplate()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error getting path template")
 		}
 
 		methods, err := route.GetMethods()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error getting route methods")
 		}
 		logrus.Info("Adding route with methods: ", methods, " and path: ", path)
 		subRouter.Handle(path, route.GetHandler()).Methods(methods...)
@@ -166,7 +156,7 @@ func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) err
 	})
 }
 
-func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, proxyHost string) (cron.Job, error) {
+func defaultRegJob(group *sync.WaitGroup, platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, proxyHost string) (cron.Job, error) {
 	platformClient, err := platformConfig.CreateFunc()
 	if err != nil {
 		return nil, err
@@ -175,18 +165,22 @@ func defaultRegJob(platformConfig platform.ClientConfiguration, smConfig *sm.Cli
 	if err != nil {
 		return nil, err
 	}
-	regTask := task.New(&group, platformClient, smClient, proxyHost)
+	regTask := task.New(group, platformClient, smClient, proxyHost)
 
 	return regTask, nil
 }
 
-//TODO: Should be more generic, log configuration should accept additional params to allow Kibana-styled logs
+//TODO: should happen earlier (ideally in sbproxy init(), logger.DefaultConfig()?)
 func setUpLogging(logLevel string, logFormat string) {
+	logrus.AddHook(&logger.ErrorLocationHook{})
+	logrus.AddHook(&logger.LogLocationHook{})
 	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
-		logrus.Fatal("Could not parse log level configuration")
+		logrus.SetLevel(logrus.DebugLevel)
+		logrus.WithError(err).Debug("Could not parse log level configuration")
+	} else {
+		logrus.SetLevel(level)
 	}
-	logrus.SetLevel(level)
 	if logFormat == "json" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
@@ -195,7 +189,7 @@ func setUpLogging(logLevel string, logFormat string) {
 }
 
 // handleInterrupts hannles OS interrupt signals by canceling the context
-func handleInterrupts() {
+func handleInterrupts(ctx context.Context, cancel context.CancelFunc) {
 	term := make(chan os.Signal)
 	signal.Notify(term, os.Interrupt)
 	go func() {

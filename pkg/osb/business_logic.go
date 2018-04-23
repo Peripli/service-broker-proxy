@@ -5,7 +5,7 @@ import (
 
 	"github.com/pmorie/osb-broker-lib/pkg/broker"
 
-	"errors"
+	"github.com/pkg/errors"
 
 	"fmt"
 
@@ -88,6 +88,7 @@ func (b *BusinessLogic) LastOperation(request *osbc.LastOperationRequest, c *bro
 		LastOperationResponse: *response,
 	}, nil
 }
+
 func (b *BusinessLogic) Bind(request *osbc.BindRequest, c *broker.RequestContext) (*broker.BindResponse, error) {
 	client, err := osbClient(c.Request, *b.osbClientConfig, b.createFunc)
 	if err != nil {
@@ -150,7 +151,8 @@ func osbClient(request *http.Request, config osbc.ClientConfiguration, createFun
 	brokerID, ok := vars["brokerID"]
 	if !ok {
 		errMsg := fmt.Sprintf("brokerId path parameter missing from %s", request.Host)
-		logrus.Error("Error building OSB client for proxy business logic: ", errMsg)
+		logrus.WithError(errors.New(errMsg)).Error("Error building OSB client for proxy business logic")
+
 		return nil, osbc.HTTPStatusCodeError{
 			StatusCode:  http.StatusBadRequest,
 			Description: &errMsg,

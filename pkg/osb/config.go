@@ -1,10 +1,9 @@
 package osb
 
 import (
-	"fmt"
-
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"github.com/pkg/errors"
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
-	"github.com/spf13/viper"
 )
 
 type ClientConfiguration struct {
@@ -12,41 +11,29 @@ type ClientConfiguration struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
-//TODO combine these settings with sm config maybe?
-type settings struct {
-	User           string
-	Password       string
-	Host           string
-	TimeoutSeconds int
-}
-
 func DefaultConfig() (*ClientConfiguration, error) {
-	osbConfig := &struct {
-		Sm *settings
-	}{
-		Sm: &settings{},
-	}
-	//TODO BindEnv
-	if err := viper.Unmarshal(osbConfig); err != nil {
-		return nil, err
+
+	settings, err := sm.DefaultConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating default SM config")
 	}
 
 	clientConfig := osbc.DefaultClientConfiguration()
 	clientConfig.Name = "sm"
 
-	if len(osbConfig.Sm.Host) != 0 {
-		clientConfig.URL = osbConfig.Sm.Host + "/osb"
+	if len(settings.Host) != 0 {
+		clientConfig.URL = settings.Host + settings.OsbApi
 	}
 
-	if len(osbConfig.Sm.User) != 0 && len(osbConfig.Sm.Password) != 0 {
+	if len(settings.User) != 0 && len(settings.Password) != 0 {
 		clientConfig.AuthConfig = &osbc.AuthConfig{
 			BasicAuthConfig: &osbc.BasicAuthConfig{
-				Username: osbConfig.Sm.User,
-				Password: osbConfig.Sm.Password,
+				Username: settings.User,
+				Password: settings.Password,
 			}}
 	}
-	if osbConfig.Sm.TimeoutSeconds != 0 {
-		clientConfig.TimeoutSeconds = osbConfig.Sm.TimeoutSeconds
+	if settings.TimeoutSeconds != 0 {
+		clientConfig.TimeoutSeconds = settings.TimeoutSeconds
 	}
 
 	return &ClientConfiguration{
@@ -57,16 +44,19 @@ func DefaultConfig() (*ClientConfiguration, error) {
 
 func (c *ClientConfiguration) Validate() error {
 	if c.CreateFunc == nil {
-		return fmt.Errorf("OSB Config error: CreateFunc missing")
+		return errors.New("OSB client configuration CreateFunc missing")
+	}
+	if c.ClientConfiguration == nil {
+		return errors.New("OSB client configuration missing")
 	}
 	if len(c.URL) == 0 {
-		return fmt.Errorf("OSB Config error: URL missing")
+		return errors.New("OSB client configuration URL missing")
 	}
 	if c.AuthConfig == nil {
-		return fmt.Errorf("OSB Config error: AuthConfig missing")
+		return errors.New("OSB client configuration AuthConfig missing")
 	}
 	if c.TimeoutSeconds == 0 {
-		return fmt.Errorf("OSB Config error: TimeoutSeconds missing")
+		return errors.New("OSB client configuration TimeoutSeconds missing")
 	}
 	return nil
 }

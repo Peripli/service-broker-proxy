@@ -14,7 +14,6 @@ type Broker struct {
 	Description string       `json:"description"`
 	BrokerURL   string       `json:"broker_url"`
 	Credentials *Credentials `json:"credentials,omitempty"`
-	SpaceGUID   string       `json:"space_guid,omitempty"`
 }
 
 // Basic basic credentials

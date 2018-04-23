@@ -9,10 +9,11 @@ import (
 
 	"github.com/Peripli/service-broker-proxy/pkg/httputils"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-const APIInternalBrokers = "%s/api/v1/service_brokers"
+const APIInternalBrokers = "%s/v1/service_brokers"
 
 type Client interface {
 	GetBrokers() ([]platform.ServiceBroker, error)
@@ -27,7 +28,7 @@ var _ Client = &serviceManagerClient{}
 
 func NewClient(config *ClientConfiguration) (Client, error) {
 	if err := config.Validate(); err != nil {
-		return nil, fmt.Errorf("config validation error: ", err)
+		return nil, err
 	}
 
 	httpClient := &http.Client{
@@ -56,16 +57,16 @@ func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
 	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting brokers from Service Manager: %s", err)
+		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
 	list := &BrokerList{}
 	switch response.StatusCode {
 	case http.StatusOK:
 		if err = httputils.GetContent(list, response.Body); err != nil {
-			return nil, httputils.HTTPErrorResponse{StatusCode: response.StatusCode, ErrorMessage: err.Error()}
+			return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)
 		}
 	default:
-		return nil, httputils.HandleResponseError(response)
+		return nil, errors.WithStack(httputils.HandleResponseError(response))
 	}
 
 	return c.packResponse(list), nil
