@@ -1,8 +1,8 @@
 package sm
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/env"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 type ClientConfiguration struct {
@@ -36,22 +36,25 @@ func (c *ClientConfiguration) Validate() error {
 	return nil
 }
 
-//TODO https://github.com/spf13/viper/issues/239
-func DefaultConfig() (*ClientConfiguration, error) {
-	config := &ClientConfiguration{
+func DefaultConfig() *ClientConfiguration {
+	return &ClientConfiguration{
 		User:           "admin",
 		Password:       "admin",
 		Host:           "",
 		TimeoutSeconds: 10,
 		CreateFunc:     NewClient,
 	}
+}
+
+func NewConfig(env env.Environment) (*ClientConfiguration, error) {
+	config := DefaultConfig()
+
 	smConfig := &struct {
 		Sm *ClientConfiguration
 	}{
 		Sm: config,
 	}
-	//TODO BindEnv
-	if err := viper.Unmarshal(smConfig); err != nil {
+	if err := env.Unmarshal(smConfig); err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling SM configuration")
 	}
 

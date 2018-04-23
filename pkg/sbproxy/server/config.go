@@ -1,9 +1,8 @@
 package server
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/env"
 	"github.com/pkg/errors"
-
-	"github.com/spf13/viper"
 )
 
 type AppConfiguration struct {
@@ -40,8 +39,8 @@ func (c *AppConfiguration) Validate() error {
 	return nil
 }
 
-func DefaultConfig() (*AppConfiguration, error) {
-	config := &AppConfiguration{
+func DefaultConfig() *AppConfiguration {
+	return &AppConfiguration{
 		Port:       8080,
 		LogLevel:   "debug",
 		LogFormat:  "text",
@@ -50,13 +49,17 @@ func DefaultConfig() (*AppConfiguration, error) {
 		TLSCert:    "",
 		Host:       "",
 	}
+}
+
+func NewConfig(env env.Environment) (*AppConfiguration, error) {
+	config := DefaultConfig()
 	appConfig := &struct {
 		App *AppConfiguration
 	}{
 		App: config,
 	}
-	//TODO BindEnv
-	if err := viper.Unmarshal(appConfig); err != nil {
+
+	if err := env.Unmarshal(appConfig); err != nil {
 		return nil, errors.Wrap(err, "error unmarshaling app configuration")
 	}
 	return config, nil

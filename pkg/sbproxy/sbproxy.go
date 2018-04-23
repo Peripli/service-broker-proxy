@@ -44,7 +44,7 @@ type SBProxy struct {
 	AppConfig     *server.AppConfiguration
 }
 
-func New(config *Configuration) (*SBProxy, error) {
+func New(config *Configuration, client platform.Client) (*SBProxy, error) {
 
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -62,15 +62,15 @@ func New(config *Configuration) (*SBProxy, error) {
 
 	cronScheduler := cron.New()
 
-	regJob, err := defaultRegJob(&group, config.Platform, config.Sm, config.App.Host)
+	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host)
 	if err != nil {
 		return nil, err
 	}
 
-	//if err := cronScheduler.AddJob("0-59/120 * * * *", regJob); err != nil {
-	//	return nil, errors.Wrap(err, "error adding registration job")
-	//}
-	regJob.Run()
+	if err := cronScheduler.AddJob("0-59/120 * * * *", regJob); err != nil {
+		return nil, errors.Wrap(err, "error adding registration job")
+	}
+	//regJob.Run()
 	return &SBProxy{
 		Server:        osbServer,
 		CronScheduler: cronScheduler,
@@ -156,11 +156,7 @@ func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) err
 	})
 }
 
-func defaultRegJob(group *sync.WaitGroup, platformConfig platform.ClientConfiguration, smConfig *sm.ClientConfiguration, proxyHost string) (cron.Job, error) {
-	platformClient, err := platformConfig.CreateFunc()
-	if err != nil {
-		return nil, err
-	}
+func defaultRegJob(group *sync.WaitGroup, platformClient platform.Client, smConfig *sm.ClientConfiguration, proxyHost string) (cron.Job, error) {
 	smClient, err := smConfig.CreateFunc(smConfig)
 	if err != nil {
 		return nil, err

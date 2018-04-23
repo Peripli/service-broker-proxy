@@ -1,6 +1,7 @@
 package osb
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/env"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/pkg/errors"
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
@@ -11,9 +12,9 @@ type ClientConfiguration struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
-func DefaultConfig() (*ClientConfiguration, error) {
+func NewConfig(env env.Environment) (*ClientConfiguration, error) {
 
-	settings, err := sm.DefaultConfig()
+	settings, err := sm.NewConfig(env)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating default SM config")
 	}
