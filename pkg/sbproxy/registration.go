@@ -1,4 +1,4 @@
-package task
+package sbproxy
 
 import (
 	"sync"
@@ -16,7 +16,7 @@ type SBProxyRegistration struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
 	smClient       sm.Client
-	proxyHost      string
+	proxyPath      string
 }
 
 type serviceBrokerReg struct {
@@ -24,12 +24,12 @@ type serviceBrokerReg struct {
 	SmID string
 }
 
-func New(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyHost string) *SBProxyRegistration {
+func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
 		platformClient: platformClient,
 		smClient:       smClient,
-		proxyHost:      proxyHost,
+		proxyPath:      proxyPath,
 	}
 }
 
@@ -130,7 +130,7 @@ func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBro
 	logrus.WithFields(logFields(&broker)).Info("Registration task will attempt to create broker...")
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      ProxyBrokerPrefix + broker.Guid,
-		BrokerURL: r.proxyHost + "/" + broker.Guid,
+		BrokerURL: r.proxyPath + "/" + broker.Guid,
 	}
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
 		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker creation")
@@ -141,7 +141,7 @@ func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBro
 }
 
 func (r SBProxyRegistration) isBrokerProxy(broker platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.proxyHost) || strings.HasPrefix(broker.BrokerURL, "http://host.pcfdev.io:8083")
+	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
 }
 
 func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, b []serviceBrokerReg) {

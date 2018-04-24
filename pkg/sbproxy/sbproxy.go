@@ -18,7 +18,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/middleware"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/server"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
-	"github.com/Peripli/service-broker-proxy/pkg/task"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
@@ -31,7 +30,8 @@ import (
 
 const (
 	BrokerPathParam = "brokerID"
-	ApiPrefix       = "/v1/osb/{" + BrokerPathParam + "}"
+	ApiPrefix       = "/v1/osb"
+	Path            = ApiPrefix + "/{" + BrokerPathParam + "}"
 )
 
 var (
@@ -62,15 +62,15 @@ func New(config *Configuration, client platform.Client) (*SBProxy, error) {
 
 	cronScheduler := cron.New()
 
-	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host)
+	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host + ApiPrefix)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := cronScheduler.AddJob("0-59/120 * * * *", regJob); err != nil {
+	if err := cronScheduler.AddJob("@every 1m", regJob); err != nil {
 		return nil, errors.Wrap(err, "error adding registration job")
 	}
-	//regJob.Run()
+
 	return &SBProxy{
 		Server:        osbServer,
 		CronScheduler: cronScheduler,
@@ -161,7 +161,7 @@ func defaultRegJob(group *sync.WaitGroup, platformClient platform.Client, smConf
 	if err != nil {
 		return nil, err
 	}
-	regTask := task.New(group, platformClient, smClient, proxyHost)
+	regTask := NewTask(group, platformClient, smClient, proxyHost)
 
 	return regTask, nil
 }
