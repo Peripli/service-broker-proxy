@@ -128,7 +128,7 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*osbserver.Server, error
 	osbServer := osbserver.New(api, reg)
 	router := mux.NewRouter()
 
-	err = moveRoutes(ApiPrefix, osbServer.Router, router)
+	err = moveRoutes(Path, osbServer.Router, router)
 	if err != nil {
 		return nil, err
 	}
