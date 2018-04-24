@@ -109,11 +109,6 @@ func (b *BusinessLogic) Unbind(request *osbc.UnbindRequest, c *broker.RequestCon
 	if err != nil {
 		return nil, err
 	}
-	serviceId := c.Request.Form.Get("service_id")
-	planId := c.Request.Form.Get("plan_id")
-	logrus.Debugf("Unbinding service id %s and plan id %s", serviceId, planId)
-	request.ServiceID = serviceId
-	request.PlanID = planId
 
 	response, err := client.Unbind(request)
 	if err != nil {
