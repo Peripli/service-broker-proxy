@@ -109,6 +109,7 @@ func (b *BusinessLogic) Unbind(request *osbc.UnbindRequest, c *broker.RequestCon
 	if err != nil {
 		return nil, err
 	}
+
 	response, err := client.Unbind(request)
 	if err != nil {
 		return nil, err
