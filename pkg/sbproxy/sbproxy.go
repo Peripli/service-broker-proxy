@@ -62,7 +62,7 @@ func New(config *Configuration, client platform.Client) (*SBProxy, error) {
 
 	cronScheduler := cron.New()
 
-	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host + ApiPrefix)
+	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host+ApiPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -178,9 +178,14 @@ func setUpLogging(logLevel string, logFormat string) {
 		logrus.SetLevel(level)
 	}
 	if logFormat == "json" {
-		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: "2006-01-02T15:04:05.000",
+		})
 	} else {
-		logrus.SetFormatter(&logrus.TextFormatter{})
+		logrus.SetFormatter(&logrus.TextFormatter{
+			TimestampFormat: "2006-01-02T15:04:05.000",
+			FullTimestamp:   true,
+		})
 	}
 }
 

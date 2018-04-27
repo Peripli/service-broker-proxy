@@ -25,7 +25,7 @@ type serviceBrokerReg struct {
 	SmID string
 }
 
-func New(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *SBProxyRegistration {
+func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
 		platformClient: platformClient,
@@ -35,13 +35,13 @@ func New(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Clie
 }
 
 func (r SBProxyRegistration) Run() {
-	logrus.Debug("STARTING broker registration task...")
+	logrus.Debug("STARTING scheduled registration task...")
 
 	r.group.Add(1)
 	defer r.group.Done()
 	r.run()
 
-	logrus.Debug("FINISHED broker registration task...")
+	logrus.Debug("FINISHED scheduled registration task...")
 }
 
 func (r SBProxyRegistration) run() {
@@ -64,6 +64,7 @@ func (r SBProxyRegistration) run() {
 }
 
 func (r SBProxyRegistration) getBrokersFromPlatform() []serviceBrokerReg {
+	logrus.Debug("Registration task getting proxy brokers from platform...")
 
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
@@ -74,20 +75,23 @@ func (r SBProxyRegistration) getBrokersFromPlatform() []serviceBrokerReg {
 	brokersFromPlatform := make([]serviceBrokerReg, 0, len(registeredBrokers))
 	for _, broker := range registeredBrokers {
 		if !r.isBrokerProxy(broker) {
-			logrus.WithFields(logFields(&broker)).Debug("Registration task SKIPPING registered broker as is not recognized to be proxy broker...")
 			continue
 		}
 
+		logrus.WithFields(logFields(&broker)).Debug("Registration task FOUND registered proxy broker... ")
 		brokerReg := serviceBrokerReg{
 			ServiceBroker: broker,
 			SmID:          broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:],
 		}
 		brokersFromPlatform = append(brokersFromPlatform, brokerReg)
 	}
+	logrus.Debugf("Registration task SUCCESSFULLY retrieved %d proxy brokers from platform", len(brokersFromPlatform))
 	return brokersFromPlatform
 }
 
 func (r SBProxyRegistration) getBrokersFromSM() []serviceBrokerReg {
+	logrus.Debug("Registration task getting brokers from Service Manager")
+
 	proxyBrokers, err := r.smClient.GetBrokers()
 	if err != nil {
 		logrus.WithError(err).Error("An error occurred while obtaining brokers that have to be registered at the platform")
@@ -102,20 +106,25 @@ func (r SBProxyRegistration) getBrokersFromSM() []serviceBrokerReg {
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
+	logrus.Debugf("Registration task SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
 
 	return brokersFromSM
 }
 
 func (r SBProxyRegistration) fetchBrokerCatalogs(broker platform.ServiceBroker) {
+	logrus.WithFields(logFields(&broker)).Debugf("Registration task refetching catalog for broker")
+
 	if f, isFetcher := r.platformClient.(platform.Fetcher); isFetcher {
 		if err := f.Fetch(&broker); err != nil {
 			logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during fetching catalog...")
 		}
 	}
+
+	logrus.WithFields(logFields(&broker)).Debug("Registration task SUCCESSFULLY refetched catalog for broker")
 }
 
 func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBroker) {
-	logrus.WithFields(logFields(&broker)).Info("Registration task will attempt to create broker...")
+	logrus.WithFields(logFields(&broker)).Info("Registration task attempting to create proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      ProxyBrokerPrefix + broker.Guid,
@@ -126,12 +135,12 @@ func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBro
 		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker creation")
 		//TODO how do we recover from that? Maybe atleast send email / slack notification?
 	} else {
-		logrus.WithFields(logFields(&broker)).Info("Registration task broker creation successful")
+		logrus.WithFields(logFields(&broker)).Infof("Registration task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	}
 }
 
 func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBroker) {
-	logrus.WithFields(logFields(&broker)).Info("Registration task will attempt to delete broker...")
+	logrus.WithFields(logFields(&broker)).Info("Registration task attempting to delete broker from platform...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		Guid: broker.Guid,
@@ -142,13 +151,13 @@ func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBro
 		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker deletion")
 		//TODO how do we recover from that? Maybe atleast send email / slack notification?
 	} else {
-		logrus.WithFields(logFields(&broker)).Info("Registration task broker deletion successful")
+		logrus.WithFields(logFields(&broker)).Infof("Registration task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 
 	}
 }
 
 func (r SBProxyRegistration) isBrokerProxy(broker platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.proxyPath) || strings.HasPrefix(broker.BrokerURL, "http://host.pcfdev.io:8083")
+	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
 }
 
 func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, b []serviceBrokerReg) []serviceBrokerReg {
@@ -170,8 +179,8 @@ func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, 
 
 func logFields(broker *platform.ServiceBroker) logrus.Fields {
 	return logrus.Fields{
-		"guid": broker.Guid,
-		"name": broker.Name,
-		"url":  broker.BrokerURL,
+		"broker_guid": broker.Guid,
+		"broker_name": broker.Name,
+		"broker_url":  broker.BrokerURL,
 	}
 }

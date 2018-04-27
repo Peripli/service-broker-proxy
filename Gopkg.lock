@@ -3,9 +3,21 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/Gurpartap/logrus-stack"
+  packages = ["."]
+  revision = "89c00d8a28f43c567d92eb81a2945301a6a9fbb9"
+
+[[projects]]
+  branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/facebookgo/stack"
+  packages = ["."]
+  revision = "751773369052141c013c6e827a71e8f35c07879c"
 
 [[projects]]
   name = "github.com/fatih/structs"
@@ -294,6 +306,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c06684eb7e22d9b14e3f72164b8d2430caf16dc246292b0a87f123815d037272"
+  inputs-digest = "fb33c3470835eb476c24b4031e272853283f5593afd950ea9126e8b04f54da9a"
   solver-name = "gps-cdcl"
   solver-version = 1
