@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"strings"
 
-	"flag"
-
 	"github.com/fatih/structs"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -69,6 +67,9 @@ func New(file *ConfigFile, envPrefix string) *viperEnv {
 	}
 }
 
+// Load reads the config provided by the config file into viper,  configures loading from environment variables
+// and loading from command line pflags. Also parses the command-line flags from os.Args[1:].
+// Must be called after all flags are defined and before environment and flags are accessed by the program.
 func (v *viperEnv) Load() error {
 	v.Viper.AddConfigPath(v.configFile.Path)
 	v.Viper.SetConfigName(v.configFile.Name)
@@ -77,9 +78,10 @@ func (v *viperEnv) Load() error {
 	v.Viper.SetEnvPrefix(v.envPrefix)
 	v.Viper.AutomaticEnv()
 
-	//we could introduce all the settings structs as cmd flags here or let every wrapper introduce its?
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	v.Viper.BindPFlags(pflag.CommandLine)
+	if err := v.Viper.BindPFlags(pflag.CommandLine); err != nil {
+		return fmt.Errorf("could not bind pflags to viper: %s", err)
+	}
+	pflag.Parse()
 
 	if err := v.Viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("could not read configuration file: %s", err)
