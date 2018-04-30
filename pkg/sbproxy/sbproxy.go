@@ -128,7 +128,7 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*osbserver.Server, error
 	osbServer := osbserver.New(api, reg)
 	router := mux.NewRouter()
 
-	err = moveRoutes(Path, osbServer.Router, router)
+	err = registerRoutes(Path, osbServer.Router, router)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func defaultOSBServer(config *osb.ClientConfiguration) (*osbserver.Server, error
 	return osbServer, nil
 }
 
-func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) error {
+func registerRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) error {
 	subRouter := toRouter.PathPrefix(prefix).Subrouter()
 	return fromRouter.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 
@@ -150,7 +150,7 @@ func moveRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) err
 		if err != nil {
 			return errors.Wrap(err, "error getting route methods")
 		}
-		logrus.Info("Adding route with methods: ", methods, " and path: ", path)
+		logrus.Info("Registering route with methods: ", methods, " and path: ", path)
 		subRouter.Handle(path, route.GetHandler()).Methods(methods...)
 		return nil
 	})
@@ -178,9 +178,7 @@ func setUpLogging(logLevel string, logFormat string) {
 		logrus.SetLevel(level)
 	}
 	if logFormat == "json" {
-		logrus.SetFormatter(&logrus.JSONFormatter{
-			TimestampFormat: "2006-01-02T15:04:05.000",
-		})
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{
 			TimestampFormat: "2006-01-02T15:04:05.000",

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,10 +48,19 @@ func (r SBProxyRegistration) Run() {
 func (r SBProxyRegistration) run() {
 
 	// get all the registered proxy brokers from the platform
-	brokersFromPlatform := r.getBrokersFromPlatform()
+	brokersFromPlatform, err := r.getBrokersFromPlatform()
+	if err != nil {
+		logrus.WithError(err).Error("An error occurred while obtaining already registered brokers")
+		return
+
+	}
 
 	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
-	brokersFromSM := r.getBrokersFromSM()
+	brokersFromSM, err := r.getBrokersFromSM()
+	if err != nil {
+		logrus.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		return
+	}
 
 	// register brokers that are present in SM and missing from platform
 	updateBrokerRegistrations(r.createBrokerRegistration, brokersFromSM, brokersFromPlatform)
@@ -63,13 +73,12 @@ func (r SBProxyRegistration) run() {
 
 }
 
-func (r SBProxyRegistration) getBrokersFromPlatform() []serviceBrokerReg {
+func (r SBProxyRegistration) getBrokersFromPlatform() ([]serviceBrokerReg, error) {
 	logrus.Debug("Registration task getting proxy brokers from platform...")
 
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
-		logrus.WithError(err).Error("An error occurred while obtaining already registered brokers")
-		return []serviceBrokerReg{}
+		return nil, errors.Wrap(err, "error getting brokers from platform")
 	}
 
 	brokersFromPlatform := make([]serviceBrokerReg, 0, len(registeredBrokers))
@@ -86,16 +95,15 @@ func (r SBProxyRegistration) getBrokersFromPlatform() []serviceBrokerReg {
 		brokersFromPlatform = append(brokersFromPlatform, brokerReg)
 	}
 	logrus.Debugf("Registration task SUCCESSFULLY retrieved %d proxy brokers from platform", len(brokersFromPlatform))
-	return brokersFromPlatform
+	return brokersFromPlatform, nil
 }
 
-func (r SBProxyRegistration) getBrokersFromSM() []serviceBrokerReg {
+func (r SBProxyRegistration) getBrokersFromSM() ([]serviceBrokerReg, error) {
 	logrus.Debug("Registration task getting brokers from Service Manager")
 
 	proxyBrokers, err := r.smClient.GetBrokers()
 	if err != nil {
-		logrus.WithError(err).Error("An error occurred while obtaining brokers that have to be registered at the platform")
-		return []serviceBrokerReg{}
+		return nil, errors.Wrap(err, "error getting brokers from SM")
 	}
 
 	brokersFromSM := make([]serviceBrokerReg, 0, len(proxyBrokers))
@@ -108,13 +116,13 @@ func (r SBProxyRegistration) getBrokersFromSM() []serviceBrokerReg {
 	}
 	logrus.Debugf("Registration task SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
 
-	return brokersFromSM
+	return brokersFromSM, nil
 }
 
 func (r SBProxyRegistration) fetchBrokerCatalogs(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(&broker)).Debugf("Registration task refetching catalog for broker")
 
-	if f, isFetcher := r.platformClient.(platform.Fetcher); isFetcher {
+	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 		if err := f.Fetch(&broker); err != nil {
 			logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during fetching catalog...")
 		}

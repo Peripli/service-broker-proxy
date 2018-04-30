@@ -21,7 +21,10 @@ import (
 	"fmt"
 	"strings"
 
+	"flag"
+
 	"github.com/fatih/structs"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -73,9 +76,15 @@ func (v *viperEnv) Load() error {
 	v.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.Viper.SetEnvPrefix(v.envPrefix)
 	v.Viper.AutomaticEnv()
+
+	//we could introduce all the settings structs as cmd flags here or let every wrapper introduce its?
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	v.Viper.BindPFlags(pflag.CommandLine)
+
 	if err := v.Viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("could not read configuration file: %s", err)
 	}
+
 	return nil
 }
 

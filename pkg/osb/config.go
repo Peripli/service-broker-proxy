@@ -12,6 +12,7 @@ type ClientConfiguration struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
+//TODO make from SM config as input argument?
 func NewConfig(env env.Environment) (*ClientConfiguration, error) {
 
 	settings, err := sm.NewConfig(env)
