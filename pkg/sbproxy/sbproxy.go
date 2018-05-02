@@ -19,6 +19,8 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/server"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/gorilla/mux"
+	"github.com/onrik/logrus/filename"
+	"github.com/onrik/logrus/formatter"
 	"github.com/pkg/errors"
 	"github.com/pmorie/osb-broker-lib/pkg/metrics"
 	"github.com/pmorie/osb-broker-lib/pkg/rest"
@@ -169,7 +171,9 @@ func defaultRegJob(group *sync.WaitGroup, platformClient platform.Client, smConf
 //TODO: should happen earlier (ideally in sbproxy init(), logger.DefaultConfig()?)
 func setUpLogging(logLevel string, logFormat string) {
 	logrus.AddHook(&logger.ErrorLocationHook{})
-	logrus.AddHook(&logger.LogLocationHook{})
+	hook := filename.NewHook()
+	hook.Field = "logsource"
+	logrus.AddHook(hook)
 	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -180,10 +184,8 @@ func setUpLogging(logLevel string, logFormat string) {
 	if logFormat == "json" {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	} else {
-		logrus.SetFormatter(&logrus.TextFormatter{
-			TimestampFormat: "2006-01-02T15:04:05.000",
-			FullTimestamp:   true,
-		})
+		textFormatter := formatter.New()
+		logrus.SetFormatter(textFormatter)
 	}
 }
 
