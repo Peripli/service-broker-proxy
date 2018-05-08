@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ClientConfiguration type holds SM Client config properties
 type ClientConfiguration struct {
 	User           string
 	Password       string
@@ -14,10 +15,12 @@ type ClientConfiguration struct {
 	CreateFunc     func(config *ClientConfiguration) (Client, error)
 }
 
+// Settings type is used to unmarshal SM ClientConfiguration from the environment
 type Settings struct {
 	Sm *ClientConfiguration
 }
 
+// Validate validates the configuration and returns appropriate errors in case it is invalid
 func (c *ClientConfiguration) Validate() error {
 	if len(c.User) == 0 {
 		return errors.New("SM configuration User missing")
@@ -40,6 +43,7 @@ func (c *ClientConfiguration) Validate() error {
 	return nil
 }
 
+// DefaultConfig builds a default Service Manager ClientConfiguration
 func DefaultConfig() *ClientConfiguration {
 	return &ClientConfiguration{
 		User:           "admin",
@@ -50,6 +54,7 @@ func DefaultConfig() *ClientConfiguration {
 	}
 }
 
+// NewConfig builds a Service Manager ClientConfiguration from the provided Environment
 func NewConfig(env env.Environment) (*ClientConfiguration, error) {
 	config := DefaultConfig()
 

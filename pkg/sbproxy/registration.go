@@ -14,6 +14,8 @@ import (
 const ProxyBrokerPrefix = "sm-proxy-"
 
 //TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
+// SBProxyRegistration type represents a registration task that takes care of propagating broker creations
+// and deletions to the platform
 type SBProxyRegistration struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
@@ -26,6 +28,7 @@ type serviceBrokerReg struct {
 	SmID string
 }
 
+// NewTask builds a new SBProxyRegistration
 func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *SBProxyRegistration {
 	return &SBProxyRegistration{
 		group:          group,
@@ -35,6 +38,7 @@ func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.
 	}
 }
 
+// Run executes the registration task
 func (r SBProxyRegistration) Run() {
 	logrus.Debug("STARTING scheduled registration task...")
 

@@ -15,6 +15,8 @@ import (
 
 const APIInternalBrokers = "%s/v1/service_brokers"
 
+// Client provides the logic for calling into the Service Manager
+//go:generate counterfeiter . Client
 type Client interface {
 	GetBrokers() ([]platform.ServiceBroker, error)
 }
@@ -26,6 +28,7 @@ type serviceManagerClient struct {
 
 var _ Client = &serviceManagerClient{}
 
+// NewClient builds a new Service Manager Client from the provided configuration
 func NewClient(config *ClientConfiguration) (Client, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -51,7 +54,8 @@ func NewClient(config *ClientConfiguration) (Client, error) {
 	return client, nil
 }
 
-//TODO paging
+// GetBrokers calls the Service Manager in order to obtain all brokers that need to be registered
+// in the service broker proxy
 func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)

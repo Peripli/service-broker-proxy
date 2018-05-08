@@ -7,6 +7,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 )
 
+// NewConfigFromEnv builds an sbproxy.Configuration from the specified Environment
 func NewConfigFromEnv(env env.Environment) (*Configuration, error) {
 	appConfig, err := server.NewConfig(env)
 	if err != nil {
@@ -30,12 +31,14 @@ func NewConfigFromEnv(env env.Environment) (*Configuration, error) {
 	return config, nil
 }
 
+// Configuration type holds all config properties for the sbproxy
 type Configuration struct {
 	App *server.AppConfiguration
 	Osb *osb.ClientConfiguration
 	Sm  *sm.ClientConfiguration
 }
 
+// Validate validates the configuration and returns appropriate errors in case it is invalid
 func (c *Configuration) Validate() error {
 
 	if err := c.App.Validate(); err != nil {

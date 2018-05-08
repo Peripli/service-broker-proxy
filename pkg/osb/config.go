@@ -1,3 +1,4 @@
+// Package osb contains logic for building the Service Broker Proxy OSB API
 package osb
 
 import (
@@ -6,11 +7,13 @@ import (
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
 )
 
+// ClientConfiguration type holds config info for building an OSB client
 type ClientConfiguration struct {
 	*osbc.ClientConfiguration
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
+// NewConfig creates ClientConfiguration from the provided settings
 func NewConfig(settings *sm.ClientConfiguration) (*ClientConfiguration, error) {
 
 	clientConfig := osbc.DefaultClientConfiguration()
@@ -37,6 +40,7 @@ func NewConfig(settings *sm.ClientConfiguration) (*ClientConfiguration, error) {
 	}, nil
 }
 
+// Validate validates the configuration and returns appropriate errors in case it is invalid
 func (c *ClientConfiguration) Validate() error {
 	if c.CreateFunc == nil {
 		return errors.New("OSB client configuration CreateFunc missing")

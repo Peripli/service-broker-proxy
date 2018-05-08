@@ -1,3 +1,4 @@
+// Package logger contains log utilities and hooks for extending and customizing the logger's behaviour
 package logger
 
 import (
@@ -11,13 +12,18 @@ const (
 	errorSourceField = "errorSource"
 )
 
+// ErrorLocationHook provides an implementation of the sirupsen/logrus/Hook interface.
+// Includes information in log entries abou the origination of the error.
 type ErrorLocationHook struct {
 }
 
+// Levels implements sirupsen/logrus/Hook.Levels. The hook is fired when logging on the levels specified.
 func (h *ErrorLocationHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 
+// Fire implements siprupsen/logrus/Hook.Fire. When fired it includes error source information in the
+// log entry.
 func (h *ErrorLocationHook) Fire(entry *logrus.Entry) error {
 	var (
 		errObj interface{}

@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// AppConfiguration type holds application config properties
 type AppConfiguration struct {
 	Port       int
 	LogLevel   string
@@ -15,10 +16,12 @@ type AppConfiguration struct {
 	Host       string
 }
 
+// Settings type is used to unmarshal AppConfiguration from the environment
 type Settings struct {
 	App *AppConfiguration
 }
 
+// Validate validates the configuration and returns appropriate errors in case it is invalid
 func (c *AppConfiguration) Validate() error {
 	if c.Port == 0 {
 		return errors.New("application configuration Port missing")
@@ -43,6 +46,7 @@ func (c *AppConfiguration) Validate() error {
 	return nil
 }
 
+// DefaultConfig builds the default AppConfiguration
 func DefaultConfig() *AppConfiguration {
 	return &AppConfiguration{
 		Port:       8080,
@@ -55,6 +59,7 @@ func DefaultConfig() *AppConfiguration {
 	}
 }
 
+// NewConfig builds an AppConfiguration from the given Environment
 func NewConfig(env env.Environment) (*AppConfiguration, error) {
 	config := DefaultConfig()
 	appConfig := &Settings{

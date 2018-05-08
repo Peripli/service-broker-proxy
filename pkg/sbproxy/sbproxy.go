@@ -40,12 +40,16 @@ var (
 	group sync.WaitGroup
 )
 
+// SBProxy type is the starting point of the proxy application. It glues the proxy REST API and the timed
+// jobs for broker registrations
 type SBProxy struct {
 	CronScheduler *cron.Cron
 	Server        *osbserver.Server
 	AppConfig     *server.AppConfiguration
 }
 
+// New builds a new SBProxy from the provided configuration using the provided platform client. The
+// platform client is used by the SBProxy to call to the platform during broker creation and deletion.
 func New(config *Configuration, client platform.Client) (*SBProxy, error) {
 
 	if err := config.Validate(); err != nil {
@@ -80,10 +84,12 @@ func New(config *Configuration, client platform.Client) (*SBProxy, error) {
 	}, nil
 }
 
+// Use provides a way to plugin middleware in the SBProxy
 func (s SBProxy) Use(middleware func(handler http.Handler) http.Handler) {
 	s.Server.Router.Use(middleware)
 }
 
+// Run is the entrypoint of the SBProxy. Run boots the application.
 func (s SBProxy) Run() {
 	var err error
 	ctx, cancel := context.WithCancel(context.Background())
@@ -108,6 +114,7 @@ func (s SBProxy) Run() {
 	}
 }
 
+// AddJob provides a way to add additional cron jobs to run alongside the SBProxy application.
 func (s *SBProxy) AddJob(schedule string, job cron.Job) {
 	s.CronScheduler.AddJob(schedule, job)
 }

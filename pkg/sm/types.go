@@ -1,11 +1,11 @@
 package sm
 
-// BrokerList broker struct
+// BrokerList type used for responses from the Service Manager client
 type BrokerList struct {
 	Brokers []Broker `json:"brokers"`
 }
 
-// Broker broker struct
+// Broker type used for responses from the Service Manager client
 type Broker struct {
 	ID          string       `json:"id"`
 	Name        string       `json:"name"`
@@ -14,13 +14,13 @@ type Broker struct {
 	Credentials *Credentials `json:"credentials,omitempty"`
 }
 
-// Basic basic credentials
+// Basic type for representing basic authorization credentials
 type Basic struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// Credentials credentials
+// Credentials type for representing broker credentials
 type Credentials struct {
 	Basic *Basic `json:"basic,omitempty"`
 }
