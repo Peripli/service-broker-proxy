@@ -20,7 +20,7 @@ func NewConfig(settings *sm.ClientConfiguration) (*ClientConfiguration, error) {
 	clientConfig.Name = "sbproxy"
 
 	if len(settings.Host) != 0 {
-		clientConfig.URL = settings.Host + settings.OsbApi
+		clientConfig.URL = settings.Host + settings.OsbAPI
 	}
 
 	if len(settings.User) != 0 && len(settings.Password) != 0 {

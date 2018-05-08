@@ -10,7 +10,7 @@ type ClientConfiguration struct {
 	User           string
 	Password       string
 	Host           string
-	OsbApi         string
+	OsbAPI         string
 	TimeoutSeconds int
 	CreateFunc     func(config *ClientConfiguration) (Client, error)
 }
@@ -31,7 +31,7 @@ func (c *ClientConfiguration) Validate() error {
 	if len(c.Host) == 0 {
 		return errors.New("SM configuration Host missing")
 	}
-	if len(c.OsbApi) == 0 {
+	if len(c.OsbAPI) == 0 {
 		return errors.New("SM configuration OSB API missing")
 	}
 	if c.TimeoutSeconds == 0 {

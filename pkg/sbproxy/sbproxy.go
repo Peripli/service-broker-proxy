@@ -31,9 +31,14 @@ import (
 )
 
 const (
+	// BrokerPathParam
 	BrokerPathParam = "brokerID"
-	ApiPrefix       = "/v1/osb"
-	Path            = ApiPrefix + "/{" + BrokerPathParam + "}"
+
+	// APIPrefix
+	APIPrefix = "/v1/osb"
+
+	// Path
+	Path = APIPrefix + "/{" + BrokerPathParam + "}"
 )
 
 var (
@@ -68,7 +73,7 @@ func New(config *Configuration, client platform.Client) (*SBProxy, error) {
 
 	cronScheduler := cron.New()
 
-	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host+ApiPrefix)
+	regJob, err := defaultRegJob(&group, client, config.Sm, config.App.Host+APIPrefix)
 	if err != nil {
 		return nil, err
 	}

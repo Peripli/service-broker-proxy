@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// APIInternalBrokers is the SM API for obtaining the brokers for this proxy
 const APIInternalBrokers = "%s/v1/service_brokers"
 
 // Client provides the logic for calling into the Service Manager

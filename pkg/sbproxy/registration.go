@@ -11,12 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// ProxyBrokerPrefix prefixes names of brokers registered at the platform
 const ProxyBrokerPrefix = "sm-proxy-"
 
-//TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
-// SBProxyRegistration type represents a registration task that takes care of propagating broker creations
+// Registration type represents a registration task that takes care of propagating broker creations
 // and deletions to the platform
-type SBProxyRegistration struct {
+//TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
+type Registration struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
 	smClient       sm.Client
@@ -28,9 +29,9 @@ type serviceBrokerReg struct {
 	SmID string
 }
 
-// NewTask builds a new SBProxyRegistration
-func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *SBProxyRegistration {
-	return &SBProxyRegistration{
+// NewTask builds a new Registration
+func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *Registration {
+	return &Registration{
 		group:          group,
 		platformClient: platformClient,
 		smClient:       smClient,
@@ -39,7 +40,7 @@ func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.
 }
 
 // Run executes the registration task
-func (r SBProxyRegistration) Run() {
+func (r Registration) Run() {
 	logrus.Debug("STARTING scheduled registration task...")
 
 	r.group.Add(1)
@@ -49,7 +50,7 @@ func (r SBProxyRegistration) Run() {
 	logrus.Debug("FINISHED scheduled registration task...")
 }
 
-func (r SBProxyRegistration) run() {
+func (r Registration) run() {
 
 	// get all the registered proxy brokers from the platform
 	brokersFromPlatform, err := r.getBrokersFromPlatform()
@@ -77,7 +78,7 @@ func (r SBProxyRegistration) run() {
 
 }
 
-func (r SBProxyRegistration) getBrokersFromPlatform() ([]serviceBrokerReg, error) {
+func (r Registration) getBrokersFromPlatform() ([]serviceBrokerReg, error) {
 	logrus.Debug("Registration task getting proxy brokers from platform...")
 
 	registeredBrokers, err := r.platformClient.GetBrokers()
@@ -102,7 +103,7 @@ func (r SBProxyRegistration) getBrokersFromPlatform() ([]serviceBrokerReg, error
 	return brokersFromPlatform, nil
 }
 
-func (r SBProxyRegistration) getBrokersFromSM() ([]serviceBrokerReg, error) {
+func (r Registration) getBrokersFromSM() ([]serviceBrokerReg, error) {
 	logrus.Debug("Registration task getting brokers from Service Manager")
 
 	proxyBrokers, err := r.smClient.GetBrokers()
@@ -123,7 +124,7 @@ func (r SBProxyRegistration) getBrokersFromSM() ([]serviceBrokerReg, error) {
 	return brokersFromSM, nil
 }
 
-func (r SBProxyRegistration) fetchBrokerCatalogs(broker platform.ServiceBroker) {
+func (r Registration) fetchBrokerCatalogs(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(&broker)).Debugf("Registration task refetching catalog for broker")
 
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
@@ -135,7 +136,7 @@ func (r SBProxyRegistration) fetchBrokerCatalogs(broker platform.ServiceBroker) 
 	logrus.WithFields(logFields(&broker)).Debug("Registration task SUCCESSFULLY refetched catalog for broker")
 }
 
-func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBroker) {
+func (r Registration) createBrokerRegistration(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(&broker)).Info("Registration task attempting to create proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
@@ -151,7 +152,7 @@ func (r SBProxyRegistration) createBrokerRegistration(broker platform.ServiceBro
 	}
 }
 
-func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBroker) {
+func (r Registration) deleteBrokerRegistration(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(&broker)).Info("Registration task attempting to delete broker from platform...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
@@ -168,7 +169,7 @@ func (r SBProxyRegistration) deleteBrokerRegistration(broker platform.ServiceBro
 	}
 }
 
-func (r SBProxyRegistration) isBrokerProxy(broker platform.ServiceBroker) bool {
+func (r Registration) isBrokerProxy(broker platform.ServiceBroker) bool {
 	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
 }
 

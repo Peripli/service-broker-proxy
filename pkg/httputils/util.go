@@ -19,10 +19,7 @@ func GetContent(v interface{}, closer io.ReadCloser) error {
 	}
 
 	err = json.Unmarshal(body, v)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // SendRequest sends a request to the specified client and the provided URL with
