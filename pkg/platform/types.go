@@ -8,20 +8,20 @@ type CreateServiceBrokerRequest struct {
 
 // UpdateServiceBrokerRequest type used for requests by the platform client
 type UpdateServiceBrokerRequest struct {
-	Guid      string `json:"guid"`
+	GUID      string `json:"guid"`
 	Name      string `json:"name"`
 	BrokerURL string `json:"broker_url"`
 }
 
 // DeleteServiceBrokerRequest type used for requests by the platform client
 type DeleteServiceBrokerRequest struct {
-	Guid string `json:"guid"`
+	GUID string `json:"guid"`
 	Name string `json:"name"`
 }
 
 // ServiceBroker type for responses from the platform client
 type ServiceBroker struct {
-	Guid      string `json:"guid"`
+	GUID      string `json:"guid"`
 	Name      string `json:"name"`
 	BrokerURL string `json:"broker_url"`
 }

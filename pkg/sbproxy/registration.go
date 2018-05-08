@@ -115,7 +115,7 @@ func (r Registration) getBrokersFromSM() ([]serviceBrokerReg, error) {
 	for _, broker := range proxyBrokers {
 		brokerReg := serviceBrokerReg{
 			ServiceBroker: broker,
-			SmID:          broker.Guid,
+			SmID:          broker.GUID,
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
@@ -140,8 +140,8 @@ func (r Registration) createBrokerRegistration(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(&broker)).Info("Registration task attempting to create proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      ProxyBrokerPrefix + broker.Guid,
-		BrokerURL: r.proxyPath + "/" + broker.Guid,
+		Name:      ProxyBrokerPrefix + broker.GUID,
+		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
@@ -156,7 +156,7 @@ func (r Registration) deleteBrokerRegistration(broker platform.ServiceBroker) {
 	logrus.WithFields(logFields(&broker)).Info("Registration task attempting to delete broker from platform...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
-		Guid: broker.Guid,
+		GUID: broker.GUID,
 		Name: broker.Name,
 	}
 
@@ -192,7 +192,7 @@ func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, 
 
 func logFields(broker *platform.ServiceBroker) logrus.Fields {
 	return logrus.Fields{
-		"broker_guid": broker.Guid,
+		"broker_guid": broker.GUID,
 		"broker_name": broker.Name,
 		"broker_url":  broker.BrokerURL,
 	}

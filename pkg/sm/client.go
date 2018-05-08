@@ -81,7 +81,7 @@ func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.Service
 	brokers := make([]platform.ServiceBroker, 0, len(list.Brokers))
 	for _, broker := range list.Brokers {
 		b := platform.ServiceBroker{
-			Guid:      broker.ID,
+			GUID:      broker.ID,
 			Name:      broker.Name,
 			BrokerURL: broker.BrokerURL,
 		}

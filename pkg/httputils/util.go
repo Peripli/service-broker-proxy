@@ -84,6 +84,11 @@ func WriteResponse(w http.ResponseWriter, code int, object interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	w.WriteHeader(code)
-	w.Write(data)
+	_, err = w.Write(data)
+	if err != nil {
+		logrus.Errorf("Could not write error to response: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(code)
+	}
 }

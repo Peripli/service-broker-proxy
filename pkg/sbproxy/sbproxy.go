@@ -31,13 +31,13 @@ import (
 )
 
 const (
-	// BrokerPathParam
+	// BrokerPathParam for the broker id
 	BrokerPathParam = "brokerID"
 
-	// APIPrefix
+	// APIPrefix for the Proxy OSB API
 	APIPrefix = "/v1/osb"
 
-	// Path
+	// Path for the Proxy OSB API
 	Path = APIPrefix + "/{" + BrokerPathParam + "}"
 )
 
@@ -120,8 +120,8 @@ func (s SBProxy) Run() {
 }
 
 // AddJob provides a way to add additional cron jobs to run alongside the SBProxy application.
-func (s *SBProxy) AddJob(schedule string, job cron.Job) {
-	s.CronScheduler.AddJob(schedule, job)
+func (s *SBProxy) AddJob(schedule string, job cron.Job) error {
+	return s.CronScheduler.AddJob(schedule, job)
 }
 
 func defaultOSBServer(config *osb.ClientConfiguration) (*osbserver.Server, error) {
@@ -184,7 +184,7 @@ func defaultRegJob(group *sync.WaitGroup, platformClient platform.Client, smConf
 func setUpLogging(logLevel string, logFormat string) {
 	logrus.AddHook(&logger.ErrorLocationHook{})
 	hook := filename.NewHook()
-	hook.Field = "logsource"
+	hook.Field = "errorSource"
 	logrus.AddHook(hook)
 	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
