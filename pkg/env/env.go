@@ -35,7 +35,8 @@ type Environment interface {
 	Unmarshal(value interface{}) error
 }
 
-type viperEnv struct {
+// ViperEnv implements env.Environment and provides a way to load environment variables and config files via viper
+type ViperEnv struct {
 	Viper      *viper.Viper
 	configFile *ConfigFile
 	envPrefix  string
@@ -49,7 +50,7 @@ type ConfigFile struct {
 }
 
 // Default returns the default environment configuration to be loaded from application.yml
-func Default(envPrefix string) *viperEnv {
+func Default(envPrefix string) *ViperEnv {
 	configFile := &ConfigFile{
 		Path:   ".",
 		Name:   "application",
@@ -59,8 +60,8 @@ func Default(envPrefix string) *viperEnv {
 }
 
 // New returns a new application environment loaded from the given configuration file with variables prefixed by the given prefix
-func New(file *ConfigFile, envPrefix string) *viperEnv {
-	return &viperEnv{
+func New(file *ConfigFile, envPrefix string) *ViperEnv {
+	return &ViperEnv{
 		Viper:      viper.New(),
 		configFile: file,
 		envPrefix:  envPrefix,
@@ -70,7 +71,7 @@ func New(file *ConfigFile, envPrefix string) *viperEnv {
 // Load reads the config provided by the config file into viper,  configures loading from environment variables
 // and loading from command line pflags. Also parses the command-line flags from os.Args[1:].
 // Must be called after all flags are defined and before environment and flags are accessed by the program.
-func (v *viperEnv) Load() error {
+func (v *ViperEnv) Load() error {
 	v.Viper.AddConfigPath(v.configFile.Path)
 	v.Viper.SetConfigName(v.configFile.Name)
 	v.Viper.SetConfigType(v.configFile.Format)
@@ -90,15 +91,18 @@ func (v *viperEnv) Load() error {
 	return nil
 }
 
-func (v *viperEnv) Get(key string) interface{} {
+// Get proxies the call to viper's get
+func (v *ViperEnv) Get(key string) interface{} {
 	return v.Viper.Get(key)
 }
 
-func (v *viperEnv) Set(key string, value interface{}) {
+// Set proxies the call to viper's set
+func (v *ViperEnv) Set(key string, value interface{}) {
 	v.Viper.Set(key, value)
 }
 
-func (v *viperEnv) Unmarshal(value interface{}) error {
+// Unmarshal introduces the structure provided by value and proxies to viper's unmarshal
+func (v *ViperEnv) Unmarshal(value interface{}) error {
 	if err := v.introduce(value); err != nil {
 		return err
 	}
@@ -106,7 +110,7 @@ func (v *viperEnv) Unmarshal(value interface{}) error {
 }
 
 // introduce introduces the structure's fields as viper properties.
-func (v *viperEnv) introduce(value interface{}) error {
+func (v *ViperEnv) introduce(value interface{}) error {
 	var properties []string
 	traverseFields(value, "", &properties)
 	for _, property := range properties {

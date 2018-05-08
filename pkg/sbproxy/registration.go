@@ -146,7 +146,6 @@ func (r Registration) createBrokerRegistration(broker platform.ServiceBroker) {
 
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
 		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker creation")
-		//TODO how do we recover from that? Maybe atleast send email / slack notification?
 	} else {
 		logrus.WithFields(logFields(&broker)).Infof("Registration task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	}
@@ -162,7 +161,6 @@ func (r Registration) deleteBrokerRegistration(broker platform.ServiceBroker) {
 
 	if err := r.platformClient.DeleteBroker(deleteRequest); err != nil {
 		logrus.WithFields(logFields(&broker)).WithError(err).Error("Error during broker deletion")
-		//TODO how do we recover from that? Maybe atleast send email / slack notification?
 	} else {
 		logrus.WithFields(logFields(&broker)).Infof("Registration task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 
@@ -174,7 +172,7 @@ func (r Registration) isBrokerProxy(broker platform.ServiceBroker) bool {
 }
 
 func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, b []serviceBrokerReg) []serviceBrokerReg {
-	affectedBrokers := make([]serviceBrokerReg, 0, 0)
+	affectedBrokers := make([]serviceBrokerReg, 0)
 
 	mb := make(map[string]serviceBrokerReg)
 	for _, broker := range b {
@@ -182,7 +180,7 @@ func updateBrokerRegistrations(updateOp func(broker platform.ServiceBroker), a, 
 	}
 	for _, broker := range a {
 		if _, ok := mb[broker.SmID]; !ok {
-			//TODO at some point we will be hitting platform rate limits... how should we handle that?
+			//At some point we might be hitting platform rate limits... how should we handle that?
 			updateOp(broker.ServiceBroker)
 			affectedBrokers = append(affectedBrokers, broker)
 		}
