@@ -22,7 +22,7 @@ func GetContent(v interface{}, closer io.ReadCloser) error {
 	return err
 }
 
-// SendRequest sends a request to the specified client and the provided URL with
+// SendRequest sends a request to the specified client and the provided URL with the specified parameters and body.
 func SendRequest(client *http.Client, method, URL string, params map[string]string, body interface{}) (*http.Response, error) {
 	var bodyReader io.Reader
 	if body != nil {
@@ -49,7 +49,7 @@ func SendRequest(client *http.Client, method, URL string, params map[string]stri
 	return client.Do(request)
 }
 
-// HandleResponseError builds at HttpErrorResponse from the given response
+// HandleResponseError builds at HttpErrorResponse from the given response.
 func HandleResponseError(response *http.Response) error {
 	logrus.Info("handling failure responses")
 
@@ -74,7 +74,7 @@ func HandleResponseError(response *http.Response) error {
 	return httpErr
 }
 
-// WriteResponse writes the given status code and the given object body to the given ResponseWriter
+// WriteResponse writes the given status code and the given object body to the given ResponseWriter.
 func WriteResponse(w http.ResponseWriter, code int, object interface{}) {
 	data, err := json.Marshal(object)
 	if err != nil {
