@@ -184,7 +184,7 @@ func defaultRegJob(group *sync.WaitGroup, platformClient platform.Client, smConf
 func setUpLogging(logLevel string, logFormat string) {
 	logrus.AddHook(&logger.ErrorLocationHook{})
 	hook := filename.NewHook()
-	hook.Field = "errorSource"
+	hook.Field = "logSource"
 	logrus.AddHook(hook)
 	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
