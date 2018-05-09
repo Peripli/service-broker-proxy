@@ -1,4 +1,3 @@
-// Package middleware contains the middleware filters
 package middleware
 
 import (
@@ -13,7 +12,6 @@ const (
 	errorMessage  = "Unauthorized resource access"
 )
 
-// BasicAuth provides a middleware for Basic Auth
 func BasicAuth(username, password string) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

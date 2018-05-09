@@ -80,7 +80,6 @@ func (r Registration) run() {
 
 func (r Registration) getBrokersFromPlatform() ([]serviceBrokerReg, error) {
 	logrus.Debug("Registration task getting proxy brokers from platform...")
-
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
