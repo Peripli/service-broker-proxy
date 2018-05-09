@@ -12,6 +12,7 @@ const (
 	errorMessage  = "Unauthorized resource access"
 )
 
+// BasicAuth is a middleware for basic authorization
 func BasicAuth(username, password string) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

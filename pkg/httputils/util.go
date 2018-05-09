@@ -86,7 +86,7 @@ func WriteResponse(w http.ResponseWriter, code int, object interface{}) {
 
 	w.WriteHeader(code)
 
-	if w.Write(data); err != nil {
+	if _, err = w.Write(data); err != nil {
 		logrus.Error("error writing to response: ", err)
 	}
 }
