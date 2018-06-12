@@ -152,16 +152,8 @@ func (b *BusinessLogic) Update(request *osbc.UpdateInstanceRequest, c *broker.Re
 }
 
 // ValidateBrokerAPIVersion implements pmorie/osb-broker-lib/pkg/broker/Interface.ValidateBrokerAPIVersion by
-// checking that the version provided as parameter matches the latest supported version
+// allowing all versions of the API
 func (b *BusinessLogic) ValidateBrokerAPIVersion(version string) error {
-	if version == "" {
-		return errors.New("X-Broker-API-Version Header not set")
-	}
-
-	apiVersionHeader := b.osbClientConfig.APIVersion.HeaderValue()
-	if apiVersionHeader != version {
-		return errors.New("X-Broker-API-Version Header must be " + apiVersionHeader + " but was " + version)
-	}
 	return nil
 }
 
