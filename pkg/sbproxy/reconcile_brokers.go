@@ -78,7 +78,7 @@ func (r ReconcileBrokersTask) run() {
 func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []serviceBrokerReg, payloadBrokers []serviceBrokerReg) {
 	existingMap := convertBrokersRegListToMap(existingBrokers)
 	for _, payloadBroker := range payloadBrokers {
-		existingBroker, _ := existingMap[payloadBroker.SmID]
+		existingBroker := existingMap[payloadBroker.SmID]
 		delete(existingMap, payloadBroker.SmID)
 		if existingBroker == nil {
 			r.createBrokerRegistration(&payloadBroker.ServiceBroker)
