@@ -85,7 +85,6 @@ func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []serviceBrokerRe
 		} else {
 			r.fetchBrokerCatalog(&existingBroker.ServiceBroker)
 		}
-		//r.enableServiceAccessVisibilities(&payloadBroker.ServiceBroker)
 	}
 
 	for _, existingBroker := range existingMap {
@@ -182,28 +181,6 @@ func (r ReconcileBrokersTask) deleteBrokerRegistration(broker *platform.ServiceB
 	}
 }
 
-//func (r ReconcileBrokersTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) {
-//	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
-//		emptyContext := emptyContext()
-//		logrus.WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to enable service access for broker...")
-//
-//		catalog := broker.Catalog
-//		if catalog == nil {
-//			logrus.WithFields(logBroker(broker)).Error("Error enabling service access due to missing catalog details")
-//			return
-//		}
-//
-//		for _, service := range catalog.Services {
-//			logrus.WithFields(logService(service)).Debug("ReconcileBrokersTask task attempting to enable service access for service...")
-//			if err := f.EnableAccessForService(emptyContext, service.ID); err != nil {
-//				logrus.WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
-//			}
-//			logrus.WithFields(logService(service)).Debug("ReconcileBrokersTask task finished enabling service access for service...")
-//		}
-//		logrus.WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task finished enabling service access for broker")
-//	}
-//}
-
 func (r ReconcileBrokersTask) isProxyBroker(broker platform.ServiceBroker) bool {
 	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
 }
@@ -215,18 +192,6 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 		"broker_url":  broker.BrokerURL,
 	}
 }
-
-//
-//func logService(service osbc.Service) logrus.Fields {
-//	return logrus.Fields{
-//		"service_guid": service.ID,
-//		"service_name": service.Name,
-//	}
-//}
-//
-//func emptyContext() json.RawMessage {
-//	return json.RawMessage(`{}`)
-//}
 
 func convertBrokersRegListToMap(brokerList []serviceBrokerReg) map[string]*serviceBrokerReg {
 	brokerRegMap := make(map[string]*serviceBrokerReg, len(brokerList))
