@@ -13,7 +13,8 @@ const (
 )
 
 // ErrorLocationHook provides an implementation of the sirupsen/logrus/Hook interface.
-// Includes information in log entries abou the origination of the error.
+// Attaches error location information to log entries if an error is being logged and it has stack-trace information
+// (i.e. if it originates from or is wrapped by github.com/pkg/errors).
 type ErrorLocationHook struct {
 }
 

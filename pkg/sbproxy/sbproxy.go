@@ -164,7 +164,7 @@ func registerRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router)
 		if err != nil {
 			return errors.Wrap(err, "error getting route methods")
 		}
-		logrus.Info("Registering route with methods: ", methods, " and path: ", path)
+		logrus.Info("Registering route with methods: ", methods, " and path: ", prefix+path)
 		subRouter.Handle(path, route.GetHandler()).Methods(methods...)
 		return nil
 	})
