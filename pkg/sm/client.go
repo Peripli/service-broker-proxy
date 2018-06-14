@@ -83,6 +83,8 @@ func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.Service
 			GUID:      broker.ID,
 			Name:      broker.Name,
 			BrokerURL: broker.BrokerURL,
+			Catalog:   broker.Catalog,
+			Metadata:  broker.Metadata,
 		}
 		brokers = append(brokers, b)
 	}

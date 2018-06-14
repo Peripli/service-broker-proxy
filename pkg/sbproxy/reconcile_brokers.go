@@ -5,9 +5,12 @@ import (
 
 	"strings"
 
+	"encoding/json"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/pkg/errors"
+	osbc "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,7 +20,7 @@ const ProxyBrokerPrefix = "sm-proxy-"
 // ReconcileBrokersTask type represents a registration task that takes care of propagating broker creations
 // and deletions to the platform. It reconciles the state of the proxy brokers in the platform to match
 // the desired state provided by the Service Manager.
-//TODO If the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
+//TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
 type ReconcileBrokersTask struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
@@ -85,7 +88,7 @@ func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []serviceBrokerRe
 		} else {
 			r.fetchBrokerCatalog(&existingBroker.ServiceBroker)
 		}
-		//r.enableServiceAccessVisibilities(&payloadBroker.ServiceBroker)
+		r.enableServiceAccessVisibilities(&payloadBroker.ServiceBroker)
 	}
 
 	for _, existingBroker := range existingMap {
@@ -182,27 +185,27 @@ func (r ReconcileBrokersTask) deleteBrokerRegistration(broker *platform.ServiceB
 	}
 }
 
-//func (r ReconcileBrokersTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) {
-//	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
-//		emptyContext := emptyContext()
-//		logrus.WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to enable service access for broker...")
-//
-//		catalog := broker.Catalog
-//		if catalog == nil {
-//			logrus.WithFields(logBroker(broker)).Error("Error enabling service access due to missing catalog details")
-//			return
-//		}
-//
-//		for _, service := range catalog.Services {
-//			logrus.WithFields(logService(service)).Debug("ReconcileBrokersTask task attempting to enable service access for service...")
-//			if err := f.EnableAccessForService(emptyContext, service.ID); err != nil {
-//				logrus.WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
-//			}
-//			logrus.WithFields(logService(service)).Debug("ReconcileBrokersTask task finished enabling service access for service...")
-//		}
-//		logrus.WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task finished enabling service access for broker")
-//	}
-//}
+func (r ReconcileBrokersTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) {
+	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
+		emptyContext := emptyContext()
+		logrus.WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to enable service access for broker...")
+
+		catalog := broker.Catalog
+		if catalog == nil {
+			logrus.WithFields(logBroker(broker)).Error("Error enabling service access due to missing catalog details")
+			return
+		}
+
+		for _, service := range catalog.Services {
+			logrus.WithFields(logService(service)).Debug("ReconcileBrokersTask task attempting to enable service access for service...")
+			if err := f.EnableAccessForService(emptyContext, service.ID); err != nil {
+				logrus.WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
+			}
+			logrus.WithFields(logService(service)).Debug("ReconcileBrokersTask task finished enabling service access for service...")
+		}
+		logrus.WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task finished enabling service access for broker")
+	}
+}
 
 func (r ReconcileBrokersTask) isProxyBroker(broker platform.ServiceBroker) bool {
 	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
@@ -216,17 +219,16 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 	}
 }
 
-//
-//func logService(service osbc.Service) logrus.Fields {
-//	return logrus.Fields{
-//		"service_guid": service.ID,
-//		"service_name": service.Name,
-//	}
-//}
-//
-//func emptyContext() json.RawMessage {
-//	return json.RawMessage(`{}`)
-//}
+func logService(service osbc.Service) logrus.Fields {
+	return logrus.Fields{
+		"service_guid": service.ID,
+		"service_name": service.Name,
+	}
+}
+
+func emptyContext() json.RawMessage {
+	return json.RawMessage(`{}`)
+}
 
 func convertBrokersRegListToMap(brokerList []serviceBrokerReg) map[string]*serviceBrokerReg {
 	brokerRegMap := make(map[string]*serviceBrokerReg, len(brokerList))
