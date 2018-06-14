@@ -1,5 +1,8 @@
 package platform
 
+import "encoding/json"
+import osbc "github.com/pmorie/go-open-service-broker-client/v2"
+
 // CreateServiceBrokerRequest type used for requests by the platform client
 type CreateServiceBrokerRequest struct {
 	Name      string `json:"name"`

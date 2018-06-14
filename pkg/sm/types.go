@@ -1,5 +1,8 @@
 package sm
 
+import "encoding/json"
+import osbc "github.com/pmorie/go-open-service-broker-client/v2"
+
 // BrokerList type used for responses from the Service Manager client
 type BrokerList struct {
 	Brokers []Broker `json:"brokers"`
