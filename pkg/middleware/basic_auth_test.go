@@ -41,6 +41,7 @@ var _ = Describe("Basic Authentication wrapper", func() {
 
 	DescribeTable("when given a request with basic authorization",
 		func(expectedStatus int, expectedError, username, password string) {
+
 			request := newRequest(username, password)
 			wrappedHandler.ServeHTTP(httpRecorder, request)
 
