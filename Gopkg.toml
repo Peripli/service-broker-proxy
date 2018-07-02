@@ -30,12 +30,8 @@
   unused-packages = true
 
 [[constraint]]
-  name = "github.com/pmorie/go-open-service-broker-client"
-  version = "=0.0.5"
-
-[[constraint]]
-  name = "github.com/pmorie/osb-broker-lib"
-  version = "=0.0.10"
+ name = "github.com/onrik/logrus"
+ branch = "master"
 
 [[constraint]]
   name = "github.com/robfig/cron"
@@ -43,12 +39,8 @@
 
 [[constraint]]
   name = "github.com/pkg/errors"
-  version = "=0.8.0"
+  version = "0.8.0"
 
 [[constraint]]
   name = "github.com/Peripli/service-manager"
-  branch = "pkg"
-
-[[constraint]]
-  name = "github.com/gorilla/mux"
-  version = "=1.6.1"
+  branch = "pkg_final"

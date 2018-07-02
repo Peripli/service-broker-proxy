@@ -8,10 +8,10 @@
   revision = "89c00d8a28f43c567d92eb81a2945301a6a9fbb9"
 
 [[projects]]
-  branch = "pkg"
+  branch = "pkg_final"
   name = "github.com/Peripli/service-manager"
   packages = ["pkg/env"]
-  revision = "eb62019e93bc2224a83244c0a784414bc1eb0e6d"
+  revision = "369a9bdf3bbf41250ffc25bb64736b7bc40f5d37"
 
 [[projects]]
   branch = "master"
@@ -58,8 +58,8 @@
 [[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
-  version = "v1.6.1"
+  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
+  version = "v1.6.2"
 
 [[projects]]
   branch = "master"
@@ -166,8 +166,8 @@
 [[projects]]
   name = "github.com/pmorie/go-open-service-broker-client"
   packages = ["v2"]
-  revision = "e8aa16c9036317bd59ced8921e9da6197ab577e3"
-  version = "0.0.5"
+  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
+  version = "0.0.10"
 
 [[projects]]
   name = "github.com/pmorie/osb-broker-lib"
@@ -214,7 +214,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "7d6f385de8bea29190f15ba9931442a0eaef9af7"
+  revision = "40f013a808ec4fa79def444a1a56de4d1727efcb"
 
 [[projects]]
   name = "github.com/robfig/cron"
@@ -322,6 +322,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6c5e9bf9c38770cfd851d54b074d7a9721af4ca42803f3793b7f88ee977d284b"
+  inputs-digest = "a6db7a6cf151a1b80715e706c6d57088f2d9f3523e1b973b2e7a4894712a616a"
   solver-name = "gps-cdcl"
   solver-version = 1

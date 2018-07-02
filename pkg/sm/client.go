@@ -59,7 +59,7 @@ func NewClient(config *Config) (Client, error) {
 func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
-	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, nil, nil)
+	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
