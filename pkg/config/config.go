@@ -1,0 +1,67 @@
+package config
+
+import (
+	"github.com/Peripli/service-broker-proxy/pkg/osb"
+	"github.com/Peripli/service-broker-proxy/pkg/server"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"github.com/Peripli/service-manager/pkg/env"
+	"github.com/spf13/pflag"
+)
+
+// NewConfigFromEnv builds an sbproxy.Config from the specified Environment
+func New(env env.Environment) (*Config, error) {
+	serverConfig, err := server.NewConfig(env)
+	if err != nil {
+		return nil, err
+	}
+
+	smConfig, err := sm.NewConfig(env)
+	if err != nil {
+		return nil, err
+	}
+
+	osbConfig, err := osb.NewConfig(smConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &Config{
+		Server: serverConfig,
+		Osb:    osbConfig,
+		Sm:     smConfig,
+	}
+
+	return config, nil
+}
+
+func CreatePFlagsForProxy(set *pflag.FlagSet) {
+	defaultCfg := &Config{
+		Server: server.DefaultConfig(),
+		Sm:     sm.DefaultConfig(),
+		Osb:    osb.DefaultConfig(),
+	}
+
+	env.CreatePFlags(set, defaultCfg)
+}
+
+// Config type holds all config properties for the sbproxy
+type Config struct {
+	Server *server.Config
+	Sm     *sm.Config
+	Osb    *osb.ClientConfig `structs:"-"`
+}
+
+// Validate validates the configuration and returns appropriate errors in case it is invalid
+func (c *Config) Validate() error {
+
+	if err := c.Server.Validate(); err != nil {
+		return err
+	}
+	if err := c.Osb.Validate(); err != nil {
+		return err
+	}
+	if err := c.Sm.Validate(); err != nil {
+		return err
+	}
+	return nil
+}

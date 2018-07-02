@@ -1,5 +1,5 @@
-// Package logger contains log utilities and hooks for extending and customizing the logger's behaviour
-package logger
+// Package logging contains log utilities and hooks for extending and customizing the logging's behaviour
+package logging
 
 import (
 	"fmt"

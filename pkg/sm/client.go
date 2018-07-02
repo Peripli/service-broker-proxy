@@ -22,20 +22,20 @@ type Client interface {
 }
 
 type serviceManagerClient struct {
-	Config     *ClientConfiguration
+	Config     *Config
 	httpClient *http.Client
 }
 
 var _ Client = &serviceManagerClient{}
 
 // NewClient builds a new Service Manager Client from the provided configuration
-func NewClient(config *ClientConfiguration) (Client, error) {
+func NewClient(config *Config) (Client, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
 	httpClient := &http.Client{
-		Timeout: time.Duration(config.TimeoutSeconds) * time.Second,
+		Timeout: time.Duration(config.RequestTimeout) * time.Second,
 	}
 
 	if config.User != "" && config.Password != "" {
