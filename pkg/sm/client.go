@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
-	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -65,7 +64,7 @@ func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
 
-	list := &types.Brokers{}
+	list := &Brokers{}
 	switch response.StatusCode {
 	case http.StatusOK:
 		if err = util.ReadClientResponseContent(list, response.Body); err != nil {
@@ -78,7 +77,7 @@ func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	return c.packResponse(list), nil
 }
 
-func (c *serviceManagerClient) packResponse(list *types.Brokers) []platform.ServiceBroker {
+func (c *serviceManagerClient) packResponse(list *Brokers) []platform.ServiceBroker {
 	brokers := make([]platform.ServiceBroker, 0, len(list.Brokers))
 	for _, broker := range list.Brokers {
 		b := platform.ServiceBroker{
@@ -86,7 +85,7 @@ func (c *serviceManagerClient) packResponse(list *types.Brokers) []platform.Serv
 			Name:      broker.Name,
 			BrokerURL: broker.BrokerURL,
 			Catalog:   broker.Catalog,
-			//Metadata:  broker.Metadata,
+			Metadata:  broker.Metadata,
 		}
 		brokers = append(brokers, b)
 	}
