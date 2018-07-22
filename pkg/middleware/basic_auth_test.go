@@ -10,7 +10,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/Peripli/service-broker-proxy/pkg/httputils"
+	"github.com/Peripli/service-manager/pkg/util"
 )
 
 var _ = Describe("Basic Authentication wrapper", func() {
@@ -47,12 +47,12 @@ var _ = Describe("Basic Authentication wrapper", func() {
 
 			Expect(httpRecorder.Code).To(Equal(expectedStatus))
 			if expectedError != "" {
-				var body httputils.HTTPErrorResponse
+				var body util.HTTPError
 				decoder := json.NewDecoder(httpRecorder.Body)
 				err := decoder.Decode(&body)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(body.ErrorKey).To(Equal(expectedError))
-				Expect(body.ErrorMessage).To(Not(BeEmpty()))
+				Expect(body.ErrorType).To(Equal(expectedError))
+				Expect(body.Description).To(Not(BeEmpty()))
 			}
 		},
 		Entry("returns 401 for empty username", http.StatusUnauthorized, "Not Authorized", "", validPassword),

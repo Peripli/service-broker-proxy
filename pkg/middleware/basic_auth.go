@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/Peripli/service-broker-proxy/pkg/httputils"
+	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,9 +18,10 @@ func BasicAuth(username, password string) func(handler http.Handler) http.Handle
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !authorized(r, username, password) {
 				logrus.WithField("username", username).Debug(errorMessage)
-				httputils.WriteResponse(w, http.StatusUnauthorized, httputils.HTTPErrorResponse{
-					ErrorKey:     notAuthorized,
-					ErrorMessage: errorMessage,
+				util.SendJSON(w, http.StatusUnauthorized, &util.HTTPError{
+					ErrorType:   notAuthorized,
+					Description: errorMessage,
+					StatusCode:  http.StatusUnauthorized,
 				},
 				)
 				return

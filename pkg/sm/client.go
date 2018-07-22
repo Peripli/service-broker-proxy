@@ -6,8 +6,9 @@ import (
 
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/httputils"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-manager/pkg/types"
+	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -59,24 +60,25 @@ func NewClient(config *Config) (Client, error) {
 func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
-	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
+	response, err := util.SendClientRequest(c.httpClient, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
-	list := &BrokerList{}
+
+	list := &types.Brokers{}
 	switch response.StatusCode {
 	case http.StatusOK:
-		if err = httputils.GetContent(list, response.Body); err != nil {
+		if err = util.ReadClientResponseContent(list, response.Body); err != nil {
 			return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)
 		}
 	default:
-		return nil, errors.WithStack(httputils.HandleResponseError(response))
+		return nil, errors.WithStack(util.HandleClientResponseError(response))
 	}
 
 	return c.packResponse(list), nil
 }
 
-func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.ServiceBroker {
+func (c *serviceManagerClient) packResponse(list *types.Brokers) []platform.ServiceBroker {
 	brokers := make([]platform.ServiceBroker, 0, len(list.Brokers))
 	for _, broker := range list.Brokers {
 		b := platform.ServiceBroker{
@@ -84,7 +86,7 @@ func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.Service
 			Name:      broker.Name,
 			BrokerURL: broker.BrokerURL,
 			Catalog:   broker.Catalog,
-			Metadata:  broker.Metadata,
+			//Metadata:  broker.Metadata,
 		}
 		brokers = append(brokers, b)
 	}

@@ -2,28 +2,21 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/Gurpartap/logrus-stack"
-  packages = ["."]
-  revision = "89c00d8a28f43c567d92eb81a2945301a6a9fbb9"
-
-[[projects]]
-  branch = "pkg_final"
+  branch = "refactoring1"
   name = "github.com/Peripli/service-manager"
-  packages = ["pkg/env"]
-  revision = "369a9bdf3bbf41250ffc25bb64736b7bc40f5d37"
+  packages = [
+    "pkg/env",
+    "pkg/types",
+    "pkg/util",
+    "pkg/web"
+  ]
+  revision = "e52a4f0aa641250c0d20827d229df519f637e1f4"
 
 [[projects]]
   branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/facebookgo/stack"
-  packages = ["."]
-  revision = "751773369052141c013c6e827a71e8f35c07879c"
 
 [[projects]]
   name = "github.com/fatih/structs"
@@ -36,6 +29,21 @@
   packages = ["."]
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  name = "github.com/gobwas/glob"
+  packages = [
+    ".",
+    "compiler",
+    "match",
+    "syntax",
+    "syntax/ast",
+    "syntax/lexer",
+    "util/runes",
+    "util/strings"
+  ]
+  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
+  version = "v0.2.3"
 
 [[projects]]
   branch = "master"
@@ -58,8 +66,8 @@
 [[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
-  version = "v1.6.2"
+  revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
+  version = "v1.6.1"
 
 [[projects]]
   branch = "master"
@@ -79,6 +87,18 @@
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
+  name = "github.com/hpcloud/tail"
+  packages = [
+    ".",
+    "ratelimiter",
+    "util",
+    "watch",
+    "winfile"
+  ]
+  revision = "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "c2353362d570a7bfa228149c62842019201cfb71"
@@ -94,7 +114,7 @@
   branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
+  revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
 
 [[projects]]
   branch = "master"
@@ -103,7 +123,7 @@
     "filename",
     "formatter"
   ]
-  revision = "9db917e87735094e75f37662738b3bebb96eedaa"
+  revision = "00f4ddfaeb23824ce8b9ce969095a9b2529b9eca"
 
 [[projects]]
   name = "github.com/onsi/ginkgo"
@@ -128,8 +148,8 @@
     "reporters/stenographer/support/go-isatty",
     "types"
   ]
-  revision = "fa5fabab2a1bfbd924faf4c067d07ae414e2aedf"
-  version = "v1.5.0"
+  revision = "3774a09d95489ccaa16032e0770d08ea77ba6184"
+  version = "v1.6.0"
 
 [[projects]]
   name = "github.com/onsi/gomega"
@@ -148,8 +168,8 @@
     "matchers/support/goraph/util",
     "types"
   ]
-  revision = "62bff4df71bdbc266561a0caee19f0594b17c240"
-  version = "v1.4.0"
+  revision = "b6ea1ea48f981d0f615a154a45eabb9dd466556d"
+  version = "v1.4.1"
 
 [[projects]]
   name = "github.com/pelletier/go-toml"
@@ -166,8 +186,8 @@
 [[projects]]
   name = "github.com/pmorie/go-open-service-broker-client"
   packages = ["v2"]
-  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
-  version = "0.0.10"
+  revision = "e8aa16c9036317bd59ced8921e9da6197ab577e3"
+  version = "0.0.5"
 
 [[projects]]
   name = "github.com/pmorie/osb-broker-lib"
@@ -193,7 +213,7 @@
   branch = "master"
   name = "github.com/prometheus/client_model"
   packages = ["go"]
-  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
+  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
 
 [[projects]]
   branch = "master"
@@ -214,7 +234,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "40f013a808ec4fa79def444a1a56de4d1727efcb"
+  revision = "ae68e2d4c00fed4943b5f6698d504a5fe083da8a"
 
 [[projects]]
   name = "github.com/robfig/cron"
@@ -225,8 +245,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   name = "github.com/spf13/afero"
@@ -265,7 +285,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
+  revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
 
 [[projects]]
   branch = "master"
@@ -275,7 +295,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "4cb1c02c05b0e749b0365f61ae859a8e0cfceed9"
+  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
 
 [[projects]]
   branch = "master"
@@ -284,7 +304,7 @@
     "unix",
     "windows"
   ]
-  revision = "7138fd3d9dc8335c567ca206f4333fb75eb05d56"
+  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -314,6 +334,19 @@
   version = "v0.3.0"
 
 [[projects]]
+  name = "gopkg.in/fsnotify.v1"
+  packages = ["."]
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  source = "https://github.com/fsnotify/fsnotify.git"
+  version = "v1.4.7"
+
+[[projects]]
+  branch = "v1"
+  name = "gopkg.in/tomb.v1"
+  packages = ["."]
+  revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
+
+[[projects]]
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
@@ -322,6 +355,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a6db7a6cf151a1b80715e706c6d57088f2d9f3523e1b973b2e7a4894712a616a"
+  inputs-digest = "41fc7c5746f31d405441d8a93fb2cbc46a30cf5f04d33b791829b487cb7d3fe9"
   solver-name = "gps-cdcl"
   solver-version = 1
