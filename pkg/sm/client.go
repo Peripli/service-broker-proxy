@@ -54,7 +54,7 @@ func NewClient(config *Config) (Client, error) {
 	return client, nil
 }
 
-// GetBrokers calls the Service Manager in order to obtain all brokers that need to be registered
+// GetBrokers calls the Service Manager in order to obtain all brokers t	hat need to be registered
 // in the service broker proxy
 func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
