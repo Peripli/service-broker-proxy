@@ -10,11 +10,12 @@ import (
 // DefaultConfig builds a default Service Manager Config
 func DefaultConfig() *Config {
 	return &Config{
-		User:           "admin",
-		Password:       "admin",
-		Host:           "",
-		RequestTimeout: 5 * time.Second,
-		CreateFunc:     NewClient,
+		User:              "admin",
+		Password:          "admin",
+		Host:              "",
+		RequestTimeout:    5 * time.Second,
+		CreateFunc:        NewClient,
+		SkipSslValidation: false,
 	}
 }
 
@@ -33,11 +34,12 @@ func NewConfig(env env.Environment) (*Config, error) {
 
 // Config type holds SM Client config properties
 type Config struct {
-	User           string
-	Password       string
-	Host           string
-	OsbAPI         string
-	RequestTimeout time.Duration
+	User              string
+	Password          string
+	Host              string
+	OsbAPI            string
+	RequestTimeout    time.Duration
+	SkipSslValidation bool
 
 	CreateFunc func(config *Config) (Client, error) `structs:"-"`
 }

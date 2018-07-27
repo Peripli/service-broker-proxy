@@ -1,6 +1,7 @@
 package sm
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 
@@ -44,6 +45,9 @@ func NewClient(config *Config) (Client, error) {
 			password: config.Password,
 			rt:       http.DefaultTransport,
 		}
+	}
+	if t, ok := httpClient.Transport.(*http.Transport); ok {
+		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: config.SkipSslValidation}
 	}
 
 	client := &serviceManagerClient{
