@@ -7,12 +7,13 @@ import (
 
 // ClientConfiguration type holds SM Client config properties
 type ClientConfiguration struct {
-	User           string
-	Password       string
-	Host           string
-	OsbAPI         string
-	TimeoutSeconds int
-	CreateFunc     func(config *ClientConfiguration) (Client, error)
+	User              string
+	Password          string
+	Host              string
+	OsbAPI            string
+	TimeoutSeconds    int
+	SkipSslValidation bool
+	CreateFunc        func(config *ClientConfiguration) (Client, error)
 }
 
 // Settings type is used to unmarshal SM ClientConfiguration from the environment
@@ -46,11 +47,13 @@ func (c *ClientConfiguration) Validate() error {
 // DefaultConfig builds a default Service Manager ClientConfiguration
 func DefaultConfig() *ClientConfiguration {
 	return &ClientConfiguration{
-		User:           "admin",
-		Password:       "admin",
-		Host:           "",
-		TimeoutSeconds: 10,
-		CreateFunc:     NewClient,
+		User:              "admin",
+		Password:          "admin",
+		Host:              "",
+		OsbAPI:            "",
+		TimeoutSeconds:    10,
+		SkipSslValidation: false,
+		CreateFunc:        NewClient,
 	}
 }
 
