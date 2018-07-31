@@ -7,8 +7,8 @@ import (
 
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/httputils"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -23,20 +23,20 @@ type Client interface {
 }
 
 type serviceManagerClient struct {
-	Config     *ClientConfiguration
+	Config     *Config
 	httpClient *http.Client
 }
 
 var _ Client = &serviceManagerClient{}
 
 // NewClient builds a new Service Manager Client from the provided configuration
-func NewClient(config *ClientConfiguration) (Client, error) {
+func NewClient(config *Config) (Client, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
 	httpClient := &http.Client{
-		Timeout: time.Duration(config.TimeoutSeconds) * time.Second,
+		Timeout: time.Duration(config.RequestTimeout) * time.Second,
 	}
 
 	if config.User != "" && config.Password != "" {
@@ -58,29 +58,30 @@ func NewClient(config *ClientConfiguration) (Client, error) {
 	return client, nil
 }
 
-// GetBrokers calls the Service Manager in order to obtain all brokers that need to be registered
+// GetBrokers calls the Service Manager in order to obtain all brokers t	hat need to be registered
 // in the service broker proxy
 func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
-	response, err := httputils.SendRequest(c.httpClient, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
+	response, err := util.SendRequest(c.httpClient.Do, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
-	list := &BrokerList{}
+
+	list := &Brokers{}
 	switch response.StatusCode {
 	case http.StatusOK:
-		if err = httputils.GetContent(list, response.Body); err != nil {
+		if err = util.BodyToObject(response.Body, list); err != nil {
 			return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)
 		}
 	default:
-		return nil, errors.WithStack(httputils.HandleResponseError(response))
+		return nil, errors.WithStack(util.HandleResponseError(response))
 	}
 
 	return c.packResponse(list), nil
 }
 
-func (c *serviceManagerClient) packResponse(list *BrokerList) []platform.ServiceBroker {
+func (c *serviceManagerClient) packResponse(list *Brokers) []platform.ServiceBroker {
 	brokers := make([]platform.ServiceBroker, 0, len(list.Brokers))
 	for _, broker := range list.Brokers {
 		b := platform.ServiceBroker{

@@ -228,7 +228,6 @@ func logService(service osbc.Service) logrus.Fields {
 
 func emptyContext() json.RawMessage {
 	return json.RawMessage(`{}`)
-
 }
 
 func convertBrokersRegListToMap(brokerList []serviceBrokerReg) map[string]*serviceBrokerReg {

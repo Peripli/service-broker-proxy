@@ -23,7 +23,7 @@ type BusinessLogic struct {
 var _ broker.Interface = &BusinessLogic{}
 
 // NewBusinessLogic creates an OSB business logic containing logic to proxy OSB calls
-func NewBusinessLogic(config *ClientConfiguration) (*BusinessLogic, error) {
+func NewBusinessLogic(config *ClientConfig) (*BusinessLogic, error) {
 	return &BusinessLogic{
 		osbClientConfig: config.ClientConfiguration,
 		createFunc:      config.CreateFunc,
