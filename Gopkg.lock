@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  branch = "refactoring1"
+  branch = "master"
   name = "github.com/Peripli/service-manager"
   packages = [
     "pkg/env",
@@ -10,7 +10,7 @@
     "pkg/util",
     "pkg/web"
   ]
-  revision = "e52a4f0aa641250c0d20827d229df519f637e1f4"
+  revision = "0c7accec07dad10a411bfd377370345d331cadcb"
 
 [[projects]]
   branch = "master"
@@ -156,7 +156,6 @@
   packages = [
     ".",
     "format",
-    "ghttp",
     "internal/assertion",
     "internal/asyncassertion",
     "internal/oraclematcher",
@@ -234,7 +233,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "ae68e2d4c00fed4943b5f6698d504a5fe083da8a"
+  revision = "05ee40e3a273f7245e8777337fc7b46e533a9a92"
 
 [[projects]]
   name = "github.com/robfig/cron"
@@ -285,7 +284,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "a2144134853fc9a27a7b1e3eb4f19f1a76df13c9"
+  revision = "c126467f60eb25f8f27e5a981f32a87e3965053f"
 
 [[projects]]
   branch = "master"
@@ -295,7 +294,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1"
+  revision = "a0f8a16cb08c06df97cbdf9c47f4731ba548c33c"
 
 [[projects]]
   branch = "master"
@@ -304,7 +303,7 @@
     "unix",
     "windows"
   ]
-  revision = "ac767d655b305d4e9612f5f6e33120b9176c4ad4"
+  revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -355,6 +354,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "41fc7c5746f31d405441d8a93fb2cbc46a30cf5f04d33b791829b487cb7d3fe9"
+  inputs-digest = "96625f8e6d847bb535f26eb964b8ca2ea2b6efddc2114511e79dc28391aa5ad8"
   solver-name = "gps-cdcl"
   solver-version = 1

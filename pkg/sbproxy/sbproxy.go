@@ -18,6 +18,7 @@ const (
 	APIPrefix = "/v1/osb"
 )
 
+// SBProxy service broker proxy struct
 type SBProxy struct {
 	Server *server.Server
 
@@ -25,7 +26,7 @@ type SBProxy struct {
 	group         *sync.WaitGroup
 }
 
-// New starts a service broker proxy that is configured from the provided environment and platform client.
+// New creates service broker proxy that is configured from the provided environment and platform client.
 func New(env env.Environment, client platform.Client) (*SBProxy, error) {
 	cronScheduler := cron.New()
 	var group sync.WaitGroup
@@ -61,6 +62,7 @@ func New(env env.Environment, client platform.Client) (*SBProxy, error) {
 	return sbProxy, nil
 }
 
+// Run starts the proxy
 func (p *SBProxy) Run() {
 	p.cronScheduler.Start()
 	defer p.cronScheduler.Stop()

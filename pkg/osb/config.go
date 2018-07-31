@@ -15,6 +15,7 @@ type ClientConfig struct {
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
+// DefaultConfig returns default ClientConfig
 func DefaultConfig() *ClientConfig {
 	return &ClientConfig{
 		ClientConfiguration: osbc.DefaultClientConfiguration(),

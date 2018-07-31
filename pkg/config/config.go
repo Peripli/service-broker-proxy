@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// NewConfigFromEnv builds an sbproxy.Config from the specified Environment
+// New builds an sbproxy.Config from the specified Environment
 func New(env env.Environment) (*Config, error) {
 	serverConfig, err := server.NewConfig(env)
 	if err != nil {
@@ -54,15 +54,12 @@ type Config struct {
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid
 func (c *Config) Validate() error {
+	validatable := []interface{ Validate() error }{c.Server, c.Osb, c.Sm}
 
-	if err := c.Server.Validate(); err != nil {
-		return err
-	}
-	if err := c.Osb.Validate(); err != nil {
-		return err
-	}
-	if err := c.Sm.Validate(); err != nil {
-		return err
+	for _, item := range validatable {
+		if err := item.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

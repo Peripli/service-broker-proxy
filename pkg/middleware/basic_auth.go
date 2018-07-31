@@ -18,12 +18,14 @@ func BasicAuth(username, password string) func(handler http.Handler) http.Handle
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !authorized(r, username, password) {
 				logrus.WithField("username", username).Debug(errorMessage)
-				util.SendJSON(w, http.StatusUnauthorized, &util.HTTPError{
+				err := util.WriteJSON(w, http.StatusUnauthorized, &util.HTTPError{
 					ErrorType:   notAuthorized,
 					Description: errorMessage,
 					StatusCode:  http.StatusUnauthorized,
-				},
-				)
+				})
+				if err != nil {
+					logrus.Error(err)
+				}
 				return
 			}
 			handler.ServeHTTP(w, r)

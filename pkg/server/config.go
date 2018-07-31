@@ -62,13 +62,15 @@ func (c *Config) Validate() error {
 	if c.ResyncPeriod == 0 {
 		return errors.New("application configuration RequestTimeout missing")
 	}
-	if (c.TLSCert != "" || c.TLSKey != "") &&
-		(c.TLSCert == "" || c.TLSKey == "") {
+	if !tlsConfigOK(c.TLSCert, c.TLSKey) {
 		return errors.New("application configuration both TLSCert and TLSKey must be provided to use TLS")
 	}
-
 	if len(c.Host) == 0 {
 		return errors.New("application configuration Host missing")
 	}
 	return nil
+}
+
+func tlsConfigOK(TLSCert, TLSKey string) bool {
+	return (TLSCert == "" && TLSKey == "") || (TLSCert != "" && TLSKey != "")
 }

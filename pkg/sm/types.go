@@ -7,7 +7,7 @@ import (
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
 )
 
-// BrokerList type used for responses from the Service Manager client
+// Brokers type used for responses from the Service Manager client
 type Brokers struct {
 	Brokers []Broker `json:"brokers"`
 }
