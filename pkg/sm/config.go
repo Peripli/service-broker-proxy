@@ -10,8 +10,8 @@ import (
 // DefaultConfig builds a default Service Manager Config
 func DefaultConfig() *Config {
 	return &Config{
-		User:              "admin",
-		Password:          "admin",
+		User:              "",
+		Password:          "",
 		Host:              "",
 		RequestTimeout:    5 * time.Second,
 		CreateFunc:        NewClient,
@@ -41,7 +41,7 @@ type Config struct {
 	RequestTimeout    time.Duration
 	SkipSslValidation bool
 
-	CreateFunc func(config *Config) (Client, error) `structs:"-"`
+	CreateFunc func(config *Config) (Client, error)
 }
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid

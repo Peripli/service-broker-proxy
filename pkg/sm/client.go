@@ -39,15 +39,22 @@ func NewClient(config *Config) (Client, error) {
 		Timeout: time.Duration(config.RequestTimeout) * time.Second,
 	}
 
+	defaultTransport := http.DefaultTransport.(*http.Transport)
+	t := &http.Transport{
+		Proxy:                 defaultTransport.Proxy,
+		TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
+		ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
+	}
+	t.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: config.SkipSslValidation,
+	}
+
 	if config.User != "" && config.Password != "" {
 		httpClient.Transport = BasicAuthTransport{
 			username: config.User,
 			password: config.Password,
-			rt:       http.DefaultTransport,
+			rt:       t,
 		}
-	}
-	if t, ok := httpClient.Transport.(*http.Transport); ok {
-		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: config.SkipSslValidation}
 	}
 
 	client := &serviceManagerClient{

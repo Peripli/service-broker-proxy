@@ -11,6 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	"fmt"
 )
 
 const (
@@ -24,6 +26,23 @@ type SBProxy struct {
 
 	cronScheduler *cron.Cron
 	group         *sync.WaitGroup
+}
+
+// DefaultEnv creates a default environment that can be used to boot up a Service Manager
+func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) env.Environment {
+	set := env.EmptyFlagSet()
+
+	env.CreatePFlagsForConfigFile(set)
+	config.AddPFlags(set)
+
+	for _, addFlags := range additionalPFlags {
+		addFlags(set)
+	}
+	environment, err := env.New(set)
+	if err != nil {
+		panic(fmt.Errorf("error loading environment: %s", err))
+	}
+	return environment
 }
 
 // New creates service broker proxy that is configured from the provided environment and platform client.

@@ -35,7 +35,7 @@ func New(env env.Environment) (*Config, error) {
 }
 
 // CreatePFlagsForProxy adds the pflags needed for the the proxy default config to the provided flag set.
-func CreatePFlagsForProxy(set *pflag.FlagSet) {
+func AddPFlags(set *pflag.FlagSet) {
 	defaultCfg := &Config{
 		Server: server.DefaultConfig(),
 		Sm:     sm.DefaultConfig(),
