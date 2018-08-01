@@ -45,6 +45,8 @@ func NewConfig(settings *sm.Config) (*ClientConfig, error) {
 			}}
 	}
 
+	clientConfig.Insecure = settings.SkipSslValidation
+	
 	return clientConfig, nil
 }
 
