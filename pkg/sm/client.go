@@ -37,6 +37,7 @@ func NewClient(config *Config) (Client, error) {
 
 	httpClient := &http.Client{
 		Timeout: time.Duration(config.RequestTimeout) * time.Second,
+<<<<<<< HEAD
 	}
 
 	defaultTransport := http.DefaultTransport.(*http.Transport)
@@ -47,6 +48,8 @@ func NewClient(config *Config) (Client, error) {
 	}
 	t.TLSClientConfig = &tls.Config{
 		InsecureSkipVerify: config.SkipSslValidation,
+=======
+>>>>>>> refs/heads/master
 	}
 
 	if config.User != "" && config.Password != "" {
