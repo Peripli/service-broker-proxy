@@ -12,6 +12,7 @@ const name = "sbproxy"
 // ClientConfig type holds config info for building an OSB client
 type ClientConfig struct {
 	*osbc.ClientConfiguration
+
 	CreateFunc func(config *osbc.ClientConfiguration) (osbc.Client, error)
 }
 
@@ -43,6 +44,8 @@ func NewConfig(settings *sm.Config) (*ClientConfig, error) {
 				Password: settings.Password,
 			}}
 	}
+
+	clientConfig.Insecure = settings.SkipSslValidation
 
 	return clientConfig, nil
 }

@@ -61,7 +61,6 @@ func (r ReconcileBrokersTask) run() {
 	if err != nil {
 		logrus.WithError(err).Error("An error occurred while obtaining already registered brokers")
 		return
-
 	}
 
 	// get all the brokers that are in SM and for which a proxy broker should be present in the platform

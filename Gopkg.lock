@@ -10,7 +10,7 @@
     "pkg/util",
     "pkg/web"
   ]
-  revision = "0c7accec07dad10a411bfd377370345d331cadcb"
+  revision = "6bbeba0c92ac3a6ff0fe64e7495f4a359ca88d07"
 
 [[projects]]
   branch = "master"
@@ -222,7 +222,7 @@
     "internal/bitbucket.org/ww/goautoneg",
     "model"
   ]
-  revision = "7600349dcfe1abd18d72d3a1770870d9800a7801"
+  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
 
 [[projects]]
   branch = "master"
@@ -294,7 +294,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "a0f8a16cb08c06df97cbdf9c47f4731ba548c33c"
+  revision = "49c15d80dfbc983ea25246ee959d970efe09ec09"
 
 [[projects]]
   branch = "master"
@@ -354,6 +354,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "96625f8e6d847bb535f26eb964b8ca2ea2b6efddc2114511e79dc28391aa5ad8"
+  inputs-digest = "a512b775b01edcec7446d08be6af494586fec5fbf338fcab166d0106e969f2d8"
   solver-name = "gps-cdcl"
   solver-version = 1
