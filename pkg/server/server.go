@@ -62,6 +62,10 @@ func New(config *Config, osbConfig *osb.ClientConfig) (*Server, error) {
 	}, nil
 }
 
+func (s *Server) Use(middleware func(handler http.Handler) http.Handler) {
+	s.router.Use(middleware)
+}
+
 func (s *Server) run(ctx context.Context, addr string, listenAndServe func(srv *http.Server) error) error {
 	glog.Infof("Starting server on %s\n", addr)
 	srv := &http.Server{
