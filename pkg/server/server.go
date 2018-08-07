@@ -12,6 +12,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-broker-proxy/pkg/middleware"
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -53,8 +54,7 @@ func New(config *Config, osbConfig *osb.ClientConfig) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	router.Router.Use(middleware.LogRequest())
+	router.Use(middleware.LogRequest())
 
 	return &Server{
 		router: router,
@@ -62,9 +62,21 @@ func New(config *Config, osbConfig *osb.ClientConfig) (*Server, error) {
 	}, nil
 }
 
-// Use provides a way to plugin middleware in the Server
-func (s Server) Use(middleware func(handler http.Handler) http.Handler) {
-	s.router.Use(middleware)
+func (s *Server) run(ctx context.Context, addr string, listenAndServe func(srv *http.Server) error) error {
+	glog.Infof("Starting server on %s\n", addr)
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: s.router,
+	}
+	go func() {
+		<-ctx.Done()
+		c, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if srv.Shutdown(c) != nil {
+			srv.Close()
+		}
+	}()
+	return listenAndServe(srv)
 }
 
 // Run is the entrypoint of the Server. Run boots the application.
@@ -79,11 +91,15 @@ func (s Server) Run(group *sync.WaitGroup) {
 	addr := ":" + strconv.Itoa(s.Config.Port)
 
 	logrus.Info("Running Server...")
-	if s.Config.TLSKey != "" && s.Config.TLSCert != "" {
-		err = s.Server.RunTLS(ctx, addr, s.Config.TLSCert, s.Config.TLSKey)
-	} else {
-		err = s.Server.Run(ctx, addr)
+	// if s.Config.TLSKey != "" && s.Config.TLSCert != "" {
+	// 	err = s.Server.RunTLS(ctx, addr, s.Config.TLSCert, s.Config.TLSKey)
+	// } else {
+	// 	err = s.Server.Run(ctx, addr)
+	// }
+	listenAndServe := func(srv *http.Server) error {
+		return srv.ListenAndServe()
 	}
+	err = s.run(ctx, addr, listenAndServe)
 
 	if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
 		logrus.WithError(errors.WithStack(err)).Errorln("Error occurred while sbproxy was running")
@@ -122,11 +138,11 @@ func waitWithTimeout(group *sync.WaitGroup, timeout time.Duration) {
 	}
 }
 
-func osbRouter( /*config *osb.ClientConfig*/ ) (*mux.Router, error) {
+func osbRouter(config *osb.ClientConfig) (*mux.Router, error) {
 	businessLogic, err := osb.NewBusinessLogic(config)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	if err != nil {
+		return nil, err
+	}
 
 	// reg := prom.NewRegistry()
 	// osbMetrics := metrics.New()
@@ -140,13 +156,13 @@ func osbRouter( /*config *osb.ClientConfig*/ ) (*mux.Router, error) {
 	// osbServer := osbserver.New(api, reg)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/v2/catalog", osb.HandleRequest).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", osb.HandleRequest).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}", osb.HandleRequest).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}", osb.HandleRequest).Methods("DELETE")
-	router.HandleFunc("/v2/service_instances/{instance_id}", osb.HandleRequest).Methods("PATCH")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", osb.HandleRequest).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", osb.HandleRequest).Methods("DELETE")
+	router.HandleFunc("/v2/catalog", businessLogic.HandleRequest).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", businessLogic.HandleRequest).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("DELETE")
+	router.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("PATCH")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", businessLogic.HandleRequest).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", businessLogic.HandleRequest).Methods("DELETE")
 
 	return router, nil
 
