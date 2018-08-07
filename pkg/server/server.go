@@ -14,10 +14,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/pmorie/osb-broker-lib/pkg/metrics"
-	"github.com/pmorie/osb-broker-lib/pkg/rest"
-	osbserver "github.com/pmorie/osb-broker-lib/pkg/server"
-	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,7 +31,7 @@ const (
 // Server type is the starting point of the proxy application. It glues the proxy REST API and the timed
 // jobs for broker registrations
 type Server struct {
-	*osbserver.Server
+	router *mux.Router
 
 	Config *Config
 }
@@ -53,22 +49,22 @@ func New(config *Config, osbConfig *osb.ClientConfig) (*Server, error) {
 
 	logging.Setup(config.LogLevel, config.LogFormat)
 
-	server, err := osbServer(osbConfig)
+	router, err := osbRouter(osbConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	server.Router.Use(middleware.LogRequest())
+	router.Router.Use(middleware.LogRequest())
 
 	return &Server{
-		Server: server,
+		router: router,
 		Config: config,
 	}, nil
 }
 
 // Use provides a way to plugin middleware in the Server
 func (s Server) Use(middleware func(handler http.Handler) http.Handler) {
-	s.Server.Router.Use(middleware)
+	s.router.Use(middleware)
 }
 
 // Run is the entrypoint of the Server. Run boots the application.
@@ -126,31 +122,41 @@ func waitWithTimeout(group *sync.WaitGroup, timeout time.Duration) {
 	}
 }
 
-func osbServer(config *osb.ClientConfig) (*osbserver.Server, error) {
+func osbRouter( /*config *osb.ClientConfig*/ ) (*mux.Router, error) {
 	businessLogic, err := osb.NewBusinessLogic(config)
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	reg := prom.NewRegistry()
-	osbMetrics := metrics.New()
-	reg.MustRegister(osbMetrics)
+	// reg := prom.NewRegistry()
+	// osbMetrics := metrics.New()
+	// reg.MustRegister(osbMetrics)
 
-	api, err := rest.NewAPISurface(businessLogic, osbMetrics)
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating OSB API surface")
-	}
+	// api, err := rest.NewAPISurface(businessLogic, osbMetrics)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "error creating OSB API surface")
+	// }
 
-	osbServer := osbserver.New(api, reg)
+	// osbServer := osbserver.New(api, reg)
+
 	router := mux.NewRouter()
+	router.HandleFunc("/v2/catalog", osb.HandleRequest).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", osb.HandleRequest).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{instance_id}", osb.HandleRequest).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}", osb.HandleRequest).Methods("DELETE")
+	router.HandleFunc("/v2/service_instances/{instance_id}", osb.HandleRequest).Methods("PATCH")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", osb.HandleRequest).Methods("PUT")
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", osb.HandleRequest).Methods("DELETE")
 
-	err = registerRoutes(Path, osbServer.Router, router)
-	if err != nil {
-		return nil, err
-	}
+	return router, nil
 
-	osbServer.Router = router
-	return osbServer, nil
+	// err = registerRoutes(Path, osbServer.Router, router)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// osbServer.Router = router
+	// return osbServer, nil
 }
 
 func registerRoutes(prefix string, fromRouter *mux.Router, toRouter *mux.Router) error {
