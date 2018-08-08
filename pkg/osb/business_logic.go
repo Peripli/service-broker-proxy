@@ -23,10 +23,13 @@ type myOsbController struct {
 
 // NewOsbController creates an OSB business logic containing logic to proxy OSB calls
 func NewOsbController(config *ClientConfig) (*myOsbController, error) {
-	return &myOsbController{
-		Controller: &smOsb.Controller{},
-		config:     config,
-	}, nil
+
+	myOsb := &myOsbController{
+		config: config,
+	}
+	myOsb.Controller = &smOsb.Controller{Handler: myOsb.handler}
+
+	return myOsb, nil
 }
 
 func (c *myOsbController) handler(request *web.Request) (*web.Response, error) {
