@@ -160,13 +160,15 @@ func osbRouter(config *osb.ClientConfig) (*mux.Router, error) {
 	// osbServer := osbserver.New(api, reg)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/v2/catalog", businessLogic.HandleRequest).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}/last_operation", businessLogic.HandleRequest).Methods("GET")
-	router.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("DELETE")
-	router.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("PATCH")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", businessLogic.HandleRequest).Methods("PUT")
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", businessLogic.HandleRequest).Methods("DELETE")
+	subRouter := router.PathPrefix(Path).Subrouter()
+
+	subRouter.HandleFunc("/v2/catalog", businessLogic.HandleRequest).Methods("GET")
+	subRouter.HandleFunc("/v2/service_instances/{instance_id}/last_operation", businessLogic.HandleRequest).Methods("GET")
+	subRouter.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("PUT")
+	subRouter.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("DELETE")
+	subRouter.HandleFunc("/v2/service_instances/{instance_id}", businessLogic.HandleRequest).Methods("PATCH")
+	subRouter.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", businessLogic.HandleRequest).Methods("PUT")
+	subRouter.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", businessLogic.HandleRequest).Methods("DELETE")
 
 	return router, nil
 
