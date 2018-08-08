@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/Peripli/service-manager/pkg/web"
+	"github.com/sirupsen/logrus"
 )
 
 type myProxy struct {
@@ -51,6 +52,9 @@ func (p *myProxy) ProxyRequest(req *http.Request, reqBuilder *requestBuilder, bo
 	modifiedRequest.Body = ioutil.NopCloser(bytes.NewReader(body))
 	modifiedRequest.ContentLength = int64(len(body))
 
+	logrus.Debugf("Came request to: path: %s;", req.URL.Path)
+	logrus.Debugf("Making request to: host: %s; url: %s", modifiedRequest.URL.Host+modifiedRequest.URL.Path)
+
 	recorder := httptest.NewRecorder()
 	p.reverseProxy.ServeHTTP(recorder, modifiedRequest)
 
@@ -70,6 +74,10 @@ func (p *myProxy) ProxyRequest(req *http.Request, reqBuilder *requestBuilder, bo
 
 func ReverseProxy() *myProxy {
 	return &myProxy{
-		reverseProxy: &httputil.ReverseProxy{},
+		reverseProxy: &httputil.ReverseProxy{
+			Director: func(req *http.Request) {
+
+			},
+		},
 	}
 }

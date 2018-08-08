@@ -48,12 +48,12 @@ func New(config *Config, osbConfig *osb.ClientConfig) (*Server, error) {
 
 	logging.Setup(config.LogLevel, config.LogFormat)
 
-	osbController, err := osb.NewOsbController(config)
+	osbController, err := osb.NewOsbController(osbConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	api := smWeb.API{
+	api := &smWeb.API{
 		Controllers: []smWeb.Controller{
 			osbController,
 		},

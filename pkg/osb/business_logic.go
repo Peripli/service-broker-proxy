@@ -16,7 +16,7 @@ import (
 )
 
 type myOsbController struct {
-	*smOsb.Controller
+	internalController *smOsb.Controller
 
 	config *ClientConfig
 }
@@ -27,9 +27,13 @@ func NewOsbController(config *ClientConfig) (*myOsbController, error) {
 	myOsb := &myOsbController{
 		config: config,
 	}
-	myOsb.Controller = &smOsb.Controller{Handler: myOsb.handler}
+	myOsb.internalController = &smOsb.Controller{Handler: myOsb.handler}
 
 	return myOsb, nil
+}
+
+func (c *myOsbController) Routes() []web.Route {
+	return c.internalController.Routes()
 }
 
 func (c *myOsbController) handler(request *web.Request) (*web.Response, error) {
@@ -42,6 +46,7 @@ func (c *myOsbController) handler(request *web.Request) (*web.Response, error) {
 	proxier := proxy.ReverseProxy()
 
 	targetURL, _ := url.Parse(target.URL)
+	targetURL.Path = request.Request.URL.Path
 
 	reqBuilder := proxier.RequestBuilder().
 		URL(targetURL).
