@@ -1,65 +1,59 @@
 package osb
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
 	"github.com/Peripli/service-broker-proxy/pkg/proxy"
+	smOsb "github.com/Peripli/service-manager/api/osb"
 	"github.com/Peripli/service-manager/pkg/util"
+	"github.com/Peripli/service-manager/pkg/web"
 	"github.com/pkg/errors"
 
 	"fmt"
 
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
-// BusinessLogic provides an implementation of the pmorie/osb-broker-lib/pkg/broker/Interface interface.
-type BusinessLogic struct {
+type myOsbController struct {
+	*smOsb.Controller
+
 	config *ClientConfig
 }
 
-// NewBusinessLogic creates an OSB business logic containing logic to proxy OSB calls
-func NewBusinessLogic(config *ClientConfig) (*BusinessLogic, error) {
-	return &BusinessLogic{
-		config: config,
+// NewOsbController creates an OSB business logic containing logic to proxy OSB calls
+func NewOsbController(config *ClientConfig) (*myOsbController, error) {
+	return &myOsbController{
+		Controller: &smOsb.Controller{},
+		config:     config,
 	}, nil
 }
 
-func (b *BusinessLogic) HandleRequest(rw http.ResponseWriter, req *http.Request) {
-	target, err := osbClient(req, b.config)
+func (c *myOsbController) handler(request *web.Request) (*web.Response, error) {
+	logrus.Info(">>>>>>>>>>>>>>>>>>>>here")
+	target, err := osbClient(request, c.config)
 	if err != nil {
-		// TODO
-		return
+		return nil, err
 	}
 
 	proxier := proxy.ReverseProxy()
 
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		// TODO
-		return
-	}
 	targetURL, _ := url.Parse(target.URL)
 
 	reqBuilder := proxier.RequestBuilder().
 		URL(targetURL).
 		Auth(target.Username, target.Password)
 
-	response, err := proxier.ProxyRequest(req, reqBuilder, body)
+	response, err := proxier.ProxyRequest(request.Request, reqBuilder, request.Body)
 	if err != nil {
-		// TODO
-		return
+		return nil, err
 	}
 
-	rw.WriteHeader(response.StatusCode)
-	rw.Write(response.Body)
+	return response, nil
 }
 
-func osbClient(request *http.Request, config *ClientConfig) (*Target, error) {
-	vars := mux.Vars(request)
-	brokerID, ok := vars["brokerID"]
+func osbClient(request *web.Request, config *ClientConfig) (*Target, error) {
+	brokerID, ok := request.PathParams["brokerID"]
 	if !ok {
 		errMsg := fmt.Sprintf("brokerId path parameter missing from %s", request.Host)
 		logrus.WithError(errors.New(errMsg)).Error("Error building OSB client for proxy business logic")
