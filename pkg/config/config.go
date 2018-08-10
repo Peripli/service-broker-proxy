@@ -5,7 +5,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/server"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/env"
-	smServer "github.com/Peripli/service-manager/server"
 	"github.com/spf13/pflag"
 )
 
@@ -48,10 +47,9 @@ func AddPFlags(set *pflag.FlagSet) {
 
 // Config type holds all config properties for the sbproxy
 type Config struct {
-	SmServer *smServer.Settings `structs:"-"`
-	Server   *server.Config
-	Sm       *sm.Config
-	Osb      *osb.ClientConfig `structs:"-"`
+	Server *server.Config
+	Sm     *sm.Config
+	Osb    *osb.ClientConfig `structs:"-"`
 }
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid
