@@ -42,10 +42,6 @@
   version = "=0.0.10"
 
 [[constraint]]
-  name = "github.com/pmorie/osb-broker-lib"
-  version = "=0.0.10"
-
-[[constraint]]
   name = "github.com/sirupsen/logrus"
   version = "=1.0.4"
 
