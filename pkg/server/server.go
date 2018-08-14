@@ -10,6 +10,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/middleware"
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 
+	smOsb "github.com/Peripli/service-manager/api/osb"
 	smWeb "github.com/Peripli/service-manager/pkg/web"
 	smServer "github.com/Peripli/service-manager/server"
 
@@ -48,14 +49,14 @@ func New(config *Config, osbConfig *osb.ClientConfig) (*Server, error) {
 
 	logging.Setup(config.LogLevel, config.LogFormat)
 
-	osbController, err := osb.NewOsbController(osbConfig)
+	osbAdapter, err := osb.NewOsbAdapter(osbConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	api := &smWeb.API{
 		Controllers: []smWeb.Controller{
-			osbController,
+			smOsb.NewController(osbAdapter),
 		},
 	}
 	server := smServer.New(smServer.Settings{
