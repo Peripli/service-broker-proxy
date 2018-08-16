@@ -37,10 +37,10 @@ type Settings struct {
 	User              string
 	Password          string
 	Host              string
-	OsbAPI            string
-	RequestTimeout    time.Duration
-	ResyncPeriod      time.Duration
-	SkipSslValidation bool
+	OsbAPI            string        `mapstructure:"osb_api"`
+	RequestTimeout    time.Duration `mapstructure:"request_timeout"`
+	ResyncPeriod      time.Duration `mapstructure:"resync_period"`
+	SkipSslValidation bool          `mapstructure:"skip_ssl_validation"`
 
 	CreateFunc func(config *Settings) (Client, error)
 }

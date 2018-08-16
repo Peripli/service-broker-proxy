@@ -5,20 +5,22 @@ import (
 
 	"fmt"
 
+	"context"
+	"time"
+
 	"github.com/Peripli/service-broker-proxy/pkg/config"
+	"github.com/Peripli/service-broker-proxy/pkg/logging"
+	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
-	"github.com/Peripli/service-manager/pkg/server"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"github.com/Peripli/service-manager/api/filters"
+	smOsb "github.com/Peripli/service-manager/api/osb"
 	"github.com/Peripli/service-manager/pkg/env"
+	"github.com/Peripli/service-manager/pkg/server"
+	"github.com/Peripli/service-manager/pkg/web"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"time"
-	"github.com/Peripli/service-broker-proxy/pkg/logging"
-	"github.com/Peripli/service-manager/pkg/web"
-	smOSB "github.com/Peripli/service-manager/api/osb"
-	"context"
-	"github.com/Peripli/service-manager/api/filters"
 )
 
 const (
@@ -47,10 +49,9 @@ type SMProxy struct {
 	Server *server.Server
 
 	scheduler *cron.Cron
-	ctx    context.Context
-	group         *sync.WaitGroup
+	ctx       context.Context
+	group     *sync.WaitGroup
 }
-
 
 // DefaultEnv creates a default environment that can be used to boot up a Service Manager
 func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) env.Environment {
@@ -73,7 +74,9 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 	var group sync.WaitGroup
 
 	cfg, err := config.New(env)
-	panic(err)
+	if err != nil {
+		panic(err)
+	}
 
 	if err := cfg.Validate(); err != nil {
 		panic(err)
@@ -83,24 +86,22 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 
 	api := &web.API{
 		Controllers: []web.Controller{
-			&smOSB.Controller{
-				//TODO
-				Tr: sm.Transport{
-					Username: cfg.Sm.User,
-					Password: cfg.Sm.Password,
-					URL:      cfg.Sm.Host,
-					Rt:       sm.SkipSSLTransport{
-						SkipSslValidation: cfg.Sm.SkipSslValidation,
-					},
+			smOsb.NewController(&osb.BrFetcherImpl{
+				Tr: sm.SkipSSLTransport{
+					SkipSslValidation: cfg.Sm.SkipSslValidation,
 				},
-			},
+				URL:      cfg.Sm.Host + cfg.Sm.OsbAPI,
+				Username: cfg.Sm.User,
+				Password: cfg.Sm.Password,
+			}),
 		},
 	}
 
 	sbProxy := &SMProxyBuilder{
-		API:           api,
-		ctx:           ctx,
-		cfg:           cfg.Server,
+		API:  api,
+		ctx:  ctx,
+		cfg:  cfg.Server,
+		Cron: cronScheduler,
 	}
 
 	regJob, err := defaultRegJob(&group, client, cfg.Sm, cfg.Server.Host)
@@ -124,8 +125,9 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 	srv.Use(filters.NewRecoveryMiddleware())
 
 	return &SMProxy{
-		ctx:    smb.ctx,
-		Server: srv,
+		scheduler: smb.Cron,
+		ctx:       smb.ctx,
+		Server:    srv,
 	}
 }
 
