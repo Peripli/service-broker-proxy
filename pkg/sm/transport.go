@@ -7,16 +7,18 @@ import (
 
 // BasicAuthTransport implements http.RoundTripper interface and intercepts that request that is being sent,
 // adding basic authorization and delegates back to the original transport.
-type Transport struct {
+type BasicAuthTransport struct {
 	Username string
 	Password string
 
 	Rt http.RoundTripper
 }
 
+var _ http.RoundTripper = * &BasicAuthTransport{}
+
 // RoundTrip implements http.RoundTrip and adds basic authorization header before delegating to the
 // underlying RoundTripper
-func (b Transport) RoundTrip(request *http.Request) (*http.Response, error) {
+func (b BasicAuthTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 	if b.Username != "" && b.Password != "" {
 		request.SetBasicAuth(b.Username, b.Password)
 	}
@@ -24,12 +26,14 @@ func (b Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 	return b.Rt.RoundTrip(request)
 }
 
+// SkipSSLTransport implements http.RoundTripper and sets the SSL Validation to match the provided property
 type SkipSSLTransport struct {
 	SkipSslValidation bool
 }
 
-// RoundTrip implements http.RoundTrip and adds basic authorization header before delegating to the
-// underlying RoundTripper
+var _ http.RoundTripper = * &SkipSSLTransport{}
+
+// RoundTrip implements http.RoundTrip and adds skip SSL validation logic
 func (b SkipSSLTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 	defaultTransport := http.DefaultTransport.(*http.Transport)
 	t := &http.Transport{

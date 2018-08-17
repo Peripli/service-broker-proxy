@@ -16,6 +16,7 @@ type Settings struct {
 	SelfHost string           `mapstructure:"self_host"`
 }
 
+// DefaultSettings returns default value for the proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
 		Server:   server.DefaultSettings(),
@@ -25,6 +26,7 @@ func DefaultSettings() *Settings {
 	}
 }
 
+// NewSettings creates new proxy settings from the specified environment
 func NewSettings(env env.Environment) (*Settings, error) {
 	config := DefaultSettings()
 	if err := env.Unmarshal(config); err != nil {

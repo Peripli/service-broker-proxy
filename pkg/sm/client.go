@@ -38,7 +38,7 @@ func NewClient(config *Settings) (Client, error) {
 		Timeout: time.Duration(config.RequestTimeout) * time.Second,
 	}
 
-	httpClient.Transport = Transport {
+	httpClient.Transport = BasicAuthTransport{
 		Username: config.User,
 		Password: config.Password,
 		Rt: SkipSSLTransport{
