@@ -41,12 +41,13 @@ type SMProxyBuilder struct {
 	*cron.Cron
 
 	ctx context.Context
-	cfg *server.Settings
+	cfg *config.Settings
+	group     *sync.WaitGroup
 }
 
 // SMProxy  struct
 type SMProxy struct {
-	Server *server.Server
+	*server.Server
 
 	scheduler *cron.Cron
 	ctx       context.Context
@@ -86,7 +87,7 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 
 	api := &web.API{
 		Controllers: []web.Controller{
-			smOsb.NewController(&osb.BrFetcherImpl{
+			smOsb.NewController(&osb.BrokerTransport{
 				Tr: sm.SkipSSLTransport{
 					SkipSslValidation: cfg.Sm.SkipSslValidation,
 				},
@@ -98,13 +99,14 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 	}
 
 	sbProxy := &SMProxyBuilder{
-		API:  api,
-		ctx:  ctx,
-		cfg:  cfg.Server,
-		Cron: cronScheduler,
+		API:   api,
+		Cron:  cronScheduler,
+		ctx:   ctx,
+		cfg:   cfg,
+		group: &group,
 	}
 
-	regJob, err := defaultRegJob(&group, client, cfg.Sm, cfg.Server.Host)
+	regJob, err := defaultRegJob(&group, client, cfg.Sm, cfg.SelfHost)
 	if err != nil {
 		panic(err)
 	}
@@ -121,13 +123,14 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 
 // Build builds the Service Manager
 func (smb *SMProxyBuilder) Build() *SMProxy {
-	srv := server.New(smb.cfg, smb.API)
+	srv := server.New(smb.cfg.Server, smb.API)
 	srv.Use(filters.NewRecoveryMiddleware())
 
 	return &SMProxy{
+		Server:    srv,
 		scheduler: smb.Cron,
 		ctx:       smb.ctx,
-		Server:    srv,
+		group:     smb.group,
 	}
 }
 

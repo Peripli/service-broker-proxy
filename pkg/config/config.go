@@ -43,19 +43,14 @@ func AddPFlags(set *pflag.FlagSet) {
 
 // New builds an config.Settings from the specified Environment
 func New(env env.Environment) (*Settings, error) {
-	// config, err :=
 	return NewSettings(env)
-
-	// return &Settings{
-	// 	Server: serverConfig,
-	// 	Log:    logConfig,
-	// 	Sm:     smConfig,
-	// }, nil
 }
 
-// Validate validates the configuration and returns appropriate errors in case it is invalid
+// Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
-	validatable := []interface{ Validate() error }{c.Server, c.Sm, c.Log}
+	validatable := []interface {
+		Validate() error
+	}{c.Server, c.Log, c.Sm}
 
 	for _, item := range validatable {
 		if err := item.Validate(); err != nil {
