@@ -40,9 +40,9 @@ type SMProxyBuilder struct {
 	*web.API
 	*cron.Cron
 
-	ctx context.Context
-	cfg *config.Settings
-	group     *sync.WaitGroup
+	ctx   context.Context
+	cfg   *config.Settings
+	group *sync.WaitGroup
 }
 
 // SMProxy  struct
@@ -165,7 +165,7 @@ func waitWithTimeout(group *sync.WaitGroup, timeout time.Duration) {
 	}()
 	select {
 	case <-c:
-		logrus.Debug("Timeout WaitGroup ", group, " finished successfully")
+		logrus.Debug(fmt.Sprintf("Timeout WaitGroup %+v finished successfully", group))
 	case <-time.After(timeout):
 		logrus.Fatal("Shutdown took more than ", timeout)
 		close(c)
