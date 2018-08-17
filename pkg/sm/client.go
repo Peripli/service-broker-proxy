@@ -42,7 +42,7 @@ func NewClient(config *Settings) (Client, error) {
 		Username: config.User,
 		Password: config.Password,
 		Rt: SkipSSLTransport{
-			SkipSslValidation: config.SkipSslValidation,
+			SkipSslValidation: config.SkipSSLValidation,
 		},
 	}
 

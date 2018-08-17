@@ -15,7 +15,7 @@ func DefaultSettings() *Settings {
 		Host:              "",
 		RequestTimeout:    5 * time.Second,
 		CreateFunc:        NewClient,
-		SkipSslValidation: false,
+		SkipSSLValidation: false,
 	}
 }
 
@@ -40,7 +40,7 @@ type Settings struct {
 	OsbAPI            string        `mapstructure:"osb_api"`
 	RequestTimeout    time.Duration `mapstructure:"request_timeout"`
 	ResyncPeriod      time.Duration `mapstructure:"resync_period"`
-	SkipSslValidation bool          `mapstructure:"skip_ssl_validation"`
+	SkipSSLValidation bool          `mapstructure:"skip_ssl_validation"`
 
 	CreateFunc func(config *Settings) (Client, error)
 }

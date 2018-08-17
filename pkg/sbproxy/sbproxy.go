@@ -89,7 +89,7 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 		Controllers: []web.Controller{
 			smOsb.NewController(&osb.BrokerTransport{
 				Tr: sm.SkipSSLTransport{
-					SkipSslValidation: cfg.Sm.SkipSslValidation,
+					SkipSslValidation: cfg.Sm.SkipSSLValidation,
 				},
 				URL:      cfg.Sm.Host + cfg.Sm.OsbAPI,
 				Username: cfg.Sm.User,
