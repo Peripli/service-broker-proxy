@@ -14,7 +14,7 @@ type BasicAuthTransport struct {
 	Rt http.RoundTripper
 }
 
-var _ http.RoundTripper = * &BasicAuthTransport{}
+var _ http.RoundTripper = &BasicAuthTransport{}
 
 // RoundTrip implements http.RoundTrip and adds basic authorization header before delegating to the
 // underlying RoundTripper
@@ -31,7 +31,7 @@ type SkipSSLTransport struct {
 	SkipSslValidation bool
 }
 
-var _ http.RoundTripper = * &SkipSSLTransport{}
+var _ http.RoundTripper = &SkipSSLTransport{}
 
 // RoundTrip implements http.RoundTrip and adds skip SSL validation logic
 func (b SkipSSLTransport) RoundTrip(request *http.Request) (*http.Response, error) {
