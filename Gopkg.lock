@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  branch = "master"
+  branch = "logging"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -19,13 +19,14 @@
     "pkg/server",
     "pkg/types",
     "pkg/util",
+    "pkg/util/slice",
     "pkg/web",
     "security",
     "security/basic",
     "security/oidc",
     "storage"
   ]
-  revision = "c48beef856f9f591d5724698daf786a5d5b4bb1f"
+  revision = "d7fed9a0675d7bd9de9e46d04b04b8eeb8ed7ea7"
 
 [[projects]]
   name = "github.com/coreos/go-oidc"
@@ -58,6 +59,12 @@
   ]
   revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
   version = "v0.2.3"
+
+[[projects]]
+  name = "github.com/gofrs/uuid"
+  packages = ["."]
+  revision = "d41eeda0759468834c84365a32d1b1ec4264c75f"
+  version = "v3.1.0"
 
 [[projects]]
   branch = "master"
@@ -218,11 +225,6 @@
   version = "v1.1"
 
 [[projects]]
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "36e9d2ebbde5e3f13ab2e25625fd453271d6522e"
-
-[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
@@ -375,6 +377,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a10976151af6c7d11483e96c7a82bd3049fb42c4a3d047d0e287b4cf3ec5d0a8"
+  inputs-digest = "e2bc4addd2c2fe2dc27926782dfee69a536df880b94e1880feb3f54021edc014"
   solver-name = "gps-cdcl"
   solver-version = 1
