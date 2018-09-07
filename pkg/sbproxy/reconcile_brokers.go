@@ -126,7 +126,7 @@ func (r ReconcileBrokersTask) getBrokersFromPlatform() ([]serviceBrokerReg, erro
 func (r ReconcileBrokersTask) getBrokersFromSM() ([]serviceBrokerReg, error) {
 	log.C(r.ctx).Debug("ReconcileBrokersTask task getting brokers from Service Manager")
 
-	proxyBrokers, err := r.smClient.GetBrokers()
+	proxyBrokers, err := r.smClient.GetBrokers(r.ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from SM")
 	}
