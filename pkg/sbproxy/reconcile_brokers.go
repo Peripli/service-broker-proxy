@@ -18,7 +18,6 @@ import (
 
 // ProxyBrokerPrefix prefixes names of brokers registered at the platform
 const ProxyBrokerPrefix = "sm-proxy-"
-const name = "pkg/sbproxy/reconcile_brokers"
 
 // ReconcileBrokersTask type represents a registration task that takes care of propagating broker creations
 // and deletions to the platform. It reconciles the state of the proxy brokers in the platform to match
