@@ -58,7 +58,7 @@ func NewClient(config *Settings) (Client, error) {
 // GetBrokers calls the Service Manager in order to obtain all brokers t	hat need to be registered
 // in the service broker proxy
 func (c *serviceManagerClient) GetBrokers(ctx context.Context) ([]platform.ServiceBroker, error) {
-	log.C(ctx, "pkg/sm/client").Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.URL)
+	log.C(ctx).Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.URL)
 	URL := fmt.Sprintf(APIInternalBrokers, c.Config.URL)
 	response, err := util.SendRequest(ctx, c.httpClient.Do, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
 	if err != nil {

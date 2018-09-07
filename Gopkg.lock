@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "logging"
-  digest = "1:e5591526771f7c6be7fb31c1afa5d2482de74f2b32b16a32f5270c6777702ae0"
+  digest = "1:fa236b6586e66f3bf8c29d9601921bb46d7e8215424f29182fad4bff64846dde"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -28,7 +28,7 @@
     "storage",
   ]
   pruneopts = "NT"
-  revision = "bf33759242d774bc5bb96901de3fe04bcaaa8885"
+  revision = "474ad687a69da8ac491218a23ad7930ef74d64a3"
 
 [[projects]]
   digest = "1:f6e5e1bc64c2908167e6aa9a1fe0c084d515132a1c63ad5b6c84036aa06dc0c1"

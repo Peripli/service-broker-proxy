@@ -17,7 +17,7 @@ func BasicAuth(username, password string) func(handler http.Handler) http.Handle
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !authorized(r, username, password) {
-				logger := log.R(r, "pkg/middleware/basic_auth")
+				logger := log.C(r.Context())
 				logger.WithField("username", username).Debug(errorMessage)
 				err := util.WriteJSON(w, http.StatusUnauthorized, &util.HTTPError{
 					ErrorType:   notAuthorized,

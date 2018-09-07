@@ -1,6 +1,7 @@
 package sbproxy
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/pkg/log"
 	"sync"
 
@@ -83,6 +84,7 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 	}
 
 	ctx = log.Configure(ctx, cfg.Log)
+	log.AddHook(&logging.ErrorLocationHook{})
 
 	api := &web.API{
 		Controllers: []web.Controller{
@@ -114,7 +116,7 @@ func New(ctx context.Context, env env.Environment, client platform.Client) *SMPr
 	}
 
 	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
-	log.C(ctx, "pkg/sbproxy/sbproxy").Info("Brokers and Access resync schedule: ", resyncSchedule)
+	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)
 
 	if err := cronScheduler.AddJob(resyncSchedule, regJob); err != nil {
 		panic(err)
@@ -142,7 +144,7 @@ func (p *SMProxy) Run() {
 	defer p.scheduler.Stop()
 	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
 
-	log.C(p.ctx, "pkg/sbproxy/sbproxy").Info("Running SBProxy...")
+	log.C(p.ctx).Info("Running SBProxy...")
 
 	p.Server.Run(p.ctx)
 }
@@ -167,9 +169,9 @@ func waitWithTimeout(ctx context.Context, group *sync.WaitGroup, timeout time.Du
 	}()
 	select {
 	case <-c:
-		log.C(ctx, "pkg/sbproxy/sbproxy").Debug(fmt.Sprintf("Timeout WaitGroup %+v finished successfully", group))
+		log.C(ctx).Debug(fmt.Sprintf("Timeout WaitGroup %+v finished successfully", group))
 	case <-time.After(timeout):
-		log.C(ctx, "pkg/sbproxy/sbproxy").Fatal("Shutdown took more than ", timeout)
+		log.C(ctx).Fatal("Shutdown took more than ", timeout)
 		close(c)
 	}
 }
