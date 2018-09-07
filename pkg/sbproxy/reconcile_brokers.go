@@ -51,27 +51,27 @@ func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform
 // Run executes the registration task that is responsible for reconciling the state of the proxy brokers at the
 // platform with the brokers provided by the Service Manager
 func (r ReconcileBrokersTask) Run() {
-	log.C(r.ctx, name).Debug("STARTING scheduled reconciliation task...")
+	log.C(r.ctx).Debug("STARTING scheduled reconciliation task...")
 
 	r.group.Add(1)
 	defer r.group.Done()
 	r.run()
 
-	log.C(r.ctx, name).Debug("FINISHED scheduled reconciliation task...")
+	log.C(r.ctx).Debug("FINISHED scheduled reconciliation task...")
 }
 
 func (r ReconcileBrokersTask) run() {
 	// get all the registered proxy brokers from the platform
 	brokersFromPlatform, err := r.getBrokersFromPlatform()
 	if err != nil {
-		log.C(r.ctx, name).WithError(err).Error("An error occurred while obtaining already registered brokers")
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
 		return
 	}
 
 	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
 	brokersFromSM, err := r.getBrokersFromSM()
 	if err != nil {
-		log.C(r.ctx, name).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
 		return
 	}
 
@@ -100,7 +100,7 @@ func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []serviceBrokerRe
 }
 
 func (r ReconcileBrokersTask) getBrokersFromPlatform() ([]serviceBrokerReg, error) {
-	log.C(r.ctx, name).Debug("ReconcileBrokersTask task getting proxy brokers from platform...")
+	log.C(r.ctx).Debug("ReconcileBrokersTask task getting proxy brokers from platform...")
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
@@ -112,19 +112,19 @@ func (r ReconcileBrokersTask) getBrokersFromPlatform() ([]serviceBrokerReg, erro
 			continue
 		}
 
-		log.C(r.ctx, name).WithFields(logBroker(&broker)).Debug("ReconcileBrokersTask task FOUND registered proxy broker... ")
+		log.C(r.ctx).WithFields(logBroker(&broker)).Debug("ReconcileBrokersTask task FOUND registered proxy broker... ")
 		brokerReg := serviceBrokerReg{
 			ServiceBroker: broker,
 			SmID:          broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:],
 		}
 		brokersFromPlatform = append(brokersFromPlatform, brokerReg)
 	}
-	log.C(r.ctx, name).Debugf("ReconcileBrokersTask task SUCCESSFULLY retrieved %d proxy brokers from platform", len(brokersFromPlatform))
+	log.C(r.ctx).Debugf("ReconcileBrokersTask task SUCCESSFULLY retrieved %d proxy brokers from platform", len(brokersFromPlatform))
 	return brokersFromPlatform, nil
 }
 
 func (r ReconcileBrokersTask) getBrokersFromSM() ([]serviceBrokerReg, error) {
-	log.C(r.ctx, name).Debug("ReconcileBrokersTask task getting brokers from Service Manager")
+	log.C(r.ctx).Debug("ReconcileBrokersTask task getting brokers from Service Manager")
 
 	proxyBrokers, err := r.smClient.GetBrokers()
 	if err != nil {
@@ -139,7 +139,7 @@ func (r ReconcileBrokersTask) getBrokersFromSM() ([]serviceBrokerReg, error) {
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
-	log.C(r.ctx, name).Debugf("ReconcileBrokersTask task SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
+	log.C(r.ctx).Debugf("ReconcileBrokersTask task SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
 
 	return brokersFromSM, nil
 }
@@ -147,17 +147,17 @@ func (r ReconcileBrokersTask) getBrokersFromSM() ([]serviceBrokerReg, error) {
 func (r ReconcileBrokersTask) fetchBrokerCatalog(broker *platform.ServiceBroker) {
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 
-		log.C(r.ctx, name).WithFields(logBroker(broker)).Debugf("ReconcileBrokersTask task refetching catalog for broker")
+		log.C(r.ctx).WithFields(logBroker(broker)).Debugf("ReconcileBrokersTask task refetching catalog for broker")
 		if err := f.Fetch(broker); err != nil {
-			log.C(r.ctx, name).WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
+			log.C(r.ctx).WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
 		} else {
-			log.C(r.ctx, name).WithFields(logBroker(broker)).Debug("ReconcileBrokersTask task SUCCESSFULLY refetched catalog for broker")
+			log.C(r.ctx).WithFields(logBroker(broker)).Debug("ReconcileBrokersTask task SUCCESSFULLY refetched catalog for broker")
 		}
 	}
 }
 
 func (r ReconcileBrokersTask) createBrokerRegistration(broker *platform.ServiceBroker) {
-	log.C(r.ctx, name).WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to create proxy for broker in platform...")
+	log.C(r.ctx).WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to create proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      ProxyBrokerPrefix + broker.GUID,
@@ -165,14 +165,14 @@ func (r ReconcileBrokersTask) createBrokerRegistration(broker *platform.ServiceB
 	}
 
 	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
-		log.C(r.ctx, name).WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
+		log.C(r.ctx).WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
 	} else {
-		log.C(r.ctx, name).WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
+		log.C(r.ctx).WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	}
 }
 
 func (r ReconcileBrokersTask) deleteBrokerRegistration(broker *platform.ServiceBroker) {
-	log.C(r.ctx, name).WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to delete broker from platform...")
+	log.C(r.ctx).WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to delete broker from platform...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		GUID: broker.GUID,
@@ -180,31 +180,31 @@ func (r ReconcileBrokersTask) deleteBrokerRegistration(broker *platform.ServiceB
 	}
 
 	if err := r.platformClient.DeleteBroker(deleteRequest); err != nil {
-		log.C(r.ctx, name).WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
+		log.C(r.ctx).WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
 	} else {
-		log.C(r.ctx, name).WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
+		log.C(r.ctx).WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 	}
 }
 
 func (r ReconcileBrokersTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) {
 	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
 		emptyContext := emptyContext()
-		log.C(r.ctx, name).WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to enable service access for broker...")
+		log.C(r.ctx).WithFields(logBroker(broker)).Info("ReconcileBrokersTask task attempting to enable service access for broker...")
 
 		catalog := broker.Catalog
 		if catalog == nil {
-			log.C(r.ctx, name).WithFields(logBroker(broker)).Error("Error enabling service access due to missing catalog details")
+			log.C(r.ctx).WithFields(logBroker(broker)).Error("Error enabling service access due to missing catalog details")
 			return
 		}
 
 		for _, service := range catalog.Services {
-			log.C(r.ctx, name).WithFields(logService(service)).Debug("ReconcileBrokersTask task attempting to enable service access for service...")
+			log.C(r.ctx).WithFields(logService(service)).Debug("ReconcileBrokersTask task attempting to enable service access for service...")
 			if err := f.EnableAccessForService(emptyContext, service.ID); err != nil {
-				log.C(r.ctx, name).WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
+				log.C(r.ctx).WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
 			}
-			log.C(r.ctx, name).WithFields(logService(service)).Debug("ReconcileBrokersTask task finished enabling service access for service...")
+			log.C(r.ctx).WithFields(logService(service)).Debug("ReconcileBrokersTask task finished enabling service access for service...")
 		}
-		log.C(r.ctx, name).WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task finished enabling service access for broker")
+		log.C(r.ctx).WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task finished enabling service access for broker")
 	}
 }
 
