@@ -2,9 +2,9 @@ package osb
 
 import (
 	"context"
-	"net/http"
 	"github.com/Peripli/service-manager/api/osb"
 	"github.com/Peripli/service-manager/pkg/types"
+	"net/http"
 )
 
 // BrokerTransport implements osb.BrokerRoundTripper
