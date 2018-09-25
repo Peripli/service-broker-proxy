@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Service Manager Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package sm
 
 import (
@@ -12,6 +28,7 @@ import (
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
 	"net/http"
 
+	"context"
 	"time"
 )
 
@@ -42,8 +59,8 @@ var _ = Describe("Client", func() {
 			settings = &Settings{
 				User:              "admin",
 				Password:          "admin",
-				Host:              "http://example.com",
-				OsbAPI:            "/osb",
+				URL:               "http://example.com",
+				OSBAPIPath:        "/osb",
 				RequestTimeout:    5,
 				ResyncPeriod:      5,
 				SkipSSLValidation: false,
@@ -310,15 +327,15 @@ var _ = Describe("Client", func() {
 		client, err := NewClient(&Settings{
 			User:              "admin",
 			Password:          "admin",
-			Host:              "http://example.com",
-			OsbAPI:            "/osb",
+			URL:               "http://example.com",
+			OSBAPIPath:        "/osb",
 			RequestTimeout:    2 * time.Second,
 			ResyncPeriod:      5 * time.Second,
 			SkipSSLValidation: false,
 			Transport:         httpClient(t.reaction, t.expectations),
 		})
 		Expect(err).ShouldNot(HaveOccurred())
-		resp, err := client.GetBrokers()
+		resp, err := client.GetBrokers(context.TODO())
 
 		if t.expectedErr != nil {
 			Expect(errors.Cause(err).Error()).To(ContainSubstring(t.expectedErr.Error()))

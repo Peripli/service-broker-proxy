@@ -10,8 +10,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/config"
-	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -43,7 +41,7 @@ type SMProxyBuilder struct {
 	*cron.Cron
 
 	ctx   context.Context
-	cfg   *config.Settings
+	cfg   *Settings
 	group *sync.WaitGroup
 }
 
@@ -111,10 +109,11 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 		group: &group,
 	}
 
-	smClient, err := sm.NewClient(cfg.Sm)
+	smClient, _ := sm.NewClient(cfg.Sm)
 	if err != nil {
 		panic(err)
 	}
+
 	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.Host+APIPrefix)
 
 	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()

@@ -2,16 +2,19 @@
 package smfakes
 
 import (
+	"context"
 	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 )
 
 type FakeClient struct {
-	GetBrokersStub        func() ([]sm.Broker, error)
+	GetBrokersStub        func(ctx context.Context) ([]sm.Broker, error)
 	getBrokersMutex       sync.RWMutex
-	getBrokersArgsForCall []struct{}
-	getBrokersReturns     struct {
+	getBrokersArgsForCall []struct {
+		ctx context.Context
+	}
+	getBrokersReturns struct {
 		result1 []sm.Broker
 		result2 error
 	}
@@ -23,14 +26,16 @@ type FakeClient struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeClient) GetBrokers() ([]sm.Broker, error) {
+func (fake *FakeClient) GetBrokers(ctx context.Context) ([]sm.Broker, error) {
 	fake.getBrokersMutex.Lock()
 	ret, specificReturn := fake.getBrokersReturnsOnCall[len(fake.getBrokersArgsForCall)]
-	fake.getBrokersArgsForCall = append(fake.getBrokersArgsForCall, struct{}{})
-	fake.recordInvocation("GetBrokers", []interface{}{})
+	fake.getBrokersArgsForCall = append(fake.getBrokersArgsForCall, struct {
+		ctx context.Context
+	}{ctx})
+	fake.recordInvocation("GetBrokers", []interface{}{ctx})
 	fake.getBrokersMutex.Unlock()
 	if fake.GetBrokersStub != nil {
-		return fake.GetBrokersStub()
+		return fake.GetBrokersStub(ctx)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -42,6 +47,12 @@ func (fake *FakeClient) GetBrokersCallCount() int {
 	fake.getBrokersMutex.RLock()
 	defer fake.getBrokersMutex.RUnlock()
 	return len(fake.getBrokersArgsForCall)
+}
+
+func (fake *FakeClient) GetBrokersArgsForCall(i int) context.Context {
+	fake.getBrokersMutex.RLock()
+	defer fake.getBrokersMutex.RUnlock()
+	return fake.getBrokersArgsForCall[i].ctx
 }
 
 func (fake *FakeClient) GetBrokersReturns(result1 []sm.Broker, result2 error) {

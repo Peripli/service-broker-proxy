@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Service Manager Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package sm
 
 import (
@@ -6,10 +22,10 @@ import (
 
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"context"
+	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // APIInternalBrokers is the SM API for obtaining the brokers for this proxy
@@ -18,7 +34,7 @@ const APIInternalBrokers = "%s/v1/service_brokers"
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
 type Client interface {
-	GetBrokers(ctx context.Context) ([]platform.ServiceBroker, error)
+	GetBrokers(ctx context.Context) ([]Broker, error)
 }
 
 // ServiceManagerClient allows consuming APIs from a Service Manager
@@ -50,7 +66,7 @@ func NewClient(config *Settings) (*ServiceManagerClient, error) {
 	}
 
 	return &ServiceManagerClient{
-		host:       config.Host,
+		host:       config.URL,
 		httpClient: httpClient,
 	}, nil
 }

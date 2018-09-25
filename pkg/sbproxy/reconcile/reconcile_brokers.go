@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 The Service Manager Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package reconcile
 
 import (
@@ -9,12 +25,12 @@ import (
 
 	"encoding/json"
 
+	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/pkg/errors"
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/Peripli/service-broker-proxy/pkg/sm"
-	"fmt"
 )
 
 // ProxyBrokerPrefix prefixes names of brokers registered at the platform
@@ -118,7 +134,7 @@ func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []platform.Servic
 func (r ReconcileBrokersTask) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {
 	logger := log.C(r.ctx)
 	logger.Debug("ReconcileBrokersTask task getting proxy brokers from platform...")
-	registeredBrokers, err := r.platformClient.GetBrokers()
+	registeredBrokers, err := r.platformClient.GetBrokers(r.ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
 	}
@@ -228,7 +244,7 @@ func (r ReconcileBrokersTask) enableServiceAccessVisibilities(broker *platform.S
 }
 
 func (r ReconcileBrokersTask) isProxyBroker(broker platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.selfHost)
+	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
 }
 
 func logBroker(broker *platform.ServiceBroker) logrus.Fields {
@@ -250,7 +266,7 @@ func emptyContext() json.RawMessage {
 	return json.RawMessage(`{}`)
 }
 
-func convertBrokersRegListToMap(brokerList []platform.ServiceBroker) map[string]*platform.ServiceBroker{
+func convertBrokersRegListToMap(brokerList []platform.ServiceBroker) map[string]*platform.ServiceBroker {
 	brokerRegMap := make(map[string]*platform.ServiceBroker, len(brokerList))
 
 	for i, broker := range brokerList {

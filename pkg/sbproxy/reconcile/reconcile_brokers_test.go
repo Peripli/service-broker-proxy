@@ -1,6 +1,23 @@
+/*
+ * Copyright 2018 The Service Manager Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package reconcile
 
 import (
+	"context"
 	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
@@ -35,7 +52,7 @@ var _ = Describe("ReconcileBrokersTask", func() {
 		platformbrokerNonProxy platform.ServiceBroker
 	)
 
-	stubCreateBrokerToSucceed := func(r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+	stubCreateBrokerToSucceed := func(ctx context.Context, r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 		return &platform.ServiceBroker{
 			GUID:      r.Name,
 			Name:      r.Name,
@@ -43,7 +60,7 @@ var _ = Describe("ReconcileBrokersTask", func() {
 		}, nil
 	}
 
-	stubCreateBrokerToReturnError := func(r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+	stubCreateBrokerToReturnError := func(ctx context.Context, r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 		return nil, fmt.Errorf("error")
 	}
 
@@ -62,7 +79,7 @@ var _ = Describe("ReconcileBrokersTask", func() {
 
 		fakeWG = &sync.WaitGroup{}
 
-		reconcilationTask = NewTask(fakeWG, struct {
+		reconcilationTask = NewTask(context.TODO(), fakeWG, struct {
 			*platformfakes.FakeCatalogFetcher
 			*platformfakes.FakeServiceAccess
 			*platformfakes.FakeClient
@@ -404,7 +421,8 @@ var _ = Describe("ReconcileBrokersTask", func() {
 		expected := t.expectations()
 		Expect(fakePlatformBrokerClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreate)))
 		for index, broker := range expected.reconcileCreate {
-			Expect(fakePlatformBrokerClient.CreateBrokerArgsForCall(index)).To(Equal(&platform.CreateServiceBrokerRequest{
+			_, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
+			Expect(request).To(Equal(&platform.CreateServiceBrokerRequest{
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
 			}))
@@ -412,14 +430,15 @@ var _ = Describe("ReconcileBrokersTask", func() {
 
 		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalog)))
 		for index, broker := range expected.reconcileCatalog {
-			Expect(fakePlatformCatalogFetcher.FetchArgsForCall(index)).To(Equal(&broker))
+			_, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
+			Expect(serviceBroker).To(Equal(&broker))
 		}
 
 		servicesCount := 0
 		index := 0
 		for _, catalog := range expected.reconcileAccess {
 			for _, service := range catalog.Services {
-				_, serviceID := fakePlatformServiceAccess.EnableAccessForServiceArgsForCall(index)
+				_, _, serviceID := fakePlatformServiceAccess.EnableAccessForServiceArgsForCall(index)
 				Expect(serviceID).To(Equal(service.ID))
 				servicesCount++
 				index++
@@ -429,7 +448,8 @@ var _ = Describe("ReconcileBrokersTask", func() {
 
 		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDelete)))
 		for index, broker := range expected.reconcileDelete {
-			Expect(fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)).To(Equal(&platform.DeleteServiceBrokerRequest{
+			_, request := fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)
+			Expect(request).To(Equal(&platform.DeleteServiceBrokerRequest{
 				GUID: broker.GUID,
 				Name: broker.Name,
 			}))
