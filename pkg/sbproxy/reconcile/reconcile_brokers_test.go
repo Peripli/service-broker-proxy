@@ -30,7 +30,7 @@ import (
 	"sync"
 )
 
-var _ = Describe("ReconcileBrokersTask", func() {
+var _ = Describe("ReconcilationTask", func() {
 	const fakeSelfHost = "https://smproxy.com"
 
 	var (
@@ -42,7 +42,7 @@ var _ = Describe("ReconcileBrokersTask", func() {
 
 		fakeWG *sync.WaitGroup
 
-		reconcilationTask *ReconcileBrokersTask
+		reconcilationTask *ReconcilationTask
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
