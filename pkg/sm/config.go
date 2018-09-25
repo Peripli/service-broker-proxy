@@ -5,6 +5,7 @@ import (
 
 	"github.com/Peripli/service-manager/pkg/env"
 	"github.com/pkg/errors"
+	"net/http"
 )
 
 // DefaultSettings builds a default Service Manager Settings
@@ -13,9 +14,11 @@ func DefaultSettings() *Settings {
 		User:              "",
 		Password:          "",
 		URL:               "",
+		OSBAPIPath:            "",
 		RequestTimeout:    5 * time.Second,
-		CreateFunc:        NewClient,
+		ResyncPeriod:      5 * time.Minute,
 		SkipSSLValidation: false,
+		Transport:         nil,
 	}
 }
 
@@ -42,7 +45,7 @@ type Settings struct {
 	ResyncPeriod      time.Duration `mapstructure:"resync_period"`
 	SkipSSLValidation bool          `mapstructure:"skip_ssl_validation"`
 
-	CreateFunc func(config *Settings) (Client, error)
+	Transport http.RoundTripper
 }
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid
@@ -64,9 +67,6 @@ func (c *Settings) Validate() error {
 	}
 	if c.ResyncPeriod == 0 {
 		return errors.New("SM configuration RequestTimeout missing")
-	}
-	if c.CreateFunc == nil {
-		return errors.New("SM configuration CreateFunc missing")
 	}
 	return nil
 }
