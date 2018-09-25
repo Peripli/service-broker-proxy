@@ -1,4 +1,4 @@
-package config
+package sbproxy
 
 import (
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -6,23 +6,28 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/server"
 	"github.com/spf13/pflag"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 )
+
+type validatable interface {
+	Validate() error
+}
 
 // Settings type holds all config properties for the sbproxy
 type Settings struct {
-	Server   *server.Settings `mapstructure:"server"`
-	Log      *log.Settings    `mapstructure:"log"`
-	Sm       *sm.Settings     `mapstructure:"sm"`
-	SelfHost string           `mapstructure:"self_host"`
+	Server    *server.Settings    `mapstructure:"server"`
+	Log       *log.Settings       `mapstructure:"log"`
+	Sm        *sm.Settings        `mapstructure:"sm"`
+	Reconcile *reconcile.Settings `mapstructure:"self"`
 }
 
 // DefaultSettings returns default value for the proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		Server:   server.DefaultSettings(),
-		Log:      log.DefaultSettings(),
-		Sm:       sm.DefaultSettings(),
-		SelfHost: "",
+		Server:    server.DefaultSettings(),
+		Log:       log.DefaultSettings(),
+		Sm:        sm.DefaultSettings(),
+		Reconcile: reconcile.DefaultSettings(),
 	}
 }
 
@@ -43,16 +48,9 @@ func AddPFlags(set *pflag.FlagSet) {
 	env.CreatePFlagsForConfigFile(set)
 }
 
-// New builds an config.Settings from the specified Environment
-func New(env env.Environment) (*Settings, error) {
-	return NewSettings(env)
-}
-
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
-	validatable := []interface {
-		Validate() error
-	}{c.Server, c.Log, c.Sm}
+	validatable := []validatable {c.Server, c.Log, c.Sm, c.Reconcile}
 
 	for _, item := range validatable {
 		if err := item.Validate(); err != nil {

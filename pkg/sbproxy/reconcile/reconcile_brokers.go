@@ -1,4 +1,4 @@
-package sbproxy
+package reconcile
 
 import (
 	"sync"
@@ -8,10 +8,11 @@ import (
 	"encoding/json"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
-	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/pkg/errors"
 	osbc "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"fmt"
 )
 
 // ProxyBrokerPrefix prefixes names of brokers registered at the platform
@@ -25,22 +26,37 @@ type ReconcileBrokersTask struct {
 	group          *sync.WaitGroup
 	platformClient platform.Client
 	smClient       sm.Client
-	proxyPath      string
+	selfHost       string
 }
 
-type serviceBrokerReg struct {
-	platform.ServiceBroker
-	SmID string
+// Settings type represents the sbproxy settings
+type Settings struct {
+	Host string
+}
+
+// DefaultSettings creates default proxy settings
+func DefaultSettings() *Settings {
+	return &Settings{
+		Host: "",
+	}
 }
 
 // NewTask builds a new ReconcileBrokersTask
-func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *ReconcileBrokersTask {
+func NewTask(group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, selfHost string) *ReconcileBrokersTask {
 	return &ReconcileBrokersTask{
 		group:          group,
 		platformClient: platformClient,
 		smClient:       smClient,
-		proxyPath:      proxyPath,
+		selfHost:       selfHost,
 	}
+}
+
+// Validate validates that the configuration contains all mandatory properties
+func (c *Settings) Validate() error {
+	if c.Host == "" {
+		return fmt.Errorf("validate settings: missing host")
+	}
+	return nil
 }
 
 // Run executes the registration task that is responsible for reconciling the state of the proxy brokers at the
@@ -76,49 +92,45 @@ func (r ReconcileBrokersTask) run() {
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
-func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []serviceBrokerReg, payloadBrokers []serviceBrokerReg) {
+func (r ReconcileBrokersTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
 	existingMap := convertBrokersRegListToMap(existingBrokers)
 	for _, payloadBroker := range payloadBrokers {
-		existingBroker := existingMap[payloadBroker.SmID]
-		delete(existingMap, payloadBroker.SmID)
+		existingBroker := existingMap[payloadBroker.GUID]
+		delete(existingMap, payloadBroker.GUID)
 		if existingBroker == nil {
-			r.createBrokerRegistration(&payloadBroker.ServiceBroker)
+			r.createBrokerRegistration(&payloadBroker)
 		} else {
-			r.fetchBrokerCatalog(&existingBroker.ServiceBroker)
+			r.fetchBrokerCatalog(existingBroker)
 		}
-		r.enableServiceAccessVisibilities(&payloadBroker.ServiceBroker)
+		r.enableServiceAccessVisibilities(&payloadBroker)
 	}
 
 	for _, existingBroker := range existingMap {
-		r.deleteBrokerRegistration(&existingBroker.ServiceBroker)
+		r.deleteBrokerRegistration(existingBroker)
 	}
 }
 
-func (r ReconcileBrokersTask) getBrokersFromPlatform() ([]serviceBrokerReg, error) {
+func (r ReconcileBrokersTask) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {
 	logrus.Debug("ReconcileBrokersTask task getting proxy brokers from platform...")
 	registeredBrokers, err := r.platformClient.GetBrokers()
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
 	}
 
-	brokersFromPlatform := make([]serviceBrokerReg, 0, len(registeredBrokers))
+	brokersFromPlatform := make([]platform.ServiceBroker, 0, len(registeredBrokers))
 	for _, broker := range registeredBrokers {
 		if !r.isProxyBroker(broker) {
 			continue
 		}
 
 		logrus.WithFields(logBroker(&broker)).Debug("ReconcileBrokersTask task FOUND registered proxy broker... ")
-		brokerReg := serviceBrokerReg{
-			ServiceBroker: broker,
-			SmID:          broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:],
-		}
-		brokersFromPlatform = append(brokersFromPlatform, brokerReg)
+		brokersFromPlatform = append(brokersFromPlatform, broker)
 	}
 	logrus.Debugf("ReconcileBrokersTask task SUCCESSFULLY retrieved %d proxy brokers from platform", len(brokersFromPlatform))
 	return brokersFromPlatform, nil
 }
 
-func (r ReconcileBrokersTask) getBrokersFromSM() ([]serviceBrokerReg, error) {
+func (r ReconcileBrokersTask) getBrokersFromSM() ([]platform.ServiceBroker, error) {
 	logrus.Debug("ReconcileBrokersTask task getting brokers from Service Manager")
 
 	proxyBrokers, err := r.smClient.GetBrokers()
@@ -126,11 +138,13 @@ func (r ReconcileBrokersTask) getBrokersFromSM() ([]serviceBrokerReg, error) {
 		return nil, errors.Wrap(err, "error getting brokers from SM")
 	}
 
-	brokersFromSM := make([]serviceBrokerReg, 0, len(proxyBrokers))
+	brokersFromSM := make([]platform.ServiceBroker, 0, len(proxyBrokers))
 	for _, broker := range proxyBrokers {
-		brokerReg := serviceBrokerReg{
-			ServiceBroker: broker,
-			SmID:          broker.GUID,
+		brokerReg := platform.ServiceBroker{
+			GUID:      broker.ID,
+			BrokerURL: broker.BrokerURL,
+			Catalog:   broker.Catalog,
+			Metadata:  broker.Metadata,
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
@@ -156,13 +170,13 @@ func (r ReconcileBrokersTask) createBrokerRegistration(broker *platform.ServiceB
 
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      ProxyBrokerPrefix + broker.GUID,
-		BrokerURL: r.proxyPath + "/" + broker.GUID,
+		BrokerURL: r.selfHost + "/" + broker.GUID,
 	}
 
-	if _, err := r.platformClient.CreateBroker(createRequest); err != nil {
+	if b, err := r.platformClient.CreateBroker(createRequest); err != nil {
 		logrus.WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
 	} else {
-		logrus.WithFields(logBroker(broker)).Infof("ReconcileBrokersTask task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
+		logrus.WithFields(logBroker(b)).Infof("ReconcileBrokersTask task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	}
 }
 
@@ -204,7 +218,7 @@ func (r ReconcileBrokersTask) enableServiceAccessVisibilities(broker *platform.S
 }
 
 func (r ReconcileBrokersTask) isProxyBroker(broker platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
+	return strings.HasPrefix(broker.BrokerURL, r.selfHost)
 }
 
 func logBroker(broker *platform.ServiceBroker) logrus.Fields {
@@ -226,12 +240,12 @@ func emptyContext() json.RawMessage {
 	return json.RawMessage(`{}`)
 }
 
-func convertBrokersRegListToMap(brokerList []serviceBrokerReg) map[string]*serviceBrokerReg {
-	brokerRegMap := make(map[string]*serviceBrokerReg, len(brokerList))
+func convertBrokersRegListToMap(brokerList []platform.ServiceBroker) map[string]*platform.ServiceBroker{
+	brokerRegMap := make(map[string]*platform.ServiceBroker, len(brokerList))
 
-	for i := range brokerList {
-		brokerRegMap[brokerList[i].SmID] = &brokerList[i]
+	for i, broker := range brokerList {
+		smID := broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:]
+		brokerRegMap[smID] = &brokerList[i]
 	}
-
 	return brokerRegMap
 }

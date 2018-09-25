@@ -6,7 +6,7 @@ import (
 
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"context"
 	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -15,51 +15,70 @@ import (
 // APIInternalBrokers is the SM API for obtaining the brokers for this proxy
 const APIInternalBrokers = "%s/v1/service_brokers"
 
+//todo
+// nqkakvi transporti koito mogat da se vlagat
+// logika za tova koe mi e brokera
+// proxy
+// osb controller koito priema kude mi e brokera i transport
+// sm client koito se pravi ot sm config
+// sm config -> brokertransport -> forwarder koito e reverseproxy s transporta i url
+// -> osb controller ot brokertransport (vutre suzdava forwarder ?)
+// -> SMClient implements Client + Forwarder, priema v konstruktura transport
+
+//type SMC struct {
+//	settings *Settings // creds, osbapi, smurl, skipssl, timeout
+//}
+//
+//type Forwarder interface {
+//	Forward()
+//}
+
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
 type Client interface {
-	GetBrokers() ([]platform.ServiceBroker, error)
+	GetBrokers() ([]Broker, error)
 }
 
-type serviceManagerClient struct {
-	Config     *Settings
+// ServiceManagerClient allows consuming APIs from a Service Manager
+type ServiceManagerClient struct {
+	host       string
 	httpClient *http.Client
 }
 
-var _ Client = &serviceManagerClient{}
-
 // NewClient builds a new Service Manager Client from the provided configuration
-func NewClient(config *Settings) (Client, error) {
+func NewClient(config *Settings) (*ServiceManagerClient, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
-	httpClient := &http.Client{
-		Timeout: time.Duration(config.RequestTimeout) * time.Second,
+	httpClient := &http.Client{}
+	httpClient.Timeout = time.Duration(config.RequestTimeout)
+	tr := config.Transport
+
+	if tr == nil {
+		tr = &SkipSSLTransport{
+			SkipSslValidation: config.SkipSSLValidation,
+		}
 	}
 
-	httpClient.Transport = BasicAuthTransport{
+	httpClient.Transport = &BasicAuthTransport{
 		Username: config.User,
 		Password: config.Password,
-		Rt: SkipSSLTransport{
-			SkipSslValidation: config.SkipSSLValidation,
-		},
+		Rt:       tr,
 	}
 
-	client := &serviceManagerClient{
-		Config:     config,
+	return &ServiceManagerClient{
+		host:       config.Host,
 		httpClient: httpClient,
-	}
-
-	return client, nil
+	}, nil
 }
 
 // GetBrokers calls the Service Manager in order to obtain all brokers t	hat need to be registered
 // in the service broker proxy
-func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
-	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.Config.Host)
-	URL := fmt.Sprintf(APIInternalBrokers, c.Config.Host)
-	response, err := util.SendRequest(c.httpClient.Do, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
+func (c *ServiceManagerClient) GetBrokers() ([]Broker, error) {
+	logrus.Debugf("Getting brokers for proxy from Service Manager at %s", c.host)
+	URL := fmt.Sprintf(APIInternalBrokers, c.host)
+	response, err := util.SendRequest(context.Background(), c.httpClient.Do, http.MethodGet, URL, map[string]string{"catalog": "true"}, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
@@ -74,20 +93,5 @@ func (c *serviceManagerClient) GetBrokers() ([]platform.ServiceBroker, error) {
 		return nil, errors.WithStack(util.HandleResponseError(response))
 	}
 
-	return c.packResponse(list), nil
-}
-
-func (c *serviceManagerClient) packResponse(list *Brokers) []platform.ServiceBroker {
-	brokers := make([]platform.ServiceBroker, 0, len(list.Brokers))
-	for _, broker := range list.Brokers {
-		b := platform.ServiceBroker{
-			GUID:      broker.ID,
-			Name:      broker.Name,
-			BrokerURL: broker.BrokerURL,
-			Catalog:   broker.Catalog,
-			Metadata:  broker.Metadata,
-		}
-		brokers = append(brokers, b)
-	}
-	return brokers
+	return list.Brokers, nil
 }
