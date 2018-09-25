@@ -2,8 +2,8 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:6ec6d0750c43e57130fae9f09c997494efbd66e3c0d2c404eb012c112059a543"
+  branch = "minors"
+  digest = "1:0e3aaa7d59adc13400888211adf00cafeb5d771b8bd73fe34fc4bc8fba29f70d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -18,6 +18,7 @@
     "cf",
     "config",
     "pkg/env",
+    "pkg/env/envfakes",
     "pkg/log",
     "pkg/server",
     "pkg/sm",
@@ -33,7 +34,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "f9027b31347dd7bec45a5239544a647295383192"
+  revision = "5346e84f358818efb13fbe918ce8e0231dc9e748"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -293,12 +294,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5324cfeea9061676ca4c46b8d4c85077bd307f7c0b0bcefeb8c911bd586a8eaf"
+  digest = "1:4323c6f79178c6f811a0528b1b2eba03bad0cae33605636f1e38c8f907b5cbf7"
   name = "github.com/onrik/logrus"
-  packages = [
-    "filename",
-    "formatter",
-  ]
+  packages = ["filename"]
   pruneopts = "UT"
   revision = "ca0a758702be2ae04725ba88dcd27a71949faf33"
 
@@ -559,7 +557,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:95cd6281ba9854b73cb684c27fb0fbd5b5bc01f01f8b881b2ebaa65ff0874e7f"
+  digest = "1:1867ccf0254b44012cf155e384e455ec8a41353955243a9595695eb5887cefc0"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -571,7 +569,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "26e67e76b6c3f6ce91f7c52def5af501b4e0f3a2"
+  revision = "f04abc6bdfa7a0171a8a0c9fd2ada9391044d056"
 
 [[projects]]
   branch = "master"
@@ -586,14 +584,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:374fc90fcb026e9a367e3fad29e988e5dd944b68ca3f24a184d77abc5307dda4"
+  digest = "1:75cb7164c3c9e028922e69b10842159549ab96ffc4800ea189c4a6865dc3bc08"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+  revision = "90868a75fefd03942536221d7c0e2f84ec62a668"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -631,7 +629,7 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:328b5e4f197d928c444a51a75385f4b978915c0e75521f0ad6a3db976c97a7d3"
+  digest = "1:6247f76e55a1e1a5c19a81e2d4b4dff6730461eeb5bbb0a16dd4a8ec8637ee93"
   name = "google.golang.org/appengine"
   packages = [
     "internal",
@@ -643,8 +641,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
-  version = "v1.1.0"
+  revision = "ae0ab99deb4dc413a2b4bd6c8bdd0eb67f1e4d06"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -656,7 +654,7 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:02d2c5be9a35ce750536e74af0d98aca806f225913a3ab28f285843d6283c70d"
+  digest = "1:26a278a34e30cc8fbd09d5f7474488ac4cbad325c2b592b30e76e5d7d2fc1f10"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -664,8 +662,8 @@
     "json",
   ]
   pruneopts = "UT"
-  revision = "8254d6c783765f38c8675fae4427a1fe73fbd09d"
-  version = "v2.1.8"
+  revision = "ef984e69dd356202fd4e4910d4d9c24468bdf0b8"
+  version = "v2.1.9"
 
 [[projects]]
   branch = "v1"
@@ -690,21 +688,24 @@
     "github.com/Peripli/service-manager/api/filters",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
+    "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/log",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
     "github.com/Peripli/service-manager/test/common",
-    "github.com/onrik/logrus/filename",
-    "github.com/onrik/logrus/formatter",
+    "github.com/fatih/structs",
+    "github.com/gavv/httpexpect",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
+    "github.com/onsi/gomega/ghttp",
     "github.com/pkg/errors",
     "github.com/pmorie/go-open-service-broker-client/v2",
     "github.com/robfig/cron",
     "github.com/sirupsen/logrus",
+    "github.com/spf13/cast",
     "github.com/spf13/pflag",
   ]
   solver-name = "gps-cdcl"

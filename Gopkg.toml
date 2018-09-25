@@ -26,8 +26,12 @@
   version = "1.4.0"
 
 [[constraint]]
- name = "github.com/onrik/logrus"
- branch = "master"
+  name = "github.com/pmorie/go-open-service-broker-client"
+  version = "=0.0.10"
+
+[[constraint]]
+  name = "github.com/gavv/httpexpect"
+  revision = "c44a6d7bb636b17e880a53998a7f7061a56ffacb"
 
 [[constraint]]
  name = "github.com/onsi/gomega"
@@ -39,7 +43,7 @@
 
 [[constraint]]
   name = "github.com/Peripli/service-manager"
-  branch = "master"
+  branch = "minors"
 
 # Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]

@@ -455,4 +455,17 @@ var _ = Describe("ReconcileBrokersTask", func() {
 			}))
 		}
 	}, entries...)
+
+	Describe("Settings", func() {
+		Describe("Validate", func() {
+			Context("when host is missing", func() {
+				It("returns an error", func() {
+					settings := DefaultSettings()
+					err := settings.Validate()
+
+					Expect(err).Should(HaveOccurred())
+				})
+			})
+		})
+	})
 })
