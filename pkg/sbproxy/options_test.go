@@ -86,7 +86,7 @@ var _ = Describe("Config", func() {
 						SkipSSLValidation: true,
 					},
 					Reconcile: &reconcile.Settings{
-						Host: "https://selfhost.com",
+						Host: "https://apphost.com",
 					},
 				}
 				fakeEnv.UnmarshalReturns(nil)
@@ -160,11 +160,11 @@ var _ = Describe("Config", func() {
 					SkipSSLValidation: true,
 				},
 				Reconcile: &reconcile.Settings{
-					Host: "https://selfhost.com",
+					Host: "https://apphost.com",
 				},
 			}
 		})
-		Context("when selfhost is missing", func() {
+		Context("when app.host is missing", func() {
 			It("returns an error", func() {
 				config.Reconcile.Host = ""
 				assertErrorDuringValidate()

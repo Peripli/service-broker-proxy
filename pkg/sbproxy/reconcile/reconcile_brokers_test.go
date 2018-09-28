@@ -31,7 +31,7 @@ import (
 )
 
 var _ = Describe("ReconcilationTask", func() {
-	const fakeSelfHost = "https://smproxy.com"
+	const fakeAppHost = "https://smproxy.com"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
@@ -87,7 +87,7 @@ var _ = Describe("ReconcilationTask", func() {
 			FakeCatalogFetcher: fakePlatformCatalogFetcher,
 			FakeServiceAccess:  fakePlatformServiceAccess,
 			FakeClient:         fakePlatformBrokerClient,
-		}, fakeSMClient, fakeSelfHost)
+		}, fakeSMClient, fakeAppHost)
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
@@ -148,13 +148,13 @@ var _ = Describe("ReconcilationTask", func() {
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
 			Name:      ProxyBrokerPrefix + "smBrokerID1",
-			BrokerURL: fakeSelfHost + "/" + smbroker1.ID,
+			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
 			Name:      ProxyBrokerPrefix + "smBrokerID2",
-			BrokerURL: fakeSelfHost + "/" + smbroker2.ID,
+			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
 		platformbrokerNonProxy = platform.ServiceBroker{
