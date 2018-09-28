@@ -40,7 +40,7 @@ var _ = Describe("ReconcilationTask", func() {
 		fakePlatformServiceAccess  *platformfakes.FakeServiceAccess
 		fakePlatformBrokerClient   *platformfakes.FakeClient
 
-		fakeWG *sync.WaitGroup
+		waitGroup *sync.WaitGroup
 
 		reconcilationTask *ReconcilationTask
 
@@ -77,9 +77,9 @@ var _ = Describe("ReconcilationTask", func() {
 		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
 		fakePlatformServiceAccess = &platformfakes.FakeServiceAccess{}
 
-		fakeWG = &sync.WaitGroup{}
+		waitGroup = &sync.WaitGroup{}
 
-		reconcilationTask = NewTask(context.TODO(), fakeWG, struct {
+		reconcilationTask = NewTask(context.TODO(), waitGroup, struct {
 			*platformfakes.FakeCatalogFetcher
 			*platformfakes.FakeServiceAccess
 			*platformfakes.FakeClient
@@ -164,11 +164,11 @@ var _ = Describe("ReconcilationTask", func() {
 		}
 	})
 
-	type reconcilationExceptations struct {
-		reconcileCreate  []platform.ServiceBroker
-		reconcileDelete  []platform.ServiceBroker
-		reconcileCatalog []platform.ServiceBroker
-		reconcileAccess  []osbc.CatalogResponse
+	type expectations struct {
+		reconcileCreateCalledFor  []platform.ServiceBroker
+		reconcileDeleteCalledFor  []platform.ServiceBroker
+		reconcileCatalogCalledFor []platform.ServiceBroker
+		reconcileAccessCalledFor  []osbc.CatalogResponse
 	}
 
 	type testCase struct {
@@ -176,7 +176,7 @@ var _ = Describe("ReconcilationTask", func() {
 		platformBrokers func() ([]platform.ServiceBroker, error)
 		smBrokers       func() ([]sm.Broker, error)
 
-		expectations func() reconcilationExceptations
+		expectations func() expectations
 	}
 
 	entries := []TableEntry{
@@ -190,12 +190,12 @@ var _ = Describe("ReconcilationTask", func() {
 			smBrokers: func() ([]sm.Broker, error) {
 				return nil, fmt.Errorf("error fetching brokers")
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate:  []platform.ServiceBroker{},
-					reconcileDelete:  []platform.ServiceBroker{},
-					reconcileCatalog: []platform.ServiceBroker{},
-					reconcileAccess:  []osbc.CatalogResponse{},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileAccessCalledFor:  []osbc.CatalogResponse{},
 				}
 			},
 		}),
@@ -210,12 +210,12 @@ var _ = Describe("ReconcilationTask", func() {
 			smBrokers: func() ([]sm.Broker, error) {
 				return []sm.Broker{}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate:  []platform.ServiceBroker{},
-					reconcileDelete:  []platform.ServiceBroker{},
-					reconcileCatalog: []platform.ServiceBroker{},
-					reconcileAccess:  []osbc.CatalogResponse{},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileAccessCalledFor:  []osbc.CatalogResponse{},
 				}
 			},
 		}),
@@ -237,18 +237,16 @@ var _ = Describe("ReconcilationTask", func() {
 					smbroker1,
 				}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate: []platform.ServiceBroker{
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{
 						platformbroker1,
 					},
-					reconcileDelete: []platform.ServiceBroker{
+					reconcileDeleteCalledFor: []platform.ServiceBroker{
 						platformbroker2,
 					},
-					reconcileCatalog: []platform.ServiceBroker{},
-					reconcileAccess: []osbc.CatalogResponse{
-						*smbroker1.Catalog,
-					},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileAccessCalledFor: []osbc.CatalogResponse{},
 				}
 			},
 		}),
@@ -270,15 +268,15 @@ var _ = Describe("ReconcilationTask", func() {
 					smbroker2,
 				}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate: []platform.ServiceBroker{},
-					reconcileDelete: []platform.ServiceBroker{},
-					reconcileCatalog: []platform.ServiceBroker{
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{},
+					reconcileDeleteCalledFor: []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{
 						platformbroker1,
 						platformbroker2,
 					},
-					reconcileAccess: []osbc.CatalogResponse{
+					reconcileAccessCalledFor: []osbc.CatalogResponse{
 						*smbroker2.Catalog,
 					},
 				}
@@ -298,15 +296,15 @@ var _ = Describe("ReconcilationTask", func() {
 					smbroker2,
 				}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate: []platform.ServiceBroker{
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{
 						platformbroker1,
 						platformbroker2,
 					},
-					reconcileDelete:  []platform.ServiceBroker{},
-					reconcileCatalog: []platform.ServiceBroker{},
-					reconcileAccess: []osbc.CatalogResponse{
+					reconcileDeleteCalledFor:  []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileAccessCalledFor: []osbc.CatalogResponse{
 						*smbroker1.Catalog,
 						*smbroker2.Catalog,
 					},
@@ -328,14 +326,14 @@ var _ = Describe("ReconcilationTask", func() {
 					smbroker1,
 				}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate: []platform.ServiceBroker{},
-					reconcileDelete: []platform.ServiceBroker{},
-					reconcileCatalog: []platform.ServiceBroker{
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{},
+					reconcileDeleteCalledFor: []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{
 						platformbroker1,
 					},
-					reconcileAccess: []osbc.CatalogResponse{
+					reconcileAccessCalledFor: []osbc.CatalogResponse{
 						*smbroker1.Catalog,
 					},
 				}
@@ -354,14 +352,14 @@ var _ = Describe("ReconcilationTask", func() {
 			smBrokers: func() ([]sm.Broker, error) {
 				return []sm.Broker{}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate: []platform.ServiceBroker{},
-					reconcileDelete: []platform.ServiceBroker{
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{},
+					reconcileDeleteCalledFor: []platform.ServiceBroker{
 						platformbroker1,
 					},
-					reconcileCatalog: []platform.ServiceBroker{},
-					reconcileAccess:  []osbc.CatalogResponse{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileAccessCalledFor:  []osbc.CatalogResponse{},
 				}
 			},
 		}),
@@ -378,12 +376,12 @@ var _ = Describe("ReconcilationTask", func() {
 			smBrokers: func() ([]sm.Broker, error) {
 				return []sm.Broker{}, nil
 			},
-			expectations: func() reconcilationExceptations {
-				return reconcilationExceptations{
-					reconcileCreate:  []platform.ServiceBroker{},
-					reconcileDelete:  []platform.ServiceBroker{},
-					reconcileCatalog: []platform.ServiceBroker{},
-					reconcileAccess:  []osbc.CatalogResponse{},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileAccessCalledFor:  []osbc.CatalogResponse{},
 				}
 			},
 		}),
@@ -419,8 +417,8 @@ var _ = Describe("ReconcilationTask", func() {
 		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
 
 		expected := t.expectations()
-		Expect(fakePlatformBrokerClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreate)))
-		for index, broker := range expected.reconcileCreate {
+		Expect(fakePlatformBrokerClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreateCalledFor)))
+		for index, broker := range expected.reconcileCreateCalledFor {
 			_, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
 			Expect(request).To(Equal(&platform.CreateServiceBrokerRequest{
 				Name:      broker.Name,
@@ -428,15 +426,15 @@ var _ = Describe("ReconcilationTask", func() {
 			}))
 		}
 
-		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalog)))
-		for index, broker := range expected.reconcileCatalog {
+		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
+		for index, broker := range expected.reconcileCatalogCalledFor {
 			_, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
 			Expect(serviceBroker).To(Equal(&broker))
 		}
 
 		servicesCount := 0
 		index := 0
-		for _, catalog := range expected.reconcileAccess {
+		for _, catalog := range expected.reconcileAccessCalledFor {
 			for _, service := range catalog.Services {
 				_, _, serviceID := fakePlatformServiceAccess.EnableAccessForServiceArgsForCall(index)
 				Expect(serviceID).To(Equal(service.ID))
@@ -446,8 +444,8 @@ var _ = Describe("ReconcilationTask", func() {
 		}
 		Expect(fakePlatformServiceAccess.EnableAccessForServiceCallCount()).To(Equal(servicesCount))
 
-		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDelete)))
-		for index, broker := range expected.reconcileDelete {
+		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDeleteCalledFor)))
+		for index, broker := range expected.reconcileDeleteCalledFor {
 			_, request := fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)
 			Expect(request).To(Equal(&platform.DeleteServiceBrokerRequest{
 				GUID: broker.GUID,

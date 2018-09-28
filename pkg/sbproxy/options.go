@@ -23,18 +23,15 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/server"
 	"github.com/spf13/pflag"
+	"github.com/Peripli/service-manager/pkg/util"
 )
-
-type validatable interface {
-	Validate() error
-}
 
 // Settings type holds all config properties for the sbproxy
 type Settings struct {
 	Server    *server.Settings    `mapstructure:"server"`
 	Log       *log.Settings       `mapstructure:"log"`
 	Sm        *sm.Settings        `mapstructure:"sm"`
-	Reconcile *reconcile.Settings `mapstructure:"self"`
+	Reconcile *reconcile.Settings `mapstructure:"app"`
 }
 
 // DefaultSettings returns default value for the proxy settings
@@ -66,7 +63,7 @@ func AddPFlags(set *pflag.FlagSet) {
 
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
-	validatable := []validatable{c.Server, c.Log, c.Sm, c.Reconcile}
+	validatable := []util.InputValidator{c.Server, c.Log, c.Sm, c.Reconcile}
 
 	for _, item := range validatable {
 		if err := item.Validate(); err != nil {

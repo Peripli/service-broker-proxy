@@ -83,21 +83,6 @@ var _ = Describe("Sbproxy", func() {
 			})
 		})
 
-		//Context("when adding cron job fails due to invalid schedule", func() {
-		//	FIt("should panic", func() {
-		//		Expect(func() {
-		//			New(ctx, DefaultEnv(func(set *pflag.FlagSet) {
-		//				set.Set("self.host", "http://localhost:8080")
-		//				set.Set("sm.user", "admin")
-		//				set.Set("sm.password", "admin")
-		//				set.Set("sm.url", "http://localhost:8080")
-		//				set.Set("sm.osb_api_path", "/osb")
-		//				set.Set("sm.resync_period", "1m")
-		//			}), fakePlatformClient)
-		//		}).To(Panic())
-		//	})
-		//})
-
 		Context("when no errors occur", func() {
 			var SMProxy *httpexpect.Expect
 

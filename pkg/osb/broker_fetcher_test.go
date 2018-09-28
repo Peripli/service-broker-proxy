@@ -35,7 +35,7 @@ var _ = Describe("BrokerFetcher", func() {
 		var fetcher smosb.BrokerFetcher
 
 		BeforeEach(func() {
-			fetcher = &osb.BrokerDetails{
+			fetcher = &osb.BrokerDetailsFetcher{
 				Username: user,
 				Password: password,
 				URL:      url,

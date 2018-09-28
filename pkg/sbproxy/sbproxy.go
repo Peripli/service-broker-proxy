@@ -88,7 +88,7 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 
 	api := &web.API{
 		Controllers: []web.Controller{
-			smosb.NewController(&osb.BrokerDetails{
+			smosb.NewController(&osb.BrokerDetailsFetcher{
 				URL:      cfg.Sm.URL + cfg.Sm.OSBAPIPath,
 				Username: cfg.Sm.User,
 				Password: cfg.Sm.Password,

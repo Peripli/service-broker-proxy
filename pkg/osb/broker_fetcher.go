@@ -22,17 +22,17 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-// BrokerDetails implements osb.BrokerRoundTripper
-type BrokerDetails struct {
+// BrokerDetailsFetcher implements osb.BrokerFetchervalidatable
+type BrokerDetailsFetcher struct {
 	Username string
 	Password string
 	URL      string
 }
 
-var _ osb.BrokerFetcher = &BrokerDetails{}
+var _ osb.BrokerFetcher = &BrokerDetailsFetcher{}
 
 // FetchBroker implements osb.BrokerRoundTripper and returns the coordinates of the broker with the specified id
-func (b *BrokerDetails) FetchBroker(ctx context.Context, brokerID string) (*types.Broker, error) {
+func (b *BrokerDetailsFetcher) FetchBroker(ctx context.Context, brokerID string) (*types.Broker, error) {
 	return &types.Broker{
 		BrokerURL: b.URL + "/" + brokerID,
 		Credentials: &types.Credentials{
