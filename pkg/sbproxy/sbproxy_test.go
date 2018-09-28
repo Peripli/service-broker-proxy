@@ -58,7 +58,7 @@ var _ = Describe("Sbproxy", func() {
 			It("should panic", func() {
 				Expect(func() {
 					New(ctx, DefaultEnv(func(set *pflag.FlagSet) {
-						set.Set("app.host", "http://localhost:8080")
+						set.Set("app.url", "http://localhost:8080")
 						set.Set("sm.user", "")
 						set.Set("sm.password", "admin")
 						set.Set("sm.url", "http://localhost:8080")
@@ -73,7 +73,7 @@ var _ = Describe("Sbproxy", func() {
 			It("should panic", func() {
 				Expect(func() {
 					New(ctx, DefaultEnv(func(set *pflag.FlagSet) {
-						set.Set("app.host", "http://localhost:8080")
+						set.Set("app.url", "http://localhost:8080")
 						set.Set("sm.user", "")
 						set.Set("sm.password", "admin")
 						set.Set("sm.url", "http://localhost:8080")
@@ -90,7 +90,7 @@ var _ = Describe("Sbproxy", func() {
 				fakePlatformClient.GetBrokersReturns([]platform.ServiceBroker{}, nil)
 
 				proxy := New(ctx, DefaultEnv(func(set *pflag.FlagSet) {
-					set.Set("app.host", "http://localhost:8080")
+					set.Set("app.url", "http://localhost:8080")
 					set.Set("sm.user", "admin")
 					set.Set("sm.password", "admin")
 					set.Set("sm.url", "http://localhost:8080")

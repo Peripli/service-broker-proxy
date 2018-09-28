@@ -114,7 +114,7 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 		panic(err)
 	}
 
-	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.Host+APIPrefix)
+	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix)
 
 	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
 	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)

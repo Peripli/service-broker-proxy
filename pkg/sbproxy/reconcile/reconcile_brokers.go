@@ -50,13 +50,13 @@ type ReconcilationTask struct {
 
 // Settings type represents the sbproxy settings
 type Settings struct {
-	Host string
+	URL string
 }
 
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		Host: "",
+		URL: "",
 	}
 }
 
@@ -73,7 +73,7 @@ func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform
 
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
-	if c.Host == "" {
+	if c.URL == "" {
 		return fmt.Errorf("validate settings: missing host")
 	}
 	return nil
