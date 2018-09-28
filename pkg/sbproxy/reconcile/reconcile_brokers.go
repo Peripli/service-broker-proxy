@@ -210,7 +210,7 @@ func (r ReconcilationTask) createBrokerRegistration(broker *platform.ServiceBrok
 	return
 }
 
-func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBroker) (err error) {
+func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBroker) {
 	logger := log.C(r.ctx)
 	logger.WithFields(logBroker(broker)).Info("ReconcilationTask task attempting to delete broker from platform...")
 
@@ -219,7 +219,7 @@ func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBrok
 		Name: broker.Name,
 	}
 
-	if err = r.platformClient.DeleteBroker(r.ctx, deleteRequest); err != nil {
+	if err := r.platformClient.DeleteBroker(r.ctx, deleteRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
 	} else {
 		logger.WithFields(logBroker(broker)).Infof("ReconcilationTask task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
@@ -227,7 +227,7 @@ func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBrok
 	return
 }
 
-func (r ReconcilationTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) (err error) {
+func (r ReconcilationTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) {
 	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
 		emptyContext := emptyContext()
 		logger := log.C(r.ctx)
@@ -241,7 +241,7 @@ func (r ReconcilationTask) enableServiceAccessVisibilities(broker *platform.Serv
 
 		for _, service := range catalog.Services {
 			logger.WithFields(logService(service)).Debug("ReconcilationTask task attempting to enable service access for service...")
-			if err = f.EnableAccessForService(r.ctx, emptyContext, service.ID); err != nil {
+			if err := f.EnableAccessForService(r.ctx, emptyContext, service.ID); err != nil {
 				logger.WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
 			}
 			logger.WithFields(logService(service)).Debug("ReconcilationTask task finished enabling service access for service...")

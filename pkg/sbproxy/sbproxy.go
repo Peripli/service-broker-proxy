@@ -86,6 +86,8 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 	ctx = log.Configure(ctx, cfg.Log)
 	log.AddHook(&logging.ErrorLocationHook{})
 
+	log.C(ctx).Info("Proxy generic config: %+v: ", cfg)
+
 	api := &web.API{
 		Controllers: []web.Controller{
 			smosb.NewController(&osb.BrokerDetailsFetcher{
