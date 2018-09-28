@@ -224,7 +224,6 @@ func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBrok
 	} else {
 		logger.WithFields(logBroker(broker)).Infof("ReconcilationTask task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 	}
-	return
 }
 
 func (r ReconcilationTask) enableServiceAccessVisibilities(broker *platform.ServiceBroker) {
@@ -248,7 +247,6 @@ func (r ReconcilationTask) enableServiceAccessVisibilities(broker *platform.Serv
 		}
 		logger.WithFields(logBroker(broker)).Infof("ReconcilationTask task finished enabling service access for broker")
 	}
-	return
 }
 
 func (r ReconcilationTask) isProxyBroker(broker platform.ServiceBroker) bool {
