@@ -2,8 +2,8 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:2be9e8bac4afb50fbe26308d781ec78378397e3c947ee4553fe9abd16f1a0696"
+  branch = "healthcheck"
+  digest = "1:98b7d8853b2f3a9c041861a200647b993baf7209fa9343c8d1b154a3dcc102a3"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -19,6 +19,7 @@
     "config",
     "pkg/env",
     "pkg/env/envfakes",
+    "pkg/health",
     "pkg/log",
     "pkg/server",
     "pkg/sm",
@@ -34,7 +35,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "a9dcbac9f21259013baac38a2d8264d3593488bb"
+  revision = "b33f5754617f21faf6009b955f12ea3f2bd9dddf"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
