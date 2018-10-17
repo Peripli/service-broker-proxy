@@ -3,6 +3,7 @@ package sbproxy
 import (
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/api/healthcheck"
+	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
 	"sync"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/api/filters"
 	smosb "github.com/Peripli/service-manager/api/osb"
@@ -21,7 +23,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/web"
 	"github.com/robfig/cron"
 	"github.com/spf13/pflag"
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 )
 
 const (
@@ -100,6 +101,7 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 		Filters: []web.Filter{
 			&filters.Logging{},
 		},
+		Registry: health.NewDefaultRegistry(),
 	}
 
 	sbProxy := &SMProxyBuilder{
@@ -158,7 +160,6 @@ func (p *SMProxy) Run() {
 
 	p.Server.Run(p.ctx)
 }
-
 
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards
 // WaitGroup parameter should be pointer or else the copy won't get notified about .Done() calls
