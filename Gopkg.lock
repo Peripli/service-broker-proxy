@@ -687,6 +687,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
+    "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
     "github.com/Peripli/service-manager/pkg/env/envfakes",

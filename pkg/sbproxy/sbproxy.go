@@ -2,6 +2,7 @@ package sbproxy
 
 import (
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
+	"github.com/Peripli/service-manager/api/healthcheck"
 	"github.com/Peripli/service-manager/pkg/log"
 	"sync"
 
@@ -128,6 +129,8 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 
 // Build builds the Service Manager
 func (smb *SMProxyBuilder) Build() *SMProxy {
+	smb.installHealth()
+
 	srv := server.New(smb.cfg.Server, smb.API)
 	srv.Use(filters.NewRecoveryMiddleware())
 
@@ -136,6 +139,12 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 		scheduler: smb.Cron,
 		ctx:       smb.ctx,
 		group:     smb.group,
+	}
+}
+
+func (smb *SMProxyBuilder) installHealth() {
+	if len(smb.HealthIndicators()) > 0 {
+		smb.RegisterControllers(healthcheck.NewController(smb.HealthIndicators(), smb.HealthAggregationPolicy()))
 	}
 }
 
