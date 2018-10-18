@@ -2,8 +2,8 @@
 
 
 [[projects]]
-  branch = "healthcheck"
-  digest = "1:98b7d8853b2f3a9c041861a200647b993baf7209fa9343c8d1b154a3dcc102a3"
+  branch = "master"
+  digest = "1:2eec190ce3fdf7c0484bf582c2f5fbcf7b0faca5054560af8014c9d66a7b5681"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -35,7 +35,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "b33f5754617f21faf6009b955f12ea3f2bd9dddf"
+  revision = "8ee2d61438a4b6b505a4ea18b8d8a1405a065d94"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -687,15 +687,18 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
+    "github.com/Peripli/service-manager/api/filters/authn",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
     "github.com/Peripli/service-manager/pkg/env/envfakes",
+    "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
+    "github.com/Peripli/service-manager/storage",
     "github.com/Peripli/service-manager/test/common",
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",

@@ -17,40 +17,61 @@
 package middleware
 
 import (
-	"github.com/Peripli/service-manager/pkg/log"
-	"net/http"
-
-	"github.com/Peripli/service-manager/pkg/util"
+	"context"
+	"fmt"
+	"github.com/Peripli/service-manager/api/filters/authn"
+	"github.com/Peripli/service-manager/pkg/types"
+	"github.com/Peripli/service-manager/pkg/web"
+	"github.com/Peripli/service-manager/storage"
 )
 
-const (
-	notAuthorized = "Not Authorized"
-	errorMessage  = "Unauthorized resource access"
-)
+type basicAuthFilter struct {
+	web.Filter
+}
 
-// BasicAuth is a middleware for basic authorization
-func BasicAuth(username, password string) func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !authorized(r, username, password) {
-				logger := log.C(r.Context())
-				logger.WithField("username", username).Debug(errorMessage)
-				err := util.WriteJSON(w, http.StatusUnauthorized, &util.HTTPError{
-					ErrorType:   notAuthorized,
-					Description: errorMessage,
-					StatusCode:  http.StatusUnauthorized,
-				})
-				if err != nil {
-					logger.Error(err)
-				}
-				return
-			}
-			handler.ServeHTTP(w, r)
-		})
+func BasicFilter(username, password string) web.Filter {
+	return &basicAuthFilter{
+		Filter: authn.NewBasicAuthnFilter(InMemoryCredentials(username, password), &noOpEncrypter{}),
 	}
 }
 
-func authorized(r *http.Request, username, password string) bool {
-	requestUsername, requestPassword, isOk := r.BasicAuth()
-	return isOk && username == requestUsername && password == requestPassword
+func (ba *basicAuthFilter) FilterMatchers() []web.FilterMatcher {
+	return []web.FilterMatcher{
+		{
+			Matchers: []web.Matcher{
+				web.Path(web.OSBURL + "/**"),
+			},
+		},
+	}
+}
+
+type noOpEncrypter struct {
+}
+
+func (*noOpEncrypter) Encrypt(ctx context.Context, plaintext []byte) ([]byte, error) {
+	return plaintext, nil
+}
+
+func (*noOpEncrypter) Decrypt(ctx context.Context, ciphertext []byte) ([]byte, error) {
+	return ciphertext, nil
+}
+
+type inMemoryCredentials struct {
+	username, password string
+}
+
+func InMemoryCredentials(username, password string) storage.Credentials {
+	return &inMemoryCredentials{username: username, password: password}
+}
+
+func (p *inMemoryCredentials) Get(ctx context.Context, username string) (*types.Credentials, error) {
+	if username != p.username {
+		return nil, fmt.Errorf("wrong username")
+	}
+	return &types.Credentials{
+		Basic: &types.Basic{
+			Password: p.password,
+			Username: p.username,
+		},
+	}, nil
 }

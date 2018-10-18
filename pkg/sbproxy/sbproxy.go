@@ -2,6 +2,8 @@ package sbproxy
 
 import (
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
+	"github.com/Peripli/service-broker-proxy/pkg/middleware"
+	"github.com/Peripli/service-manager/api/filters/authn"
 	"github.com/Peripli/service-manager/api/healthcheck"
 	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
@@ -100,6 +102,8 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
+			middleware.BasicFilter(cfg.Reconcile.Username, cfg.Reconcile.Password),
+			authn.NewRequiredAuthnFilter(),
 		},
 		Registry: health.NewDefaultRegistry(),
 	}
