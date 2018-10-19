@@ -17,6 +17,7 @@
 package filter
 
 import (
+	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/Peripli/service-manager/pkg/web"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -54,6 +55,8 @@ var _ = Describe("Basic Authentication wrapper", func() {
 
 			if expectsError {
 				Expect(err).To(HaveOccurred())
+				httpError := err.(*util.HTTPError)
+				Expect(httpError.StatusCode).To(Equal(expectedStatus))
 			} else {
 				Expect(response.StatusCode).To(Equal(expectedStatus))
 			}

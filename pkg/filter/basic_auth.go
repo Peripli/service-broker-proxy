@@ -18,9 +18,9 @@ package filter
 
 import (
 	"context"
-	"fmt"
 	"github.com/Peripli/service-manager/api/filters/authn"
 	"github.com/Peripli/service-manager/pkg/types"
+	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/Peripli/service-manager/pkg/web"
 )
 
@@ -62,7 +62,7 @@ type inMemoryCredentialsStorage struct {
 
 func (p *inMemoryCredentialsStorage) Get(ctx context.Context, username string) (*types.Credentials, error) {
 	if username != p.username {
-		return nil, fmt.Errorf("wrong username")
+		return nil, util.ErrNotFoundInStorage
 	}
 	return &types.Credentials{
 		Basic: &types.Basic{
