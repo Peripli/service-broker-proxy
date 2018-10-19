@@ -3,12 +3,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1eb82a8a24a12c6e712f1a2838a1bc59445fefec05c4a561e8c9d913dacfc8a8"
+  digest = "1:9e0d38c341b2f251bfa5304e6a6b28d002af5ddd1d5af64dadc40434955d9325"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/broker",
-    "api/catalog",
     "api/filters",
     "api/filters/authn",
     "api/healthcheck",
@@ -35,7 +34,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "95076f31f0720603d326f5d9d859e400d781f6b3"
+  revision = "47207b9ccc56bf85032288f45f031109c858028b"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -585,14 +584,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f5aa274a0377f85735edc7fedfb0811d3cbc20af91633797cb359e29c3272271"
+  digest = "1:bececf436a23bf63181438c4ef4f7f47816b87ff879083d83ca1321f9001a354"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
+  revision = "8f1d3d21f81be6e86ebcd6febee89c89bc50719f"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -698,7 +697,6 @@
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
-    "github.com/Peripli/service-manager/storage",
     "github.com/Peripli/service-manager/test/common",
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
