@@ -18,7 +18,7 @@ package filter
 
 import (
 	"context"
-	"github.com/Peripli/service-manager/api/filters/authn"
+	"github.com/Peripli/service-manager/api/filters/authn/basic"
 	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/Peripli/service-manager/pkg/util"
 	"github.com/Peripli/service-manager/pkg/web"
@@ -31,7 +31,7 @@ type basicAuthFilter struct {
 // NewBasicAuthFilter returns a filter configured to authenticate access based on the provided username and password
 func NewBasicAuthFilter(username, password string) web.Filter {
 	return &basicAuthFilter{
-		Filter: authn.NewBasicAuthnFilter(&inMemoryCredentialsStorage{username: username, password: password}, &noOpEncrypter{}),
+		Filter: basic.NewFilter(&inMemoryCredentialsStorage{username: username, password: password}, &noOpEncrypter{}),
 	}
 }
 
