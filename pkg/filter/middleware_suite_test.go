@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package middleware
+package filter
 
 import (
 	"testing"
@@ -23,7 +23,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestMiddleware(t *testing.T) {
+func TestFilter(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Middleware Suite")
+	RunSpecs(t, "Filter Suite")
 }
