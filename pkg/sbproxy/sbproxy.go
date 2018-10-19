@@ -7,6 +7,7 @@ import (
 	"github.com/Peripli/service-manager/api/healthcheck"
 	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
+	"github.com/Peripli/service-manager/pkg/util"
 	"sync"
 
 	"fmt"
@@ -74,7 +75,7 @@ func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) env.Environment {
 }
 
 // New creates service broker proxy that is configured from the provided environment and platform client.
-func New(ctx context.Context, env env.Environment, platformClient platform.Client) *SMProxyBuilder {
+func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, platformClient platform.Client) *SMProxyBuilder {
 	cronScheduler := cron.New()
 	var group sync.WaitGroup
 
@@ -89,6 +90,8 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 
 	ctx = log.Configure(ctx, cfg.Log)
 	log.AddHook(&logging.ErrorLocationHook{})
+
+	util.HandleInterrupts(ctx, cancel)
 
 	api := &web.API{
 		Controllers: []web.Controller{
