@@ -1,7 +1,11 @@
 package sbproxy
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
+	"github.com/Peripli/service-manager/api/filters/authn"
+	"github.com/Peripli/service-manager/api/healthcheck"
+	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
 	"sync"
 
@@ -12,6 +16,7 @@ import (
 
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/api/filters"
 	smosb "github.com/Peripli/service-manager/api/osb"
@@ -20,7 +25,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/web"
 	"github.com/robfig/cron"
 	"github.com/spf13/pflag"
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 )
 
 const (
@@ -98,7 +102,10 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
+			filter.NewBasicAuthFilter(cfg.Reconcile.Username, cfg.Reconcile.Password),
+			authn.NewRequiredAuthnFilter(),
 		},
+		Registry: health.NewDefaultRegistry(),
 	}
 
 	sbProxy := &SMProxyBuilder{
@@ -128,6 +135,8 @@ func New(ctx context.Context, env env.Environment, platformClient platform.Clien
 
 // Build builds the Service Manager
 func (smb *SMProxyBuilder) Build() *SMProxy {
+	smb.installHealth()
+
 	srv := server.New(smb.cfg.Server, smb.API)
 	srv.Use(filters.NewRecoveryMiddleware())
 
@@ -136,6 +145,12 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 		scheduler: smb.Cron,
 		ctx:       smb.ctx,
 		group:     smb.group,
+	}
+}
+
+func (smb *SMProxyBuilder) installHealth() {
+	if len(smb.HealthIndicators()) > 0 {
+		smb.RegisterControllers(healthcheck.NewController(smb.HealthIndicators(), smb.HealthAggregationPolicy()))
 	}
 }
 
@@ -149,7 +164,6 @@ func (p *SMProxy) Run() {
 
 	p.Server.Run(p.ctx)
 }
-
 
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards
 // WaitGroup parameter should be pointer or else the copy won't get notified about .Done() calls
