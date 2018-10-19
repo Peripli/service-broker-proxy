@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package middleware
+package filter
 
 import (
 	"context"
@@ -22,16 +22,16 @@ import (
 	"github.com/Peripli/service-manager/api/filters/authn"
 	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/Peripli/service-manager/pkg/web"
-	"github.com/Peripli/service-manager/storage"
 )
 
 type basicAuthFilter struct {
 	web.Filter
 }
 
-func BasicFilter(username, password string) web.Filter {
+// NewBasicAuthFilter returns a filter configured to authenticate access based on the provided username and password
+func NewBasicAuthFilter(username, password string) web.Filter {
 	return &basicAuthFilter{
-		Filter: authn.NewBasicAuthnFilter(InMemoryCredentials(username, password), &noOpEncrypter{}),
+		Filter: authn.NewBasicAuthnFilter(&inMemoryCredentialsStorage{username: username, password: password}, &noOpEncrypter{}),
 	}
 }
 
@@ -56,15 +56,11 @@ func (*noOpEncrypter) Decrypt(ctx context.Context, ciphertext []byte) ([]byte, e
 	return ciphertext, nil
 }
 
-type inMemoryCredentials struct {
+type inMemoryCredentialsStorage struct {
 	username, password string
 }
 
-func InMemoryCredentials(username, password string) storage.Credentials {
-	return &inMemoryCredentials{username: username, password: password}
-}
-
-func (p *inMemoryCredentials) Get(ctx context.Context, username string) (*types.Credentials, error) {
+func (p *inMemoryCredentialsStorage) Get(ctx context.Context, username string) (*types.Credentials, error) {
 	if username != p.username {
 		return nil, fmt.Errorf("wrong username")
 	}
