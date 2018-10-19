@@ -2,14 +2,14 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:9e0d38c341b2f251bfa5304e6a6b28d002af5ddd1d5af64dadc40434955d9325"
+  digest = "1:2249fe68d28c215f40e8496de1c856c7f7436c3a1ba66d100140ed590c97dca5"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/broker",
     "api/filters",
-    "api/filters/authn",
+    "api/filters/authn/basic",
+    "api/filters/authn/oauth",
     "api/healthcheck",
     "api/info",
     "api/osb",
@@ -20,21 +20,22 @@
     "pkg/env/envfakes",
     "pkg/health",
     "pkg/log",
+    "pkg/security",
+    "pkg/security/filters",
+    "pkg/security/middlewares",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
     "pkg/util",
     "pkg/util/slice",
     "pkg/web",
-    "security",
-    "security/basic",
-    "security/oidc",
     "storage",
     "storage/postgres",
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "47207b9ccc56bf85032288f45f031109c858028b"
+  revision = "04f873027c938d84832e90624f5ce0c14f5cdb7d"
+  version = "v0.1.1"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -686,7 +687,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
-    "github.com/Peripli/service-manager/api/filters/authn",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
