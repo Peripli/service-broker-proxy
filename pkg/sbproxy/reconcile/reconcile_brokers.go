@@ -18,14 +18,16 @@ package reconcile
 
 import (
 	"context"
-	"github.com/Peripli/service-manager/pkg/log"
 	"sync"
+
+	"github.com/Peripli/service-manager/pkg/log"
 
 	"strings"
 
 	"encoding/json"
 
 	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/pkg/errors"
@@ -46,6 +48,8 @@ type ReconcilationTask struct {
 	smClient       sm.Client
 	proxyPath      string
 	ctx            context.Context
+
+	running *bool
 }
 
 // Settings type represents the sbproxy settings
@@ -65,13 +69,14 @@ func DefaultSettings() *Settings {
 }
 
 // NewTask builds a new ReconcilationTask
-func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string) *ReconcilationTask {
+func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string, running *bool) *ReconcilationTask {
 	return &ReconcilationTask{
 		group:          group,
 		platformClient: platformClient,
 		smClient:       smClient,
 		proxyPath:      proxyPath,
 		ctx:            ctx,
+		running:        running,
 	}
 }
 
@@ -93,32 +98,49 @@ func (c *Settings) Validate() error {
 // platform with the brokers provided by the Service Manager
 func (r ReconcilationTask) Run() {
 	logger := log.C(r.ctx)
+	if *r.running {
+		logger.Info("Another reconcile job is in process... I will skip this one.")
+		return
+	}
+
 	logger.Debug("STARTING scheduled reconciliation task...")
 
 	r.group.Add(1)
-	defer r.group.Done()
+	*r.running = true
+	defer func() {
+		r.group.Done()
+		*r.running = false
+	}()
 	r.run()
 
 	logger.Debug("FINISHED scheduled reconciliation task...")
 }
 
 func (r ReconcilationTask) run() {
-	// get all the registered proxy brokers from the platform
-	brokersFromPlatform, err := r.getBrokersFromPlatform()
-	if err != nil {
-		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
-		return
+	visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
+	if ok {
+		_, err := visibilitiesClient.GetAllVisibilities(r.ctx)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
-	brokersFromSM, err := r.getBrokersFromSM()
-	if err != nil {
-		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
-		return
-	}
+	// // get all the registered proxy brokers from the platform
+	// brokersFromPlatform, err := r.getBrokersFromPlatform()
+	// if err != nil {
+	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+	// 	return
+	// }
 
-	// control logic - make sure current state matches desired state
-	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+	// // get all the brokers that are in SM and for which a proxy broker should be present in the platform
+	// brokersFromSM, err := r.getBrokersFromSM()
+	// if err != nil {
+	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+	// 	return
+	// }
+
+	// // control logic - make sure current state matches desired state
+	// r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
 }
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
@@ -201,6 +223,10 @@ func (r ReconcilationTask) fetchBrokerCatalog(broker *platform.ServiceBroker) (e
 	}
 	return
 }
+
+// func (r ReconcilationTask) getVisibilitiesFromPlatform() (interface{}, error) {
+
+// }
 
 func (r ReconcilationTask) createBrokerRegistration(broker *platform.ServiceBroker) (err error) {
 	logger := log.C(r.ctx)
