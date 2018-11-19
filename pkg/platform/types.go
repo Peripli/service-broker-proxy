@@ -51,3 +51,8 @@ type ServiceBroker struct {
 type ServiceBrokerList struct {
 	ServiceBrokers []ServiceBroker `json:"service_brokers"`
 }
+
+type ServiceVisibilityEntity struct {
+	ServicePlanGUID string
+	Label           map[string][]string
+}

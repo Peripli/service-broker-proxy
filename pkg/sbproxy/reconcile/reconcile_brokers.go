@@ -20,6 +20,8 @@ import (
 	"context"
 	"sync"
 
+	"github.com/patrickmn/go-cache"
+
 	"github.com/Peripli/service-manager/pkg/log"
 
 	"strings"
@@ -48,6 +50,7 @@ type ReconcilationTask struct {
 	smClient       sm.Client
 	proxyPath      string
 	ctx            context.Context
+	cache          *cache.Cache
 
 	running *bool
 }
@@ -69,13 +72,14 @@ func DefaultSettings() *Settings {
 }
 
 // NewTask builds a new ReconcilationTask
-func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string, running *bool) *ReconcilationTask {
+func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string, c *cache.Cache, running *bool) *ReconcilationTask {
 	return &ReconcilationTask{
 		group:          group,
 		platformClient: platformClient,
 		smClient:       smClient,
 		proxyPath:      proxyPath,
 		ctx:            ctx,
+		cache:          c,
 		running:        running,
 	}
 }
@@ -117,13 +121,7 @@ func (r ReconcilationTask) Run() {
 }
 
 func (r ReconcilationTask) run() {
-	visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
-	if ok {
-		_, err := visibilitiesClient.GetAllVisibilities(r.ctx)
-		if err != nil {
-			panic(err)
-		}
-	}
+	r.getPlatformVisibilities()
 
 	// // get all the registered proxy brokers from the platform
 	// brokersFromPlatform, err := r.getBrokersFromPlatform()
@@ -141,6 +139,38 @@ func (r ReconcilationTask) run() {
 
 	// // control logic - make sure current state matches desired state
 	// r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+}
+
+func (r ReconcilationTask) getPlatformVisibilities() interface{} {
+	visibilities, found := r.cache.Get("platform_visibilities")
+	if found {
+		return visibilities
+	}
+
+	visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
+	if ok {
+		pager, err := visibilitiesClient.GetAllVisibilities(r.ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		pageProcessor := paging.PageProcessor{
+			Pager: pager,
+		}
+		pageProcessor.Process(ctx, func(result interface{}) error {
+
+			arrRes, ok := result.([]platform.ServiceVisibilityEntity)
+			if ok {
+				fmt.Println(">>>>", len(arrRes))
+
+			}
+			return nil
+		})
+
+
+	}
+
+	return nil
 }
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)

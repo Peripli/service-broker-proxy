@@ -1,6 +1,7 @@
 package sbproxy
 
 import (
+	"github.com/patrickmn/go-cache"
 	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/api/healthcheck"
@@ -125,7 +126,8 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	}
 
 	running := false
-	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, &running)
+	c := cache.New(5*time.Minute, 10*time.Minute)
+	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c, &running)
 
 	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
 	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)

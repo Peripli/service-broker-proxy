@@ -352,6 +352,14 @@
   version = "v1.3.0"
 
 [[projects]]
+  digest = "1:808cdddf087fb64baeae67b8dfaee2069034d9704923a3cb8bd96a995421a625"
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
+[[projects]]
   digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
@@ -687,12 +695,14 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
+    "github.com/Peripli/service-manager/api/filters/authn/basic",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
+    "github.com/Peripli/service-manager/pkg/security/filters",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
@@ -704,6 +714,7 @@
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
     "github.com/onsi/gomega/ghttp",
+    "github.com/patrickmn/go-cache",
     "github.com/pkg/errors",
     "github.com/pmorie/go-open-service-broker-client/v2",
     "github.com/robfig/cron",
