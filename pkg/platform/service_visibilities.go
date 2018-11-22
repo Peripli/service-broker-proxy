@@ -19,10 +19,13 @@ package platform
 import (
 	"context"
 
+	"github.com/Peripli/service-manager/pkg/types"
+
 	"github.com/Peripli/service-broker-proxy/pkg/paging"
 )
 
 type ServiceVisibility interface {
 	GetAllVisibilities(context.Context) (paging.Pager, error)
-	GetServicePlans(context.Context) (paging.Pager, error)
+	GetVisibilitiesByPlans(context.Context, []*types.Plan) ([]*ServiceVisibilityEntity, error)
+	// GetServicePlans(context.Context) (paging.Pager, error)
 }

@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/paging"
+	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/patrickmn/go-cache"
 
@@ -129,32 +129,43 @@ func (r ReconcilationTask) Run() {
 }
 
 func (r ReconcilationTask) run() {
-	// get all the registered proxy brokers from the platform
-	brokersFromPlatform, err := r.getBrokersFromPlatform()
+	// // get all the registered proxy brokers from the platform
+	// brokersFromPlatform, err := r.getBrokersFromPlatform()
+	// if err != nil {
+	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+	// 	return
+	// }
+
+	// // get all the brokers that are in SM and for which a proxy broker should be present in the platform
+	// brokersFromSM, err := r.getBrokersFromSM()
+	// if err != nil {
+	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+	// 	return
+	// }
+
+	// // control logic - make sure current state matches desired state
+	// r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+
+	plans, err := r.smClient.GetPlans(r.ctx)
 	if err != nil {
-		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+		log.C(r.ctx).WithError(err).Error("Error during SM service plans fetch")
 		return
 	}
+	fmt.Println(">>>>plans=", len(plans))
 
-	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
-	brokersFromSM, err := r.getBrokersFromSM()
+	platformVisibilities, err := r.getPlatformVisibilities(plans)
 	if err != nil {
-		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		log.C(r.ctx).WithError(err).Error("Error during platform plans visibilities fetch")
 		return
 	}
-
-	// control logic - make sure current state matches desired state
-	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
-
-	// platformVisibilities, _ := r.getPlatformVisibilities()
-	// fmt.Println(">>>>", len(platformVisibilities))
+	fmt.Println(">>>>platformVis=", len(platformVisibilities))
 
 	smVisibilities, err := r.getSMVisibilities()
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(">>>>", smVisibilities)
+	fmt.Println(">>>>smVisibilities=", smVisibilities)
 }
 
 func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []platform.ServiceVisibilityEntity) {
@@ -190,43 +201,69 @@ func (r ReconcilationTask) convertVisListToMap(list []platform.ServiceVisibility
 	return result
 }
 
-func (r ReconcilationTask) getPlatformVisibilities() ([]platform.ServiceVisibilityEntity, error) {
+func (r ReconcilationTask) getPlatformVisibilities(plans []*types.Plan) ([]*platform.ServiceVisibilityEntity, error) {
 	visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
 	if found {
-		result, ok := visibilities.([]platform.ServiceVisibilityEntity)
+		result, ok := visibilities.([]*platform.ServiceVisibilityEntity)
 		if !ok {
-			return nil, errors.New("cached visiblities are not platform visibilities")
+			return nil, errors.New("cached visibilities are not platform visibilities")
 		}
 		return result, nil
 	}
 
 	visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
-	if ok {
-		pager, err := visibilitiesClient.GetAllVisibilities(r.ctx)
-		if err != nil {
-			panic(err)
-		}
-
-		fetchedVisibilities := make([]platform.ServiceVisibilityEntity, 0)
-		pageProcessor := paging.PageProcessor{
-			Pager: pager,
-		}
-		pageProcessor.Process(r.ctx, func(result interface{}) error {
-			arrRes, ok := result.([]platform.ServiceVisibilityEntity)
-			if ok {
-				fetchedVisibilities = append(fetchedVisibilities, arrRes...)
-			}
-			return nil
-		})
-
-		// TODO: Extract expiration time
-		r.cache.Set(PlatformVisibilityCacheKey, fetchedVisibilities, time.Minute*60)
-
-		return fetchedVisibilities, nil
+	if !ok {
+		return nil, errors.New("not a visibilities client")
 	}
 
-	return nil, errors.New("could not fetch platform visibilities")
+	platformVisibilities, err := visibilitiesClient.GetVisibilitiesByPlans(r.ctx, plans)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Extract expiration time
+	r.cache.Set(PlatformVisibilityCacheKey, platformVisibilities, time.Minute*60)
+
+	return platformVisibilities, nil
 }
+
+// func (r ReconcilationTask) getPlatformVisibilities() ([]platform.ServiceVisibilityEntity, error) {
+// visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
+// if found {
+// 	result, ok := visibilities.([]platform.ServiceVisibilityEntity)
+// 	if !ok {
+// 		return nil, errors.New("cached visiblities are not platform visibilities")
+// 	}
+// 	return result, nil
+// }
+
+// visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
+// if ok {
+// 	pager, err := visibilitiesClient.GetAllVisibilities(r.ctx)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	fetchedVisibilities := make([]platform.ServiceVisibilityEntity, 0)
+// 	pageProcessor := paging.PageProcessor{
+// 		Pager: pager,
+// 	}
+// 	pageProcessor.Process(r.ctx, func(result interface{}) error {
+// 		arrRes, ok := result.([]platform.ServiceVisibilityEntity)
+// 		if ok {
+// 			fetchedVisibilities = append(fetchedVisibilities, arrRes...)
+// 		}
+// 		return nil
+// 	})
+
+// 	// TODO: Extract expiration time
+// 	r.cache.Set(PlatformVisibilityCacheKey, fetchedVisibilities, time.Minute*60)
+
+// 	return fetchedVisibilities, nil
+// }
+
+// return nil, errors.New("could not fetch platform visibilities")
+// }
 
 func (r ReconcilationTask) getSMVisibilities() ([]platform.ServiceVisibilityEntity, error) {
 	visibilities, err := r.smClient.GetVisibilities(r.ctx)

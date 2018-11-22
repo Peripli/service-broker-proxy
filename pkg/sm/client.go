@@ -35,6 +35,7 @@ import (
 const (
 	APIInternalBrokers = "%s/v1/service_brokers"
 	APIVisibilities    = "%s/v1/service_visibilities"
+	APIPlans           = "%s/v1/service_plans"
 )
 
 // Client provides the logic for calling into the Service Manager
@@ -42,6 +43,7 @@ const (
 type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
+	GetPlans(ctx context.Context) ([]*types.Plan, error)
 }
 
 // ServiceManagerClient allows consuming APIs from a Service Manager
@@ -101,13 +103,14 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]Broker, error)
 	return list.Brokers, nil
 }
 
+// TODO: Paging
 func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 	URL := fmt.Sprintf(APIVisibilities, c.host)
 
 	response, err := util.SendRequest(ctx, c.httpClient.Do, http.MethodGet, URL, nil, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
+		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
 	}
 
 	if response.StatusCode != http.StatusOK {
@@ -121,4 +124,27 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 	}
 
 	return list.Visibilities, nil
+}
+
+// TODO: Paging
+func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.Plan, error) {
+	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
+	URL := fmt.Sprintf(APIPlans, c.host)
+
+	response, err := util.SendRequest(ctx, c.httpClient.Do, http.MethodGet, URL, nil, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.WithStack(util.HandleResponseError(response))
+	}
+
+	list := &types.Plans{}
+	err = util.BodyToObject(response.Body, list)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)
+	}
+
+	return list.Plans, nil
 }
