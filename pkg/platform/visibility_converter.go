@@ -14,29 +14,16 @@
  * limitations under the License.
  */
 
-package sm
+package platform
 
 import (
-	"encoding/json"
-
-	osbc "github.com/pmorie/go-open-service-broker-client/v2"
+	"github.com/Peripli/service-manager/pkg/types"
 )
 
-// Brokers type used for responses from the Service Manager client
-type Brokers struct {
-	Brokers []Broker `json:"brokers"`
+type SMVisibilityConverter interface {
+	Convert(*types.Visibility) ([]ServiceVisibilityEntity, error)
 }
 
-// Broker type used for responses from the Service Manager client
-type Broker struct {
-	ID        string `json:"id"`
-	BrokerURL string `json:"broker_url"`
-
-	Catalog  *osbc.CatalogResponse      `json:"catalog"`
-	Metadata map[string]json.RawMessage `json:"metadata,omitempty"`
+type ServiceVisibilityKeyMapper interface {
+	Map(*ServiceVisibilityEntity) string
 }
-
-// type Visibility struct {
-// 	ServicePlanGUID string
-// 	Labels          map[string]string
-// }

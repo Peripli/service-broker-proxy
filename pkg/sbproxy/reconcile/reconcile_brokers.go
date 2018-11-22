@@ -19,6 +19,9 @@ package reconcile
 import (
 	"context"
 	"sync"
+	"time"
+
+	"github.com/Peripli/service-broker-proxy/pkg/paging"
 
 	"github.com/patrickmn/go-cache"
 
@@ -37,20 +40,25 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ProxyBrokerPrefix prefixes names of brokers registered at the platform
-const ProxyBrokerPrefix = "sm-proxy-"
+const (
+	// ProxyBrokerPrefix prefixes names of brokers registered at the platform
+	ProxyBrokerPrefix = "sm-proxy-"
+
+	PlatformVisibilityCacheKey = "platform_visibilities"
+)
 
 // ReconcilationTask type represents a registration task that takes care of propagating broker creations
 // and deletions to the platform. It reconciles the state of the proxy brokers in the platform to match
 // the desired state provided by the Service Manager.
 // TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
 type ReconcilationTask struct {
-	group          *sync.WaitGroup
-	platformClient platform.Client
-	smClient       sm.Client
-	proxyPath      string
-	ctx            context.Context
-	cache          *cache.Cache
+	group               *sync.WaitGroup
+	platformClient      platform.Client
+	smClient            sm.Client
+	visibilityKeyMapper platform.ServiceVisibilityKeyMapper
+	proxyPath           string
+	ctx                 context.Context
+	cache               *cache.Cache
 
 	running *bool
 }
@@ -121,30 +129,75 @@ func (r ReconcilationTask) Run() {
 }
 
 func (r ReconcilationTask) run() {
-	r.getPlatformVisibilities()
+	// get all the registered proxy brokers from the platform
+	brokersFromPlatform, err := r.getBrokersFromPlatform()
+	if err != nil {
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+		return
+	}
 
-	// // get all the registered proxy brokers from the platform
-	// brokersFromPlatform, err := r.getBrokersFromPlatform()
-	// if err != nil {
-	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
-	// 	return
-	// }
+	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
+	brokersFromSM, err := r.getBrokersFromSM()
+	if err != nil {
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		return
+	}
 
-	// // get all the brokers that are in SM and for which a proxy broker should be present in the platform
-	// brokersFromSM, err := r.getBrokersFromSM()
-	// if err != nil {
-	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
-	// 	return
-	// }
+	// control logic - make sure current state matches desired state
+	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
 
-	// // control logic - make sure current state matches desired state
-	// r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+	// platformVisibilities, _ := r.getPlatformVisibilities()
+	// fmt.Println(">>>>", len(platformVisibilities))
+
+	smVisibilities, err := r.getSMVisibilities()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(">>>>", smVisibilities)
 }
 
-func (r ReconcilationTask) getPlatformVisibilities() interface{} {
-	visibilities, found := r.cache.Get("platform_visibilities")
+func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []platform.ServiceVisibilityEntity) {
+	platformMap := r.convertVisListToMap(platformVis)
+	for _, vis := range smVis {
+		key := r.visibilityKeyMapper.Map(&vis)
+		existingVis := platformMap[key]
+		delete(platformMap, key)
+		if existingVis == nil {
+			r.createVisibility(&vis)
+		}
+	}
+
+	for _, vis := range platformMap {
+		r.deleteVisibility(vis)
+	}
+}
+
+func (r ReconcilationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) {
+	panic("Not implemented")
+}
+
+func (r ReconcilationTask) deleteVisibility(visibility *platform.ServiceVisibilityEntity) {
+	panic("Not implemented")
+}
+
+func (r ReconcilationTask) convertVisListToMap(list []platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
+	result := make(map[string]*platform.ServiceVisibilityEntity, len(list))
+	for _, vis := range list {
+		key := r.visibilityKeyMapper.Map(&vis)
+		result[key] = &vis
+	}
+	return result
+}
+
+func (r ReconcilationTask) getPlatformVisibilities() ([]platform.ServiceVisibilityEntity, error) {
+	visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
 	if found {
-		return visibilities
+		result, ok := visibilities.([]platform.ServiceVisibilityEntity)
+		if !ok {
+			return nil, errors.New("cached visiblities are not platform visibilities")
+		}
+		return result, nil
 	}
 
 	visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
@@ -154,23 +207,48 @@ func (r ReconcilationTask) getPlatformVisibilities() interface{} {
 			panic(err)
 		}
 
+		fetchedVisibilities := make([]platform.ServiceVisibilityEntity, 0)
 		pageProcessor := paging.PageProcessor{
 			Pager: pager,
 		}
-		pageProcessor.Process(ctx, func(result interface{}) error {
-
+		pageProcessor.Process(r.ctx, func(result interface{}) error {
 			arrRes, ok := result.([]platform.ServiceVisibilityEntity)
 			if ok {
-				fmt.Println(">>>>", len(arrRes))
-
+				fetchedVisibilities = append(fetchedVisibilities, arrRes...)
 			}
 			return nil
 		})
 
+		// TODO: Extract expiration time
+		r.cache.Set(PlatformVisibilityCacheKey, fetchedVisibilities, time.Minute*60)
 
+		return fetchedVisibilities, nil
 	}
 
-	return nil
+	return nil, errors.New("could not fetch platform visibilities")
+}
+
+func (r ReconcilationTask) getSMVisibilities() ([]platform.ServiceVisibilityEntity, error) {
+	visibilities, err := r.smClient.GetVisibilities(r.ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	converter, ok := r.platformClient.(platform.SMVisibilityConverter)
+	if !ok {
+		return nil, errors.New("not a visibility converter")
+	}
+
+	result := make([]platform.ServiceVisibilityEntity, 0)
+	for _, visibility := range visibilities {
+		converted, err := converter.Convert(visibility)
+		if err != nil {
+			log.C(r.ctx).Error(err)
+		}
+		result = append(result, converted...)
+	}
+
+	return result, nil
 }
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
