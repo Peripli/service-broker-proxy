@@ -76,7 +76,7 @@ func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) env.Environment {
 }
 
 // New creates service broker proxy that is configured from the provided environment and platform client.
-func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, platformClient platform.Client) *SMProxyBuilder {
+func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, platformClient platform.Client, visibilityKeyMaper platform.ServiceVisibilityKeyMapper) *SMProxyBuilder {
 	cronScheduler := cron.New()
 	var group sync.WaitGroup
 
@@ -127,7 +127,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 
 	running := false
 	c := cache.New(5*time.Minute, 10*time.Minute)
-	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c, &running)
+	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c, visibilityKeyMaper, &running)
 
 	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
 	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)

@@ -53,6 +53,6 @@ type ServiceBrokerList struct {
 }
 
 type ServiceVisibilityEntity struct {
-	ServicePlanGUID string
-	Labels          map[string]string
+	CatalogPlanID string
+	Labels        map[string]string
 }

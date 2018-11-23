@@ -80,15 +80,16 @@ func DefaultSettings() *Settings {
 }
 
 // NewTask builds a new ReconcilationTask
-func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string, c *cache.Cache, running *bool) *ReconcilationTask {
+func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string, c *cache.Cache, visibilityKeyMapper platform.ServiceVisibilityKeyMapper, running *bool) *ReconcilationTask {
 	return &ReconcilationTask{
-		group:          group,
-		platformClient: platformClient,
-		smClient:       smClient,
-		proxyPath:      proxyPath,
-		ctx:            ctx,
-		cache:          c,
-		running:        running,
+		group:               group,
+		platformClient:      platformClient,
+		smClient:            smClient,
+		proxyPath:           proxyPath,
+		ctx:                 ctx,
+		cache:               c,
+		running:             running,
+		visibilityKeyMapper: visibilityKeyMapper,
 	}
 }
 
@@ -129,29 +130,29 @@ func (r ReconcilationTask) Run() {
 }
 
 func (r ReconcilationTask) run() {
-	// // get all the registered proxy brokers from the platform
-	// brokersFromPlatform, err := r.getBrokersFromPlatform()
-	// if err != nil {
-	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
-	// 	return
-	// }
+	// get all the registered proxy brokers from the platform
+	brokersFromPlatform, err := r.getBrokersFromPlatform()
+	if err != nil {
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+		return
+	}
 
-	// // get all the brokers that are in SM and for which a proxy broker should be present in the platform
-	// brokersFromSM, err := r.getBrokersFromSM()
-	// if err != nil {
-	// 	log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
-	// 	return
-	// }
+	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
+	brokersFromSM, err := r.getBrokersFromSM()
+	if err != nil {
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		return
+	}
 
-	// // control logic - make sure current state matches desired state
-	// r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+	// control logic - make sure current state matches desired state
+	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
 
 	plans, err := r.smClient.GetPlans(r.ctx)
 	if err != nil {
 		log.C(r.ctx).WithError(err).Error("Error during SM service plans fetch")
 		return
 	}
-	fmt.Println(">>>>plans=", len(plans))
+	fmt.Println(">>>>smplans=", len(plans))
 
 	platformVisibilities, err := r.getPlatformVisibilities(plans)
 	if err != nil {
@@ -166,16 +167,17 @@ func (r ReconcilationTask) run() {
 	}
 
 	fmt.Println(">>>>smVisibilities=", smVisibilities)
+	r.reconcileServiceVisibilities(platformVisibilities, smVisibilities)
 }
 
-func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []platform.ServiceVisibilityEntity) {
+func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) {
 	platformMap := r.convertVisListToMap(platformVis)
 	for _, vis := range smVis {
-		key := r.visibilityKeyMapper.Map(&vis)
+		key := r.visibilityKeyMapper.Map(vis)
 		existingVis := platformMap[key]
 		delete(platformMap, key)
 		if existingVis == nil {
-			r.createVisibility(&vis)
+			r.createVisibility(vis)
 		}
 	}
 
@@ -185,18 +187,22 @@ func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []pla
 }
 
 func (r ReconcilationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) {
-	panic("Not implemented")
+	log.D().Debugf("Creating visibility for %s in %v", visibility.CatalogPlanID, visibility.Labels)
+	r.enableServiceAccessVisibility(visibility)
+	// r.platformClient.
+	// panic("Not implemented")
 }
 
 func (r ReconcilationTask) deleteVisibility(visibility *platform.ServiceVisibilityEntity) {
-	panic("Not implemented")
+	log.D().Debugf("Deleting visibility for %s in %v", visibility.CatalogPlanID, visibility.Labels)
+	// panic("Not implemented")
 }
 
-func (r ReconcilationTask) convertVisListToMap(list []platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
+func (r ReconcilationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
 	result := make(map[string]*platform.ServiceVisibilityEntity, len(list))
 	for _, vis := range list {
-		key := r.visibilityKeyMapper.Map(&vis)
-		result[key] = &vis
+		key := r.visibilityKeyMapper.Map(vis)
+		result[key] = vis
 	}
 	return result
 }
@@ -227,45 +233,7 @@ func (r ReconcilationTask) getPlatformVisibilities(plans []*types.Plan) ([]*plat
 	return platformVisibilities, nil
 }
 
-// func (r ReconcilationTask) getPlatformVisibilities() ([]platform.ServiceVisibilityEntity, error) {
-// visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
-// if found {
-// 	result, ok := visibilities.([]platform.ServiceVisibilityEntity)
-// 	if !ok {
-// 		return nil, errors.New("cached visiblities are not platform visibilities")
-// 	}
-// 	return result, nil
-// }
-
-// visibilitiesClient, ok := r.platformClient.(platform.ServiceVisibility)
-// if ok {
-// 	pager, err := visibilitiesClient.GetAllVisibilities(r.ctx)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	fetchedVisibilities := make([]platform.ServiceVisibilityEntity, 0)
-// 	pageProcessor := paging.PageProcessor{
-// 		Pager: pager,
-// 	}
-// 	pageProcessor.Process(r.ctx, func(result interface{}) error {
-// 		arrRes, ok := result.([]platform.ServiceVisibilityEntity)
-// 		if ok {
-// 			fetchedVisibilities = append(fetchedVisibilities, arrRes...)
-// 		}
-// 		return nil
-// 	})
-
-// 	// TODO: Extract expiration time
-// 	r.cache.Set(PlatformVisibilityCacheKey, fetchedVisibilities, time.Minute*60)
-
-// 	return fetchedVisibilities, nil
-// }
-
-// return nil, errors.New("could not fetch platform visibilities")
-// }
-
-func (r ReconcilationTask) getSMVisibilities() ([]platform.ServiceVisibilityEntity, error) {
+func (r ReconcilationTask) getSMVisibilities() ([]*platform.ServiceVisibilityEntity, error) {
 	visibilities, err := r.smClient.GetVisibilities(r.ctx)
 	if err != nil {
 		return nil, err
@@ -276,7 +244,7 @@ func (r ReconcilationTask) getSMVisibilities() ([]platform.ServiceVisibilityEnti
 		return nil, errors.New("not a visibility converter")
 	}
 
-	result := make([]platform.ServiceVisibilityEntity, 0)
+	result := make([]*platform.ServiceVisibilityEntity, 0)
 	for _, visibility := range visibilities {
 		converted, err := converter.Convert(visibility)
 		if err != nil {
@@ -302,7 +270,7 @@ func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBr
 			err = r.fetchBrokerCatalog(existingBroker)
 		}
 		if err == nil {
-			r.enableServiceAccessVisibilities(&payloadBroker)
+			// r.enableServiceAccessVisibilities(&payloadBroker)
 		}
 	}
 
@@ -404,6 +372,18 @@ func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBrok
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
 	} else {
 		logger.WithFields(logBroker(broker)).Infof("ReconcilationTask task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
+	}
+}
+
+func (r ReconcilationTask) enableServiceAccessVisibility(visibility *platform.ServiceVisibilityEntity) {
+	if _, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
+		json, err := json.Marshal(visibility.Labels)
+		if err != nil {
+			fmt.Println(">>>err=", err)
+			return
+		}
+		fmt.Println(">>>>>", string(json))
+		// f.EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID)
 	}
 }
 

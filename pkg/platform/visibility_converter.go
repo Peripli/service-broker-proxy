@@ -21,7 +21,7 @@ import (
 )
 
 type SMVisibilityConverter interface {
-	Convert(*types.Visibility) ([]ServiceVisibilityEntity, error)
+	Convert(*types.Visibility) ([]*ServiceVisibilityEntity, error)
 }
 
 type ServiceVisibilityKeyMapper interface {
