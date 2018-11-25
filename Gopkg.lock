@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:2249fe68d28c215f40e8496de1c856c7f7436c3a1ba66d100140ed590c97dca5"
+  branch = "services"
+  digest = "1:c746117f3790c4b2c5c7b8dd0a889b89d6c4acf66424841ea6ce3ae89f4e840b"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -14,6 +15,8 @@
     "api/info",
     "api/osb",
     "api/platform",
+    "api/service_offering",
+    "api/service_plan",
     "cf",
     "config",
     "pkg/env",
@@ -34,8 +37,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "04f873027c938d84832e90624f5ce0c14f5cdb7d"
-  version = "v0.1.1"
+  revision = "06e71efa7d644bb3673fdc8256e42e3fb69c7cb6"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -687,12 +689,14 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
+    "github.com/Peripli/service-manager/api/filters/authn/basic",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
+    "github.com/Peripli/service-manager/pkg/security/filters",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",

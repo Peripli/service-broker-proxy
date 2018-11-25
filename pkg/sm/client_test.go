@@ -20,13 +20,15 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
+	"github.com/Peripli/service-manager/pkg/types"
+
 	"github.com/Peripli/service-manager/test/common"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	osbc "github.com/pmorie/go-open-service-broker-client/v2"
-	"net/http"
 
 	"context"
 	"time"
@@ -145,7 +147,7 @@ var _ = Describe("Client", func() {
                "plan_updateable":true,
                "plans":[  
                   {  
-                     "name":"fake-plan-1",
+                     "name":"fake-service_plan-1",
                      "id":"d3031751-XXXX-XXXX-XXXX-a42377d3320e",
                      "description":"Shared fake Server, 5tb persistent disk, 40 max concurrent connections",
                      "free":false,
@@ -220,21 +222,21 @@ var _ = Describe("Client", func() {
 		}
 	]}`
 
-	catalogObject := func(brokers string) *osbc.CatalogResponse {
+	catalogObject := func(brokers string) []types.ServiceOffering {
 		c := &Brokers{}
 		err := json.Unmarshal([]byte(brokers), c)
 		if err != nil {
 			panic(err)
 		}
-		return c.Brokers[0].Catalog
+		return c.Brokers[0].ServiceOfferings
 	}
 
 	clientBrokersResponse := []Broker{
 		{
-			ID:        "brokerID",
-			BrokerURL: "https://service-broker-url",
-			Catalog:   catalogObject(okResponse),
-			Metadata:  map[string]json.RawMessage{},
+			ID:               "brokerID",
+			BrokerURL:        "https://service-broker-url",
+			ServiceOfferings: catalogObject(okResponse),
+			Metadata:         map[string]json.RawMessage{},
 		},
 	}
 
