@@ -114,7 +114,6 @@ var _ = Describe("Client", func() {
 			"metadata": {
 
 			},
-			      "catalog":{  
          "services":[  
             {  
                "name":"fake-service",
@@ -218,7 +217,7 @@ var _ = Describe("Client", func() {
                   }
                ]
             }
-         ]}
+         ]
 		}
 	]}`
 
