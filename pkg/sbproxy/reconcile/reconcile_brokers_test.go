@@ -445,7 +445,7 @@ var _ = Describe("ReconcilationTask", func() {
 		for _, catalog := range expected.reconcileAccessCalledFor {
 			for _, service := range catalog.ServiceOfferings {
 				_, _, serviceID := fakePlatformServiceAccess.EnableAccessForServiceArgsForCall(index)
-				Expect(serviceID).To(Equal(service.ID))
+				Expect(serviceID).To(Equal(service.CatalogID))
 				servicesCount++
 				index++
 			}
