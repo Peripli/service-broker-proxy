@@ -252,8 +252,8 @@ func (r ReconcilationTask) enableServiceAccessVisibilities(broker *platform.Serv
 
 		for _, service := range broker.ServiceOfferings {
 			logger.WithFields(logService(service)).Debug("ReconcilationTask task attempting to enable service access for service...")
-			if err := f.EnableAccessForService(r.ctx, emptyContext, service.ID); err != nil {
-				logger.WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.ID)
+			if err := f.EnableAccessForService(r.ctx, emptyContext, service.CatalogID); err != nil {
+				logger.WithFields(logService(service)).WithError(err).Errorf("Error enabling service access for service with ID=%s...", service.CatalogID)
 			}
 			logger.WithFields(logService(service)).Debug("ReconcilationTask task finished enabling service access for service...")
 		}
@@ -275,7 +275,7 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 
 func logService(service types.ServiceOffering) logrus.Fields {
 	return logrus.Fields{
-		"service_guid": service.ID,
+		"service_guid": service.CatalogID,
 		"service_name": service.Name,
 	}
 }

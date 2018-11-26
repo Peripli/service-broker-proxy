@@ -2,8 +2,7 @@
 
 
 [[projects]]
-  branch = "services"
-  digest = "1:c746117f3790c4b2c5c7b8dd0a889b89d6c4acf66424841ea6ce3ae89f4e840b"
+  digest = "1:59e6b877de503536d80819fb9476afe1980686b86a03339b7dc77fc8b5a752b1"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -37,7 +36,8 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "63465d2835159ec8b4447938099d64627c05f180"
+  revision = "c3ab19d95c45ece39c1f430c950e2939e5c0e286"
+  version = "v0.1.2"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -547,7 +547,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8e241498e35f550e5192ee6b1f6ff2c0a7ffe81feff9541d297facffe1383979"
+  digest = "1:b06f45abbe7431aec373695c6cf9770a051fa4ac81ad31b3fa73ddf3bb76bb27"
   name = "golang.org/x/crypto"
   packages = [
     "ed25519",
@@ -556,7 +556,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "e657309f52e71501f9934566ac06dc5c2f7f11a1"
 
 [[projects]]
   branch = "master"
