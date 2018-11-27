@@ -26,6 +26,6 @@ import (
 
 type ServiceVisibility interface {
 	GetAllVisibilities(context.Context) (paging.Pager, error)
-	GetVisibilitiesByPlans(context.Context, []*types.Plan) ([]*ServiceVisibilityEntity, error)
+	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
 	// GetServicePlans(context.Context) (paging.Pager, error)
 }

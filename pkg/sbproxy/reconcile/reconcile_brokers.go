@@ -27,10 +27,6 @@ import (
 
 	"github.com/Peripli/service-manager/pkg/log"
 
-	"github.com/Peripli/service-manager/pkg/types"
-
-	"github.com/Peripli/service-manager/pkg/log"
-
 	"strings"
 
 	"encoding/json"
@@ -210,7 +206,7 @@ func (r ReconcilationTask) convertVisListToMap(list []*platform.ServiceVisibilit
 	return result
 }
 
-func (r ReconcilationTask) getPlatformVisibilities(plans []*types.Plan) ([]*platform.ServiceVisibilityEntity, error) {
+func (r ReconcilationTask) getPlatformVisibilities(plans []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
 	visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
 	if found {
 		result, ok := visibilities.([]*platform.ServiceVisibilityEntity)
@@ -379,14 +375,13 @@ func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBrok
 }
 
 func (r ReconcilationTask) enableServiceAccessVisibility(visibility *platform.ServiceVisibilityEntity) {
-	if _, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
+	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
 		json, err := json.Marshal(visibility.Labels)
 		if err != nil {
-			fmt.Println(">>>err=", err)
+			log.C(r.ctx).WithError(err).Error("Could not marshal labels to json")
 			return
 		}
-		fmt.Println(">>>>>", string(json))
-		// f.EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID)
+		f.EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID)
 	}
 }
 

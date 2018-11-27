@@ -43,7 +43,7 @@ const (
 type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
-	GetPlans(ctx context.Context) ([]*types.Plan, error)
+	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 }
 
 // ServiceManagerClient allows consuming APIs from a Service Manager
@@ -127,7 +127,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 }
 
 // TODO: Paging
-func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.Plan, error) {
+func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePlan, error) {
 	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
 	URL := fmt.Sprintf(APIPlans, c.host)
 
@@ -140,7 +140,9 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.Plan, err
 		return nil, errors.WithStack(util.HandleResponseError(response))
 	}
 
-	list := &types.Plans{}
+	list := &struct {
+		Plans []*types.ServicePlan `json:"service_plans"`
+	}{}
 	err = util.BodyToObject(response.Body, list)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)
