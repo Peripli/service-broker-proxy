@@ -24,8 +24,13 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/paging"
 )
 
+type Filter interface {
+	ByPlan() []*types.ServicePlan
+}
+
 type ServiceVisibility interface {
 	GetAllVisibilities(context.Context) (paging.Pager, error)
+	GetServicePlansByFilter(context.Context, Filter) ([]*PlanEntity, error)
 	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
 	// GetServicePlans(context.Context) (paging.Pager, error)
 }

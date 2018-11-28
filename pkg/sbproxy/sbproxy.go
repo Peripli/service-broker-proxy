@@ -1,7 +1,8 @@
 package sbproxy
 
 import (
-	"github.com/patrickmn/go-cache"
+	"sync"
+
 	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/api/healthcheck"
@@ -9,7 +10,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/util"
-	"sync"
+	"github.com/patrickmn/go-cache"
 
 	"fmt"
 
@@ -126,6 +127,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	}
 
 	running := false
+	// TODO: Extract constants
 	c := cache.New(5*time.Minute, 10*time.Minute)
 	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c, visibilityKeyMaper, &running)
 

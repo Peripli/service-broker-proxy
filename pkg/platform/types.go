@@ -59,3 +59,5 @@ type ServiceVisibilityEntity struct {
 	CatalogPlanID string
 	Labels        map[string]string
 }
+
+type PlanEntity map[string]interface{}

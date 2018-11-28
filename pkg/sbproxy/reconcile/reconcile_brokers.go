@@ -22,8 +22,7 @@ import (
 	"time"
 
 	"github.com/Peripli/service-manager/pkg/types"
-
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 
 	"github.com/Peripli/service-manager/pkg/log"
 
@@ -165,19 +164,41 @@ func (r ReconcilationTask) run() {
 		fmt.Println(err)
 	}
 
-	fmt.Println(">>>>smVisibilities=", smVisibilities)
+	fmt.Println(">>>>smVisibilities=", len(smVisibilities))
 	r.reconcileServiceVisibilities(platformVisibilities, smVisibilities)
+}
+
+type planFilter struct {
+	Plans []*types.ServicePlan
+}
+
+func (p *planFilter) ByPlan() []*types.ServicePlan {
+	return p.Plans
 }
 
 func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) {
 	platformMap := r.convertVisListToMap(platformVis)
+	newlyCreatedVisiblities := make([]*platform.ServiceVisibilityEntity, 0)
 	for _, vis := range smVis {
 		key := r.visibilityKeyMapper.Map(vis)
 		existingVis := platformMap[key]
 		delete(platformMap, key)
 		if existingVis == nil {
+			// TODO: Add to cache
+			newlyCreatedVisiblities = append(newlyCreatedVisiblities, vis)
 			r.createVisibility(vis)
 		}
+	}
+
+	if len(newlyCreatedVisiblities) > 0 {
+		newlyCreatedVisiblities = append(newlyCreatedVisiblities, platformVis...)
+		_, expirationTime, found := r.cache.GetWithExpiration(PlatformVisibilityCacheKey)
+		// TODO: Extract constant
+		duration := time.Minute * 60
+		if found {
+			duration = expirationTime.Sub(time.Now())
+		}
+		r.cache.Set(PlatformVisibilityCacheKey, newlyCreatedVisiblities, duration)
 	}
 
 	for _, vis := range platformMap {
