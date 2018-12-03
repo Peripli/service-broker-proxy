@@ -20,8 +20,6 @@ import (
 	"context"
 
 	"github.com/Peripli/service-manager/pkg/types"
-
-	"github.com/Peripli/service-broker-proxy/pkg/paging"
 )
 
 type Filter interface {
@@ -29,8 +27,7 @@ type Filter interface {
 }
 
 type ServiceVisibility interface {
-	GetAllVisibilities(context.Context) (paging.Pager, error)
-	GetServicePlansByFilter(context.Context, Filter) ([]*PlanEntity, error)
+	// GetAllVisibilities(context.Context) (paging.Pager, error)
 	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
 	// GetServicePlans(context.Context) (paging.Pager, error)
 }
