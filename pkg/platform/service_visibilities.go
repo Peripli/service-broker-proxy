@@ -26,8 +26,7 @@ type Filter interface {
 	ByPlan() []*types.ServicePlan
 }
 
+//go:generate counterfeiter . ServiceVisibility
 type ServiceVisibility interface {
-	// GetAllVisibilities(context.Context) (paging.Pager, error)
 	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
-	// GetServicePlans(context.Context) (paging.Pager, error)
 }

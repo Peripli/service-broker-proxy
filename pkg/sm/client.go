@@ -42,7 +42,7 @@ const (
 //go:generate counterfeiter . Client
 type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
-	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
+	GetVisibilities(ctx context.Context) ([]*Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 }
 
@@ -104,7 +104,7 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]Broker, error)
 }
 
 // TODO: Paging
-func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
+func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 	URL := fmt.Sprintf(APIVisibilities, c.host)
 
@@ -117,7 +117,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 		return nil, errors.WithStack(util.HandleResponseError(response))
 	}
 
-	list := &types.Visibilities{}
+	list := &Visibilities{}
 	err = util.BodyToObject(response.Body, list)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)

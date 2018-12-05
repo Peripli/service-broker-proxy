@@ -28,15 +28,15 @@ import (
 
 const PlatformVisibilityCacheKey = "platform_visibilities"
 
-func (r ReconcilationTask) getPlatformVisibilitiesWithCache(plans []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
+func (r ReconcilationTask) getPlatformVisibilitiesWithCache(plans []*types.ServicePlan, updateCache bool) ([]*platform.ServiceVisibilityEntity, error) {
 	logger := log.C(r.ctx)
 	visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
-	if found {
+	if !updateCache && found {
 		result, ok := visibilities.([]*platform.ServiceVisibilityEntity)
 		if !ok {
 			return nil, errors.New("could not cast cached visibilities to core visibilities")
 		}
-		logger.Debugf("%d platform visibilities found in cache", len(plans))
+		logger.Debugf("%d platform visibilities found in cache", len(result))
 
 		return result, nil
 	}
@@ -82,7 +82,7 @@ func (r ReconcilationTask) getSMPlans() ([]*types.ServicePlan, error) {
 	return plans, nil
 }
 
-func (r ReconcilationTask) getSMVisibilities() ([]*platform.ServiceVisibilityEntity, error) {
+func (r ReconcilationTask) getSMVisibilities(smPlansMap map[string]*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
 	logger := log.C(r.ctx)
 	logger.Debug("ReconcilationTask getting visibilities from Service Manager")
 
@@ -90,21 +90,20 @@ func (r ReconcilationTask) getSMVisibilities() ([]*platform.ServiceVisibilityEnt
 	if err != nil {
 		return nil, err
 	}
-
-	converter, ok := r.platformClient.(platform.SMVisibilityConverter)
-	if !ok {
-		return nil, errors.New("visibility converter not found")
-	}
+	logger.Debugf("ReconcilationTask successfully retrieved %d visibilities from Service Manager", len(visibilities))
 
 	result := make([]*platform.ServiceVisibilityEntity, 0)
-	for _, visibility := range visibilities {
-		converted, err := converter.Convert(visibility)
-		if err != nil {
-			logger.Error(err)
+	converter, ok := r.platformClient.(platform.SMVisibilityConverter)
+	if ok {
+		for _, visibility := range visibilities {
+			converted, err := converter.Convert(visibility, smPlansMap[visibility.ServicePlanID])
+			if err != nil {
+				logger.Error(err)
+			}
+			result = append(result, converted...)
 		}
-		result = append(result, converted...)
 	}
-	logger.Debugf("ReconcilationTask successfully retrieved %d visibilities from Service Manager", len(result))
+	logger.Debugf("ReconcilationTask successfully converted %d SM visibilities to %d platform visibilities", len(visibilities), len(result))
 
 	return result, nil
 }

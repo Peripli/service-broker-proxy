@@ -36,7 +36,16 @@ type Broker struct {
 	Metadata         map[string]json.RawMessage `json:"metadata,omitempty"`
 }
 
-// type Visibility struct {
-// 	ServicePlanGUID string
-// 	Labels          map[string]string
-// }
+type Visibilities struct {
+	Visibilities []*Visibility `json:"visibilities"`
+}
+
+type Visibility struct {
+	*types.Visibility
+	Labels []*Label `json:"labels"`
+}
+
+type Label struct {
+	Key    string   `json:"key"`
+	Values []string `json:"values"`
+}

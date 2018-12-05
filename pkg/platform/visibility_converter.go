@@ -17,13 +17,16 @@
 package platform
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
+//go:generate counterfeiter . SMVisibilityConverter
 type SMVisibilityConverter interface {
-	Convert(*types.Visibility) ([]*ServiceVisibilityEntity, error)
+	Convert(*sm.Visibility, *types.ServicePlan) ([]*ServiceVisibilityEntity, error)
 }
 
+//go:generate counterfeiter . ServiceVisibilityKeyMapper
 type ServiceVisibilityKeyMapper interface {
 	Map(*ServiceVisibilityEntity) string
 }

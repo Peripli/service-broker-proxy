@@ -35,7 +35,8 @@ const ProxyBrokerPrefix = "sm-proxy-"
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
-func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
+func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) bool {
+	changes := false
 	existingMap := convertBrokersRegListToMap(existingBrokers)
 	for _, payloadBroker := range payloadBrokers {
 		existingBroker := existingMap[payloadBroker.GUID]
@@ -44,7 +45,9 @@ func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBr
 		// We don't care whether the following methods return errors
 		// the errors are logged by the method itself. We just proceed
 		if existingBroker == nil {
-			r.createBrokerRegistration(&payloadBroker)
+			if err := r.createBrokerRegistration(&payloadBroker); err == nil {
+				changes = true
+			}
 		} else {
 			r.fetchBrokerCatalog(existingBroker)
 		}
@@ -52,7 +55,10 @@ func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBr
 
 	for _, existingBroker := range existingMap {
 		r.deleteBrokerRegistration(existingBroker)
+		changes = true
 	}
+
+	return changes
 }
 
 func (r ReconcilationTask) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {

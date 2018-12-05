@@ -24,6 +24,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
+	"github.com/Peripli/service-manager/pkg/types"
 	cache "github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
@@ -126,7 +127,7 @@ func (r ReconcilationTask) run() {
 	}
 
 	// control logic - make sure current state matches desired state
-	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+	changesOnBrokers := r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
 
 	plans, err := r.getSMPlans()
 	if err != nil {
@@ -134,17 +135,25 @@ func (r ReconcilationTask) run() {
 		return
 	}
 
-	platformVisibilities, err := r.getPlatformVisibilitiesWithCache(plans)
+	platformVisibilities, err := r.getPlatformVisibilitiesWithCache(plans, changesOnBrokers)
 	if err != nil {
 		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining existing visibilities from platform")
 		return
 	}
 
-	smVisibilities, err := r.getSMVisibilities()
+	smPlansMap := smPlansToMap(plans)
+	smVisibilities, err := r.getSMVisibilities(smPlansMap)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Println(">>>>smVisibilities=", len(smVisibilities))
 	r.reconcileServiceVisibilities(platformVisibilities, smVisibilities)
+}
+
+func smPlansToMap(plans []*types.ServicePlan) map[string]*types.ServicePlan {
+	plansMap := make(map[string]*types.ServicePlan, len(plans))
+	for _, plan := range plans {
+		plansMap[plan.ID] = plan
+	}
+	return plansMap
 }
