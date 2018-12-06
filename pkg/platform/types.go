@@ -56,6 +56,7 @@ type ServiceBrokerList struct {
 }
 
 type ServiceVisibilityEntity struct {
+	PlatformID    string
 	CatalogPlanID string
 	Labels        map[string]string
 }

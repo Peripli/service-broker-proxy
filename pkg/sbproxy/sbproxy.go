@@ -39,6 +39,10 @@ const (
 
 	// Path for the Proxy OSB API
 	Path = APIPrefix + "/{" + BrokerPathParam + "}"
+
+	cacheDefaultExpirationTime = 5 * time.Minute
+
+	cacheCleanupInterval = 2 * time.Minute
 )
 
 // SMProxyBuilder type is an extension point that allows adding additional filters, plugins and
@@ -127,9 +131,8 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	}
 
 	running := false
-	// TODO: Extract constants
-	c := cache.New(5*time.Minute, 10*time.Minute)
-	regJob := reconcile.NewTask(ctx, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c, visibilityKeyMaper, &running)
+	c := cache.New(cacheDefaultExpirationTime, cacheCleanupInterval)
+	regJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c, visibilityKeyMaper, &running)
 
 	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
 	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)

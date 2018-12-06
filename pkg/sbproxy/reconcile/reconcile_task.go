@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -34,6 +35,7 @@ import (
 // the desired state provided by the Service Manager.
 // TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
 type ReconcilationTask struct {
+	options             *Settings
 	group               *sync.WaitGroup
 	platformClient      platform.Client
 	smClient            sm.Client
@@ -50,20 +52,34 @@ type Settings struct {
 	URL      string
 	Username string
 	Password string
+
+	VisibilityCache bool          `mapstructure:"visibility_cache"`
+	CacheExpiration time.Duration `mapstructure:"cache_expiration"`
 }
 
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		URL:      "",
-		Username: "",
-		Password: "",
+		URL:             "",
+		Username:        "",
+		Password:        "",
+		VisibilityCache: true,
+		CacheExpiration: time.Hour,
 	}
 }
 
 // NewTask builds a new ReconcilationTask
-func NewTask(ctx context.Context, group *sync.WaitGroup, platformClient platform.Client, smClient sm.Client, proxyPath string, c *cache.Cache, visibilityKeyMapper platform.ServiceVisibilityKeyMapper, running *bool) *ReconcilationTask {
+func NewTask(ctx context.Context,
+	options *Settings,
+	group *sync.WaitGroup,
+	platformClient platform.Client,
+	smClient sm.Client,
+	proxyPath string,
+	c *cache.Cache,
+	visibilityKeyMapper platform.ServiceVisibilityKeyMapper,
+	running *bool) *ReconcilationTask {
 	return &ReconcilationTask{
+		options:             options,
 		group:               group,
 		platformClient:      platformClient,
 		smClient:            smClient,
@@ -85,6 +101,11 @@ func (c *Settings) Validate() error {
 	}
 	if len(c.Password) == 0 {
 		return errors.New("validate settings: missing password")
+	}
+	if c.VisibilityCache {
+		if time.Minute > c.CacheExpiration {
+			return errors.New("validate settings: if cache is enabled, cache_expiration should be at least 1 minute")
+		}
 	}
 	return nil
 }

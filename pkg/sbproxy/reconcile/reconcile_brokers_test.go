@@ -97,7 +97,7 @@ var _ = Describe("ReconcilationTask", func() {
 
 		waitGroup = &sync.WaitGroup{}
 
-		reconcilationTask = NewTask(context.TODO(), waitGroup, struct {
+		reconcilationTask = NewTask(context.TODO(), DefaultSettings(), waitGroup, struct {
 			*platformfakes.FakeCatalogFetcher
 			*platformfakes.FakeServiceAccess
 			*platformfakes.FakeClient

@@ -26,12 +26,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-const PlatformVisibilityCacheKey = "platform_visibilities"
+const (
+	platformVisibilityCacheKey = "platform_visibilities"
+)
 
 func (r ReconcilationTask) getPlatformVisibilitiesWithCache(plans []*types.ServicePlan, updateCache bool) ([]*platform.ServiceVisibilityEntity, error) {
 	logger := log.C(r.ctx)
-	visibilities, found := r.cache.Get(PlatformVisibilityCacheKey)
-	if !updateCache && found {
+	visibilities, found := r.cache.Get(platformVisibilityCacheKey)
+	if r.options.VisibilityCache && !updateCache && found {
 		result, ok := visibilities.([]*platform.ServiceVisibilityEntity)
 		if !ok {
 			return nil, errors.New("could not cast cached visibilities to core visibilities")
@@ -45,8 +47,9 @@ func (r ReconcilationTask) getPlatformVisibilitiesWithCache(plans []*types.Servi
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Extract expiration time
-	r.cache.Set(PlatformVisibilityCacheKey, platformVisibilities, time.Minute*60)
+	if r.options.VisibilityCache {
+		r.cache.Set(platformVisibilityCacheKey, platformVisibilities, r.options.CacheExpiration)
+	}
 
 	return platformVisibilities, nil
 }
@@ -110,39 +113,51 @@ func (r ReconcilationTask) getSMVisibilities(smPlansMap map[string]*types.Servic
 
 func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) {
 	platformMap := r.convertVisListToMap(platformVis)
-	newlyCreatedVisiblities := make([]*platform.ServiceVisibilityEntity, 0)
+	toCreateVisibility := make([]*platform.ServiceVisibilityEntity, 0)
 	for _, vis := range smVis {
 		key := r.visibilityKeyMapper.Map(vis)
 		existingVis := platformMap[key]
 		delete(platformMap, key)
 		if existingVis == nil {
-			newlyCreatedVisiblities = append(newlyCreatedVisiblities, vis)
-			r.createVisibility(vis)
+			toCreateVisibility = append(toCreateVisibility, vis)
 		}
 	}
 
-	if len(newlyCreatedVisiblities) > 0 {
-		newlyCreatedVisiblities = append(newlyCreatedVisiblities, platformVis...)
-		_, expirationTime, found := r.cache.GetWithExpiration(PlatformVisibilityCacheKey)
-		// TODO: Extract constant
-		duration := time.Minute * 60
+	erroredDuringVisibilities := true
+	for _, vis := range platformMap {
+		if err := r.deleteVisibility(vis); err != nil {
+			erroredDuringVisibilities = false
+		}
+	}
+
+	for _, toCreateVis := range toCreateVisibility {
+		if err := r.createVisibility(toCreateVis); err != nil {
+			erroredDuringVisibilities = false
+		}
+	}
+
+	if r.options.VisibilityCache && erroredDuringVisibilities {
+		// After reconcilation, if there is no error in creating/deleting, then
+		// the source of truth is Service Manager's visibilities
+		_, expirationTime, found := r.cache.GetWithExpiration(platformVisibilityCacheKey)
+		duration := r.options.CacheExpiration
 		if found {
 			duration = expirationTime.Sub(time.Now())
 		}
-		r.cache.Set(PlatformVisibilityCacheKey, newlyCreatedVisiblities, duration)
-	}
-
-	for _, vis := range platformMap {
-		r.deleteVisibility(vis)
+		r.cache.Set(platformVisibilityCacheKey, smVis, duration)
+	} else if !erroredDuringVisibilities {
+		// If there was error in creating/deleting visibilities, the cache might be in
+		// not consistent state, so delete it
+		r.cache.Delete(platformVisibilityCacheKey)
 	}
 }
 
-func (r ReconcilationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) {
+func (r ReconcilationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) error {
 	log.C(r.ctx).Debugf("Creating visibility for %s with metadata %v", visibility.CatalogPlanID, visibility.Labels)
-	r.enableServiceAccessVisibility(visibility)
+	return r.enableServiceAccessVisibility(visibility)
 }
 
-func (r ReconcilationTask) deleteVisibility(visibility *platform.ServiceVisibilityEntity) {
+func (r ReconcilationTask) deleteVisibility(visibility *platform.ServiceVisibilityEntity) error {
 	logger := log.C(r.ctx)
 	logger.Debugf("Deleting visibility for %s with metadata %v", visibility.CatalogPlanID, visibility.Labels)
 
@@ -150,28 +165,32 @@ func (r ReconcilationTask) deleteVisibility(visibility *platform.ServiceVisibili
 		json, err := json.Marshal(visibility.Labels)
 		if err != nil {
 			logger.WithError(err).Error("Could not marshal labels to json")
-			return
+			return err
 		}
 
 		if err = f.DisableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
 			logger.WithError(err).Errorf("Could not disable access for plan %s", visibility.CatalogPlanID)
+			return err
 		}
 	}
+	return nil
 }
 
-func (r ReconcilationTask) enableServiceAccessVisibility(visibility *platform.ServiceVisibilityEntity) {
+func (r ReconcilationTask) enableServiceAccessVisibility(visibility *platform.ServiceVisibilityEntity) error {
 	logger := log.C(r.ctx)
 
 	if f, isEnabler := r.platformClient.(platform.ServiceAccess); isEnabler {
 		json, err := json.Marshal(visibility.Labels)
 		if err != nil {
 			logger.WithError(err).Error("Could not marshal labels to json")
-			return
+			return err
 		}
 		if err = f.EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
 			logger.WithError(err).Errorf("Could not enable access for plan %s", visibility.CatalogPlanID)
+			return err
 		}
 	}
+	return nil
 }
 
 func (r ReconcilationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
