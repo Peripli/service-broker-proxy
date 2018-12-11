@@ -35,17 +35,3 @@ type Broker struct {
 	ServiceOfferings []types.ServiceOffering    `json:"services"`
 	Metadata         map[string]json.RawMessage `json:"metadata,omitempty"`
 }
-
-type Visibilities struct {
-	Visibilities []*Visibility `json:"visibilities"`
-}
-
-type Visibility struct {
-	*types.Visibility
-	Labels []*Label `json:"labels"`
-}
-
-type Label struct {
-	Key    string   `json:"key"`
-	Values []string `json:"values"`
-}

@@ -36,17 +36,17 @@ type FakeClient struct {
 		result1 []*types.ServicePlan
 		result2 error
 	}
-	GetVisibilitiesStub        func(context.Context) ([]*sm.Visibility, error)
+	GetVisibilitiesStub        func(context.Context) ([]*types.Visibility, error)
 	getVisibilitiesMutex       sync.RWMutex
 	getVisibilitiesArgsForCall []struct {
 		arg1 context.Context
 	}
 	getVisibilitiesReturns struct {
-		result1 []*sm.Visibility
+		result1 []*types.Visibility
 		result2 error
 	}
 	getVisibilitiesReturnsOnCall map[int]struct {
-		result1 []*sm.Visibility
+		result1 []*types.Visibility
 		result2 error
 	}
 	invocations      map[string][][]interface{}
@@ -179,7 +179,7 @@ func (fake *FakeClient) GetPlansReturnsOnCall(i int, result1 []*types.ServicePla
 	}{result1, result2}
 }
 
-func (fake *FakeClient) GetVisibilities(arg1 context.Context) ([]*sm.Visibility, error) {
+func (fake *FakeClient) GetVisibilities(arg1 context.Context) ([]*types.Visibility, error) {
 	fake.getVisibilitiesMutex.Lock()
 	ret, specificReturn := fake.getVisibilitiesReturnsOnCall[len(fake.getVisibilitiesArgsForCall)]
 	fake.getVisibilitiesArgsForCall = append(fake.getVisibilitiesArgsForCall, struct {
@@ -203,7 +203,7 @@ func (fake *FakeClient) GetVisibilitiesCallCount() int {
 	return len(fake.getVisibilitiesArgsForCall)
 }
 
-func (fake *FakeClient) GetVisibilitiesCalls(stub func(context.Context) ([]*sm.Visibility, error)) {
+func (fake *FakeClient) GetVisibilitiesCalls(stub func(context.Context) ([]*types.Visibility, error)) {
 	fake.getVisibilitiesMutex.Lock()
 	defer fake.getVisibilitiesMutex.Unlock()
 	fake.GetVisibilitiesStub = stub
@@ -216,28 +216,28 @@ func (fake *FakeClient) GetVisibilitiesArgsForCall(i int) context.Context {
 	return argsForCall.arg1
 }
 
-func (fake *FakeClient) GetVisibilitiesReturns(result1 []*sm.Visibility, result2 error) {
+func (fake *FakeClient) GetVisibilitiesReturns(result1 []*types.Visibility, result2 error) {
 	fake.getVisibilitiesMutex.Lock()
 	defer fake.getVisibilitiesMutex.Unlock()
 	fake.GetVisibilitiesStub = nil
 	fake.getVisibilitiesReturns = struct {
-		result1 []*sm.Visibility
+		result1 []*types.Visibility
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeClient) GetVisibilitiesReturnsOnCall(i int, result1 []*sm.Visibility, result2 error) {
+func (fake *FakeClient) GetVisibilitiesReturnsOnCall(i int, result1 []*types.Visibility, result2 error) {
 	fake.getVisibilitiesMutex.Lock()
 	defer fake.getVisibilitiesMutex.Unlock()
 	fake.GetVisibilitiesStub = nil
 	if fake.getVisibilitiesReturnsOnCall == nil {
 		fake.getVisibilitiesReturnsOnCall = make(map[int]struct {
-			result1 []*sm.Visibility
+			result1 []*types.Visibility
 			result2 error
 		})
 	}
 	fake.getVisibilitiesReturnsOnCall[i] = struct {
-		result1 []*sm.Visibility
+		result1 []*types.Visibility
 		result2 error
 	}{result1, result2}
 }

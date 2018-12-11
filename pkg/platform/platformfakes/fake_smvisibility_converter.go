@@ -5,15 +5,14 @@ import (
 	sync "sync"
 
 	platform "github.com/Peripli/service-broker-proxy/pkg/platform"
-	sm "github.com/Peripli/service-broker-proxy/pkg/sm"
 	types "github.com/Peripli/service-manager/pkg/types"
 )
 
 type FakeSMVisibilityConverter struct {
-	ConvertStub        func(*sm.Visibility, *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)
+	ConvertStub        func(*types.Visibility, *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)
 	convertMutex       sync.RWMutex
 	convertArgsForCall []struct {
-		arg1 *sm.Visibility
+		arg1 *types.Visibility
 		arg2 *types.ServicePlan
 	}
 	convertReturns struct {
@@ -28,11 +27,11 @@ type FakeSMVisibilityConverter struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSMVisibilityConverter) Convert(arg1 *sm.Visibility, arg2 *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
+func (fake *FakeSMVisibilityConverter) Convert(arg1 *types.Visibility, arg2 *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
 	fake.convertMutex.Lock()
 	ret, specificReturn := fake.convertReturnsOnCall[len(fake.convertArgsForCall)]
 	fake.convertArgsForCall = append(fake.convertArgsForCall, struct {
-		arg1 *sm.Visibility
+		arg1 *types.Visibility
 		arg2 *types.ServicePlan
 	}{arg1, arg2})
 	fake.recordInvocation("Convert", []interface{}{arg1, arg2})
@@ -53,13 +52,13 @@ func (fake *FakeSMVisibilityConverter) ConvertCallCount() int {
 	return len(fake.convertArgsForCall)
 }
 
-func (fake *FakeSMVisibilityConverter) ConvertCalls(stub func(*sm.Visibility, *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)) {
+func (fake *FakeSMVisibilityConverter) ConvertCalls(stub func(*types.Visibility, *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)) {
 	fake.convertMutex.Lock()
 	defer fake.convertMutex.Unlock()
 	fake.ConvertStub = stub
 }
 
-func (fake *FakeSMVisibilityConverter) ConvertArgsForCall(i int) (*sm.Visibility, *types.ServicePlan) {
+func (fake *FakeSMVisibilityConverter) ConvertArgsForCall(i int) (*types.Visibility, *types.ServicePlan) {
 	fake.convertMutex.RLock()
 	defer fake.convertMutex.RUnlock()
 	argsForCall := fake.convertArgsForCall[i]

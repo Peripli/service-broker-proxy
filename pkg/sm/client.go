@@ -28,21 +28,22 @@ import (
 
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/util"
+	"github.com/Peripli/service-manager/pkg/web"
 	"github.com/pkg/errors"
 )
 
 // APIInternalBrokers is the SM API for obtaining the brokers for this proxy
 const (
-	APIInternalBrokers = "%s/v1/service_brokers"
-	APIVisibilities    = "%s/v1/service_visibilities"
-	APIPlans           = "%s/v1/service_plans"
+	APIInternalBrokers = "%s" + web.BrokersURL
+	APIVisibilities    = "%s" + web.VisibilitiesURL
+	APIPlans           = "%s" + web.ServicePlansURL
 )
 
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
 type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
-	GetVisibilities(ctx context.Context) ([]*Visibility, error)
+	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 }
 
@@ -104,7 +105,7 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]Broker, error)
 }
 
 // TODO: Paging
-func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*Visibility, error) {
+func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 	URL := fmt.Sprintf(APIVisibilities, c.host)
 
@@ -117,7 +118,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*Visibili
 		return nil, errors.WithStack(util.HandleResponseError(response))
 	}
 
-	list := &Visibilities{}
+	list := &types.Visibilities{}
 	err = util.BodyToObject(response.Body, list)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error getting content from body of response with status %s", response.Status)
