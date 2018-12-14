@@ -105,7 +105,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 				URL:      cfg.Sm.URL + cfg.Sm.OSBAPIPath,
 				Username: cfg.Sm.User,
 				Password: cfg.Sm.Password,
-			}, &sm.SkipSSLTransport{
+			}, nil, &sm.SkipSSLTransport{
 				SkipSslValidation: cfg.Sm.SkipSSLValidation,
 			}),
 		},
