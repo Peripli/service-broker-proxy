@@ -28,33 +28,98 @@ import (
 
 const (
 	platformVisibilityCacheKey = "platform_visibilities"
+	smPlansCacheKey            = "sm_plans"
 )
 
-func (r ReconcilationTask) getPlatformVisibilitiesWithCache(plans []*types.ServicePlan, updateCache bool) ([]*platform.ServiceVisibilityEntity, error) {
+// processVisibilities handles the reconsilation of the service visibilities.
+// it gets the service visibilities from SM and the platform and runs the reconcilation
+func (r ReconcilationTask) processVisibilities() {
 	logger := log.C(r.ctx)
-	visibilities, found := r.cache.Get(platformVisibilityCacheKey)
-	if r.options.VisibilityCache && !updateCache && found {
-		result, ok := visibilities.([]*platform.ServiceVisibilityEntity)
-		if !ok {
-			return nil, errors.New("could not cast cached visibilities to core visibilities")
-		}
-		logger.Debugf("%d platform visibilities found in cache", len(result))
-
-		return result, nil
-	}
-
-	platformVisibilities, err := r.getPlatformVisibilities(plans)
+	plans, err := r.getSMPlans()
 	if err != nil {
-		return nil, err
+		logger.WithError(err).Error("An error occurred while obtaining plans from Service Manager")
+		return
 	}
+	var platformVisibilities []*platform.ServiceVisibilityEntity
+	visibilityCacheUsed := true
 	if r.options.VisibilityCache {
-		r.cache.Set(platformVisibilityCacheKey, platformVisibilities, r.options.CacheExpiration)
+		platformVisibilities = r.getPlatformVisibilitiesFromCache()
 	}
 
-	return platformVisibilities, nil
+	if platformVisibilities == nil || !r.areSMPlansSame(plans) {
+		platformVisibilities, err = r.loadPlatformVisibilities(plans)
+		if err != nil {
+			logger.WithError(err).Error("An error occurred while loading visibilities from platform")
+			return
+		}
+		visibilityCacheUsed = false
+	}
+
+	plansMap := smPlansToMap(plans)
+	smVisibilities, err := r.getSMVisibilities(plansMap)
+	if err != nil {
+		logger.WithError(err).Error("An error occurred while obtaining SM visibilities")
+	}
+
+	errorOccured := r.reconcileServiceVisibilities(platformVisibilities, smVisibilities)
+
+	if r.options.VisibilityCache {
+		if errorOccured {
+			r.cache.Delete(platformVisibilityCacheKey)
+			r.cache.Delete(smPlansCacheKey)
+		} else {
+			r.cache.Set(smPlansCacheKey, plansMap, r.options.CacheExpiration)
+			cacheExpiration := r.options.CacheExpiration
+			if visibilityCacheUsed {
+				_, expiration, found := r.cache.GetWithExpiration(platformVisibilityCacheKey)
+				if found {
+					cacheExpiration = expiration.Sub(time.Now())
+				}
+			}
+			r.cache.Set(platformVisibilityCacheKey, smVisibilities, cacheExpiration)
+		}
+	}
 }
 
-func (r ReconcilationTask) getPlatformVisibilities(plans []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
+// areSMPlansSame checks if there are new or deleted plans in SM
+// returns true if there are no new or deleted plans, false otherwise
+func (r ReconcilationTask) areSMPlansSame(plans []*types.ServicePlan) bool {
+	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
+	if !isPresent {
+		return false
+	}
+	cachedPlansMap, ok := cachedPlans.(map[string]*types.ServicePlan)
+	if !ok {
+		log.C(r.ctx).Error("SM plans cache is in invalid state! Clearing...")
+		r.cache.Delete(smPlansCacheKey)
+		return false
+	}
+	if len(cachedPlansMap) != len(plans) {
+		return false
+	}
+	for _, plan := range plans {
+		if cachedPlansMap[plan.ID] == nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (r ReconcilationTask) getPlatformVisibilitiesFromCache() []*platform.ServiceVisibilityEntity {
+	platformVisibilities, found := r.cache.Get(platformVisibilityCacheKey)
+	if !found {
+		return nil
+	}
+	if result, ok := platformVisibilities.([]*platform.ServiceVisibilityEntity); ok {
+		log.C(r.ctx).Debugf("ReconcilationTask fetched %d platform visibilities from cache", len(result))
+		return result
+	}
+	log.C(r.ctx).Error("Platform visibilities cache is in invalid state! Clearing...")
+	r.cache.Delete(platformVisibilityCacheKey)
+	return nil
+}
+
+func (r ReconcilationTask) loadPlatformVisibilities(plans []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
 	logger := log.C(r.ctx)
 	logger.Debug("ReconcilationTask getting visibilities from platform")
 
@@ -99,57 +164,47 @@ func (r ReconcilationTask) getSMVisibilities(smPlansMap map[string]*types.Servic
 	converter, ok := r.platformClient.(platform.SMVisibilityConverter)
 	if ok {
 		for _, visibility := range visibilities {
-			converted, err := converter.Convert(visibility, smPlansMap[visibility.ServicePlanID])
-			if err != nil {
-				logger.Error(err)
-			}
+			converted := converter.Convert(visibility, smPlansMap[visibility.ServicePlanID])
 			result = append(result, converted...)
 		}
+		logger.Debugf("ReconcilationTask successfully converted %d SM visibilities to %d platform visibilities", len(visibilities), len(result))
+	} else {
+		logger.Debugf("ReconcilationTask SM visibility converter not found, returning %d platform visibilities", len(result))
 	}
-	logger.Debugf("ReconcilationTask successfully converted %d SM visibilities to %d platform visibilities", len(visibilities), len(result))
 
 	return result, nil
 }
 
-func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) {
+func (r ReconcilationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {
+	logger := log.C(r.ctx)
+	logger.Debug("ReconcilationTask reconsiling platform and SM visibilities...")
+
 	platformMap := r.convertVisListToMap(platformVis)
-	toCreateVisibility := make([]*platform.ServiceVisibilityEntity, 0)
-	for _, vis := range smVis {
-		key := r.visibilityKeyMapper.Map(vis)
+	visibilitiesToCreate := make([]*platform.ServiceVisibilityEntity, 0)
+	for _, visibility := range smVis {
+		key := r.visibilityKeyMapper.Map(visibility)
 		existingVis := platformMap[key]
 		delete(platformMap, key)
 		if existingVis == nil {
-			toCreateVisibility = append(toCreateVisibility, vis)
+			visibilitiesToCreate = append(visibilitiesToCreate, visibility)
 		}
 	}
 
-	erroredDuringVisibilities := true
-	for _, vis := range platformMap {
-		if err := r.deleteVisibility(vis); err != nil {
-			erroredDuringVisibilities = false
+	errorOccured := false
+	logger.Debugf("ReconcilationTask %d visibilities will be removed from the platform", len(platformMap))
+	for _, visibility := range platformMap {
+		if err := r.deleteVisibility(visibility); err != nil {
+			errorOccured = true
 		}
 	}
 
-	for _, toCreateVis := range toCreateVisibility {
-		if err := r.createVisibility(toCreateVis); err != nil {
-			erroredDuringVisibilities = false
+	logger.Debugf("ReconcilationTask %d visibilities will be created in the platform", len(visibilitiesToCreate))
+	for _, visibility := range visibilitiesToCreate {
+		if err := r.createVisibility(visibility); err != nil {
+			errorOccured = true
 		}
 	}
-
-	if r.options.VisibilityCache && erroredDuringVisibilities {
-		// After reconcilation, if there is no error in creating/deleting, then
-		// the source of truth is Service Manager's visibilities
-		_, expirationTime, found := r.cache.GetWithExpiration(platformVisibilityCacheKey)
-		duration := r.options.CacheExpiration
-		if found {
-			duration = expirationTime.Sub(time.Now())
-		}
-		r.cache.Set(platformVisibilityCacheKey, smVis, duration)
-	} else if !erroredDuringVisibilities {
-		// If there was error in creating/deleting visibilities, the cache might be in
-		// not consistent state, so delete it
-		r.cache.Delete(platformVisibilityCacheKey)
-	}
+	return errorOccured
 }
 
 func (r ReconcilationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) error {
@@ -200,4 +255,12 @@ func (r ReconcilationTask) convertVisListToMap(list []*platform.ServiceVisibilit
 		result[key] = vis
 	}
 	return result
+}
+
+func smPlansToMap(plans []*types.ServicePlan) map[string]*types.ServicePlan {
+	plansMap := make(map[string]*types.ServicePlan, len(plans))
+	for _, plan := range plans {
+		plansMap[plan.ID] = plan
+	}
+	return plansMap
 }

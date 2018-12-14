@@ -55,10 +55,9 @@ type ServiceBrokerList struct {
 	ServiceBrokers []ServiceBroker `json:"service_brokers"`
 }
 
+// ServiceVisibilityEntity generic visibility entity
 type ServiceVisibilityEntity struct {
-	PlatformID    string
+	Public        bool
 	CatalogPlanID string
 	Labels        map[string]string
 }
-
-type PlanEntity map[string]interface{}

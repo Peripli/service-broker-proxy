@@ -22,7 +22,7 @@ import (
 
 //go:generate counterfeiter . SMVisibilityConverter
 type SMVisibilityConverter interface {
-	Convert(*types.Visibility, *types.ServicePlan) ([]*ServiceVisibilityEntity, error)
+	Convert(*types.Visibility, *types.ServicePlan) []*ServiceVisibilityEntity
 }
 
 //go:generate counterfeiter . ServiceVisibilityKeyMapper

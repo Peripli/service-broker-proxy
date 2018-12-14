@@ -33,10 +33,30 @@ import (
 // ProxyBrokerPrefix prefixes names of brokers registered at the platform
 const ProxyBrokerPrefix = "sm-proxy-"
 
+// processBrokers handles the reconsilation of the service brokers.
+// it gets the brokers from SM and the platform and runs the reconcilation
+func (r ReconcilationTask) processBrokers() {
+	// get all the registered proxy brokers from the platform
+	brokersFromPlatform, err := r.getBrokersFromPlatform()
+	if err != nil {
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+		return
+	}
+
+	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
+	brokersFromSM, err := r.getBrokersFromSM()
+	if err != nil {
+		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		return
+	}
+
+	// control logic - make sure current state matches desired state
+	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
+}
+
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
-func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) bool {
-	changes := false
+func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
 	existingMap := convertBrokersRegListToMap(existingBrokers)
 	for _, payloadBroker := range payloadBrokers {
 		existingBroker := existingMap[payloadBroker.GUID]
@@ -45,9 +65,7 @@ func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBr
 		// We don't care whether the following methods return errors
 		// the errors are logged by the method itself. We just proceed
 		if existingBroker == nil {
-			if err := r.createBrokerRegistration(&payloadBroker); err == nil {
-				changes = true
-			}
+			r.createBrokerRegistration(&payloadBroker)
 		} else {
 			r.fetchBrokerCatalog(existingBroker)
 		}
@@ -55,10 +73,7 @@ func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBr
 
 	for _, existingBroker := range existingMap {
 		r.deleteBrokerRegistration(existingBroker)
-		changes = true
 	}
-
-	return changes
 }
 
 func (r ReconcilationTask) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {

@@ -9,7 +9,7 @@ import (
 )
 
 type FakeSMVisibilityConverter struct {
-	ConvertStub        func(*types.Visibility, *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)
+	ConvertStub        func(*types.Visibility, *types.ServicePlan) []*platform.ServiceVisibilityEntity
 	convertMutex       sync.RWMutex
 	convertArgsForCall []struct {
 		arg1 *types.Visibility
@@ -17,17 +17,15 @@ type FakeSMVisibilityConverter struct {
 	}
 	convertReturns struct {
 		result1 []*platform.ServiceVisibilityEntity
-		result2 error
 	}
 	convertReturnsOnCall map[int]struct {
 		result1 []*platform.ServiceVisibilityEntity
-		result2 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeSMVisibilityConverter) Convert(arg1 *types.Visibility, arg2 *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
+func (fake *FakeSMVisibilityConverter) Convert(arg1 *types.Visibility, arg2 *types.ServicePlan) []*platform.ServiceVisibilityEntity {
 	fake.convertMutex.Lock()
 	ret, specificReturn := fake.convertReturnsOnCall[len(fake.convertArgsForCall)]
 	fake.convertArgsForCall = append(fake.convertArgsForCall, struct {
@@ -40,10 +38,10 @@ func (fake *FakeSMVisibilityConverter) Convert(arg1 *types.Visibility, arg2 *typ
 		return fake.ConvertStub(arg1, arg2)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2
+		return ret.result1
 	}
 	fakeReturns := fake.convertReturns
-	return fakeReturns.result1, fakeReturns.result2
+	return fakeReturns.result1
 }
 
 func (fake *FakeSMVisibilityConverter) ConvertCallCount() int {
@@ -52,7 +50,7 @@ func (fake *FakeSMVisibilityConverter) ConvertCallCount() int {
 	return len(fake.convertArgsForCall)
 }
 
-func (fake *FakeSMVisibilityConverter) ConvertCalls(stub func(*types.Visibility, *types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)) {
+func (fake *FakeSMVisibilityConverter) ConvertCalls(stub func(*types.Visibility, *types.ServicePlan) []*platform.ServiceVisibilityEntity) {
 	fake.convertMutex.Lock()
 	defer fake.convertMutex.Unlock()
 	fake.ConvertStub = stub
@@ -65,30 +63,27 @@ func (fake *FakeSMVisibilityConverter) ConvertArgsForCall(i int) (*types.Visibil
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeSMVisibilityConverter) ConvertReturns(result1 []*platform.ServiceVisibilityEntity, result2 error) {
+func (fake *FakeSMVisibilityConverter) ConvertReturns(result1 []*platform.ServiceVisibilityEntity) {
 	fake.convertMutex.Lock()
 	defer fake.convertMutex.Unlock()
 	fake.ConvertStub = nil
 	fake.convertReturns = struct {
 		result1 []*platform.ServiceVisibilityEntity
-		result2 error
-	}{result1, result2}
+	}{result1}
 }
 
-func (fake *FakeSMVisibilityConverter) ConvertReturnsOnCall(i int, result1 []*platform.ServiceVisibilityEntity, result2 error) {
+func (fake *FakeSMVisibilityConverter) ConvertReturnsOnCall(i int, result1 []*platform.ServiceVisibilityEntity) {
 	fake.convertMutex.Lock()
 	defer fake.convertMutex.Unlock()
 	fake.ConvertStub = nil
 	if fake.convertReturnsOnCall == nil {
 		fake.convertReturnsOnCall = make(map[int]struct {
 			result1 []*platform.ServiceVisibilityEntity
-			result2 error
 		})
 	}
 	fake.convertReturnsOnCall[i] = struct {
 		result1 []*platform.ServiceVisibilityEntity
-		result2 error
-	}{result1, result2}
+	}{result1}
 }
 
 func (fake *FakeSMVisibilityConverter) Invocations() map[string][][]interface{} {
