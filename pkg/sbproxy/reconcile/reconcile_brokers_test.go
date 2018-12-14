@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
@@ -61,7 +61,7 @@ var _ = Describe("ReconcilationTask", func() {
 		platformbroker2        platform.ServiceBroker
 		platformbrokerNonProxy platform.ServiceBroker
 
-		smVisibility1 *sm.Visibility
+		smVisibility1 *types.Visibility
 
 		platformVisibility1 *platform.ServiceVisibilityEntity
 	)
@@ -185,18 +185,19 @@ var _ = Describe("ReconcilationTask", func() {
 			BrokerURL: "https://platformBroker3.com",
 		}
 
-		smVisibility1 = &sm.Visibility{
-			Visibility: &types.Visibility{
-				ID:            "smVisibilityID1",
-				PlatformID:    "platformID1",
-				ServicePlanID: "smBroker1ServiceID1PlanID1",
-			},
-			Labels: []*sm.Label{
-				&sm.Label{
-					Key:    "organization_guid",
-					Values: []string{"org1guid"},
+		smVisibility1 = &types.Visibility{
+			ID:            "smVisibilityID1",
+			PlatformID:    "platformID1",
+			ServicePlanID: "smBroker1ServiceID1PlanID1",
+			Labels: []*types.VisibilityLabel{
+				&types.VisibilityLabel{
+					Label: types.Label{
+						Key:   "organization_guid",
+						Value: []string{"org1guid"},
+					},
 				},
-			}}
+			},
+		}
 
 		platformVisibility1 = &platform.ServiceVisibilityEntity{
 			CatalogPlanID: "smBroker1ServiceID1CatalogPlanID1",
@@ -225,8 +226,8 @@ var _ = Describe("ReconcilationTask", func() {
 		smBrokers       func() ([]sm.Broker, error)
 
 		platformVisibilities  func() ([]*platform.ServiceVisibilityEntity, error)
-		smVisibilities        func() ([]*sm.Visibility, error)
-		convertedVisibilities func() ([]*platform.ServiceVisibilityEntity, error)
+		smVisibilities        func() ([]*types.Visibility, error)
+		convertedVisibilities func() []*platform.ServiceVisibilityEntity
 
 		expectations func() expectations
 	}
@@ -235,12 +236,12 @@ var _ = Describe("ReconcilationTask", func() {
 		return nil, nil
 	}
 
-	smVisibilitiesEmptyMethod := func() ([]*sm.Visibility, error) {
+	smVisibilitiesEmptyMethod := func() ([]*types.Visibility, error) {
 		return nil, nil
 	}
 
-	convertedVisibilitiesEmptyMethod := func() ([]*platform.ServiceVisibilityEntity, error) {
-		return nil, nil
+	convertedVisibilitiesEmptyMethod := func() []*platform.ServiceVisibilityEntity {
+		return nil
 	}
 
 	entries := []TableEntry{
@@ -497,15 +498,15 @@ var _ = Describe("ReconcilationTask", func() {
 				}, nil
 			},
 			platformVisibilities: platformVisibilitiesEmptyMethod,
-			smVisibilities: func() ([]*sm.Visibility, error) {
-				return []*sm.Visibility{
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
 					smVisibility1,
 				}, nil
 			},
-			convertedVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+			convertedVisibilities: func() []*platform.ServiceVisibilityEntity {
 				return []*platform.ServiceVisibilityEntity{
 					platformVisibility1,
-				}, nil
+				}
 			},
 			expectations: func() expectations {
 				return expectations{
@@ -546,15 +547,15 @@ var _ = Describe("ReconcilationTask", func() {
 					platformVisibility1,
 				}, nil
 			},
-			smVisibilities: func() ([]*sm.Visibility, error) {
-				return []*sm.Visibility{
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
 					smVisibility1,
 				}, nil
 			},
-			convertedVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+			convertedVisibilities: func() []*platform.ServiceVisibilityEntity {
 				return []*platform.ServiceVisibilityEntity{
 					platformVisibility1,
-				}, nil
+				}
 			},
 			expectations: func() expectations {
 				return expectations{
@@ -621,7 +622,7 @@ var _ = Describe("ReconcilationTask", func() {
 		platformBrokers, err2 := t.platformBrokers()
 		platformVisibilities, err3 := t.platformVisibilities()
 		smVisibilities, err4 := t.smVisibilities()
-		convertedVisibilities, err5 := t.convertedVisibilities()
+		convertedVisibilities := t.convertedVisibilities()
 
 		smPlans := make([]*types.ServicePlan, 0)
 		for _, smBroker := range smBrokers {
@@ -638,8 +639,8 @@ var _ = Describe("ReconcilationTask", func() {
 		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
 		fakeServiceVisibility.GetVisibilitiesByPlansReturns(platformVisibilities, err3)
 		fakeSMClient.GetVisibilitiesReturns(smVisibilities, err4)
-		fakeSMVisibilityConverter.ConvertReturnsOnCall(0, convertedVisibilities, err5)
-		fakeSMVisibilityConverter.ConvertReturns(nil, nil)
+		fakeSMVisibilityConverter.ConvertReturnsOnCall(0, convertedVisibilities)
+		fakeSMVisibilityConverter.ConvertReturns(nil)
 		t.stubs()
 
 		reconcilationTask.Run()
