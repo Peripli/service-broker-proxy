@@ -22,10 +22,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-type Filter interface {
-	ByPlan() []*types.ServicePlan
-}
-
 //go:generate counterfeiter . ServiceVisibility
 type ServiceVisibility interface {
 	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)

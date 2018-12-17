@@ -48,9 +48,9 @@ type ReconcilationTask struct {
 
 // Settings type represents the sbproxy settings
 type Settings struct {
-	URL      string
-	Username string
-	Password string
+	URL      string `mapstructure:"url"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 
 	VisibilityCache bool          `mapstructure:"visibility_cache"`
 	CacheExpiration time.Duration `mapstructure:"cache_expiration"`
@@ -93,7 +93,7 @@ func NewTask(ctx context.Context,
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
 	if c.URL == "" {
-		return fmt.Errorf("validate settings: missing host")
+		return fmt.Errorf("validate settings: missing url")
 	}
 	if len(c.Username) == 0 {
 		return errors.New("validate settings: missing username")

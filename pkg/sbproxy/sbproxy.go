@@ -40,7 +40,7 @@ const (
 	// Path for the Proxy OSB API
 	Path = APIPrefix + "/{" + BrokerPathParam + "}"
 
-	cacheDefaultExpirationTime = 5 * time.Minute
+	cacheDefaultExpirationTime = 1 * time.Hour
 
 	cacheCleanupInterval = 2 * time.Minute
 )
