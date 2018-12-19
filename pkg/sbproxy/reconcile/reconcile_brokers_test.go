@@ -40,7 +40,7 @@ type platformClient struct {
 	*platformfakes.FakeServiceVisibilityHandler
 }
 
-var _ = Describe("ReconcilationTask", func() {
+var _ = Describe("ReconciliationTask", func() {
 	const fakeAppHost = "https://smproxy.com"
 
 	var (
@@ -53,7 +53,7 @@ var _ = Describe("ReconcilationTask", func() {
 
 		waitGroup *sync.WaitGroup
 
-		reconcilationTask *ReconcilationTask
+		reconciliationTask *ReconciliationTask
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -96,7 +96,7 @@ var _ = Describe("ReconcilationTask", func() {
 
 		waitGroup = &sync.WaitGroup{}
 
-		reconcilationTask = NewTask(
+		reconciliationTask = NewTask(
 			context.TODO(), DefaultSettings(), waitGroup, fakePlatformClient,
 			fakeSMClient, fakeAppHost, visibilityCache, &running)
 
@@ -233,7 +233,7 @@ var _ = Describe("ReconcilationTask", func() {
 	}
 
 	entries := []TableEntry{
-		Entry("When fetching brokers from SM fails no reconcilation should be done", testCase{
+		Entry("When fetching brokers from SM fails no reconciliation should be done", testCase{
 			stubs: func() {
 
 			},
@@ -256,7 +256,7 @@ var _ = Describe("ReconcilationTask", func() {
 			},
 		}),
 
-		Entry("When fetching brokers from platform fails no reconcilation should be done", testCase{
+		Entry("When fetching brokers from platform fails no reconciliation should be done", testCase{
 			stubs: func() {
 
 			},
@@ -279,7 +279,7 @@ var _ = Describe("ReconcilationTask", func() {
 			},
 		}),
 
-		Entry("When platform broker op fails reconcilation continues with the next broker", testCase{
+		Entry("When platform broker op fails reconciliation continues with the next broker", testCase{
 			stubs: func() {
 				fakePlatformClient.DeleteBrokerReturns(fmt.Errorf("error"))
 				fakePlatformClient.FetchReturns(fmt.Errorf("error"))
@@ -312,7 +312,7 @@ var _ = Describe("ReconcilationTask", func() {
 			},
 		}),
 
-		Entry("When broker from SM has no catalog reconcilation continues with the next broker", testCase{
+		Entry("When broker from SM has no catalog reconciliation continues with the next broker", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 			},
@@ -515,7 +515,7 @@ var _ = Describe("ReconcilationTask", func() {
 			},
 		}),
 
-		Entry("When visibility is in platform and service manager, no reconcilation should be done", testCase{
+		Entry("When visibility is in platform and service manager, no reconciliation should be done", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 			},
@@ -630,7 +630,7 @@ var _ = Describe("ReconcilationTask", func() {
 		fakePlatformClient.ConvertReturns(nil)
 		t.stubs()
 
-		reconcilationTask.Run()
+		reconciliationTask.Run()
 
 		if err1 != nil {
 			Expect(len(fakePlatformClient.FakeClient.Invocations())).To(Equal(1))

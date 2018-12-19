@@ -29,11 +29,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ReconcilationTask type represents a registration task that takes care of propagating broker creations
+// ReconciliationTask type represents a registration task that takes care of propagating broker creations
 // and deletions to the platform. It reconciles the state of the proxy brokers in the platform to match
 // the desired state provided by the Service Manager.
 // TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
-type ReconcilationTask struct {
+type ReconciliationTask struct {
 	options        *Settings
 	group          *sync.WaitGroup
 	platformClient platform.Client
@@ -66,7 +66,7 @@ func DefaultSettings() *Settings {
 	}
 }
 
-// NewTask builds a new ReconcilationTask
+// NewTask builds a new ReconciliationTask
 func NewTask(ctx context.Context,
 	options *Settings,
 	group *sync.WaitGroup,
@@ -74,8 +74,8 @@ func NewTask(ctx context.Context,
 	smClient sm.Client,
 	proxyPath string,
 	c *cache.Cache,
-	running *bool) *ReconcilationTask {
-	return &ReconcilationTask{
+	running *bool) *ReconciliationTask {
+	return &ReconciliationTask{
 		options:        options,
 		group:          group,
 		platformClient: platformClient,
@@ -108,7 +108,7 @@ func (c *Settings) Validate() error {
 
 // Run executes the registration task that is responsible for reconciling the state of the proxy brokers at the
 // platform with the brokers provided by the Service Manager
-func (r ReconcilationTask) Run() {
+func (r ReconciliationTask) Run() {
 	logger := log.C(r.ctx)
 	if *r.running {
 		logger.Info("Another reconcile job is in process... I will skip this one.")
@@ -128,7 +128,7 @@ func (r ReconcilationTask) Run() {
 	logger.Debug("FINISHED scheduled reconciliation task...")
 }
 
-func (r ReconcilationTask) run() {
+func (r ReconciliationTask) run() {
 	r.processBrokers()
 	r.processVisibilities()
 }
