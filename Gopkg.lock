@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "query-interpreter"
-  digest = "1:055ff8b1ddb24bfa185394c336c112131312c99ba59b219aac6ac11eb9f04c79"
+  digest = "1:92b816f858d108f1f2c0fa6c3d3b63b7855dc3b928704723e0950a02e798ef09"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -26,6 +26,7 @@
     "pkg/log",
     "pkg/query",
     "pkg/security",
+    "pkg/security/authenticators",
     "pkg/security/filters",
     "pkg/security/middlewares",
     "pkg/server",
@@ -39,7 +40,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "33cab33e18ccaac7b997f3ac98a7199c98cb53dc"
+  revision = "ec18a73d0666eb17a7c2a72ffeb7fd838efb731c"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -431,15 +432,15 @@
   version = "v1.0.4"
 
 [[projects]]
-  digest = "1:6a4a11ba764a56d2758899ec6f3848d24698d48442ebce85ee7a3f63284526cd"
+  digest = "1:d707dbc1330c0ed177d4642d6ae102d5e2c847ebd0eb84562d0dc4f024531cfc"
   name = "github.com/spf13/afero"
   packages = [
     ".",
     "mem",
   ]
   pruneopts = "UT"
-  revision = "d40851caa0d747393da1ffb28f7f9d8b4eeffebd"
-  version = "v1.1.2"
+  revision = "a5d6946387efe7d64d09dcba68cdd523dc1273a3"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:516e71bed754268937f57d4ecb190e01958452336fa73dbac880894164e91c1f"
@@ -499,6 +500,14 @@
   pruneopts = "UT"
   revision = "33827db735fff6510490d69a8622612558a557ed"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:ea8da5f44f5e15bb589cca1bd9b85ceb9c05257e83824a725fb0243665e3ce1c"
+  name = "github.com/tidwall/sjson"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c943cc8c8d751d9b33444adf78ae04c2fc8be754"
+  version = "v1.0.3"
 
 [[projects]]
   digest = "1:c468422f334a6b46a19448ad59aaffdfc0a36b08fdcc1c749a0b29b6453d7e59"
@@ -598,7 +607,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
+  revision = "e147a9138326bc0e9d4e179541ffd8af41cff8a9"
 
 [[projects]]
   branch = "master"

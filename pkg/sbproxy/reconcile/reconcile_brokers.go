@@ -17,13 +17,9 @@
 package reconcile
 
 import (
-	"github.com/Peripli/service-manager/pkg/types"
-
 	"github.com/Peripli/service-manager/pkg/log"
 
 	"strings"
-
-	"encoding/json"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/pkg/errors"
@@ -62,8 +58,6 @@ func (r ReconcilationTask) reconcileBrokers(existingBrokers []platform.ServiceBr
 		existingBroker := existingMap[payloadBroker.GUID]
 		delete(existingMap, payloadBroker.GUID)
 
-		// We don't care whether the following methods return errors
-		// the errors are logged by the method itself. We just proceed
 		if existingBroker == nil {
 			r.createBrokerRegistration(&payloadBroker)
 		} else {
@@ -121,20 +115,19 @@ func (r ReconcilationTask) getBrokersFromSM() ([]platform.ServiceBroker, error) 
 	return brokersFromSM, nil
 }
 
-func (r ReconcilationTask) fetchBrokerCatalog(broker *platform.ServiceBroker) (err error) {
+func (r ReconcilationTask) fetchBrokerCatalog(broker *platform.ServiceBroker) {
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 		logger := log.C(r.ctx)
 		logger.WithFields(logBroker(broker)).Debugf("ReconcilationTask task refetching catalog for broker")
-		if err = f.Fetch(r.ctx, broker); err != nil {
+		if err := f.Fetch(r.ctx, broker); err != nil {
 			logger.WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
 		} else {
 			logger.WithFields(logBroker(broker)).Debug("ReconcilationTask task SUCCESSFULLY refetched catalog for broker")
 		}
 	}
-	return
 }
 
-func (r ReconcilationTask) createBrokerRegistration(broker *platform.ServiceBroker) (err error) {
+func (r ReconcilationTask) createBrokerRegistration(broker *platform.ServiceBroker) {
 	logger := log.C(r.ctx)
 	logger.WithFields(logBroker(broker)).Info("ReconcilationTask task attempting to create proxy for broker in platform...")
 
@@ -143,13 +136,11 @@ func (r ReconcilationTask) createBrokerRegistration(broker *platform.ServiceBrok
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
-	var b *platform.ServiceBroker
-	if b, err = r.platformClient.CreateBroker(r.ctx, createRequest); err != nil {
+	if b, err := r.platformClient.CreateBroker(r.ctx, createRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
 	} else {
 		logger.WithFields(logBroker(b)).Infof("ReconcilationTask task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	}
-	return
 }
 
 func (r ReconcilationTask) deleteBrokerRegistration(broker *platform.ServiceBroker) {
@@ -178,17 +169,6 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 		"broker_name": broker.Name,
 		"broker_url":  broker.BrokerURL,
 	}
-}
-
-func logService(service types.ServiceOffering) logrus.Fields {
-	return logrus.Fields{
-		"service_guid": service.CatalogID,
-		"service_name": service.Name,
-	}
-}
-
-func emptyContext() json.RawMessage {
-	return json.RawMessage(`{}`)
 }
 
 func convertBrokersRegListToMap(brokerList []platform.ServiceBroker) map[string]*platform.ServiceBroker {

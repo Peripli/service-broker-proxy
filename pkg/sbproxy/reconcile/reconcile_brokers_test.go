@@ -34,18 +34,19 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+type platformClient struct {
+	*platformfakes.FakeClient
+	*platformfakes.FakeCatalogFetcher
+	*platformfakes.FakeServiceVisibilityHandler
+}
+
 var _ = Describe("ReconcilationTask", func() {
 	const fakeAppHost = "https://smproxy.com"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
 
-		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
-		fakePlatformServiceAccess  *platformfakes.FakeServiceAccess
-		fakePlatformBrokerClient   *platformfakes.FakeClient
-		fakeVisibilityKeyMapper    *platformfakes.FakeServiceVisibilityKeyMapper
-		fakeServiceVisibility      *platformfakes.FakeServiceVisibility
-		fakeSMVisibilityConverter  *platformfakes.FakeSMVisibilityConverter
+		fakePlatformClient *platformClient
 
 		visibilityCache *cache.Cache
 		running         bool
@@ -79,37 +80,25 @@ var _ = Describe("ReconcilationTask", func() {
 	}
 
 	stubPlatformOpsToSucceed := func() {
-		fakePlatformBrokerClient.CreateBrokerStub = stubCreateBrokerToSucceed
-		fakePlatformBrokerClient.DeleteBrokerReturns(nil)
-		fakePlatformServiceAccess.EnableAccessForServiceReturns(nil)
-		fakePlatformCatalogFetcher.FetchReturns(nil)
+		fakePlatformClient.CreateBrokerStub = stubCreateBrokerToSucceed
+		fakePlatformClient.DeleteBrokerReturns(nil)
+		fakePlatformClient.FetchReturns(nil)
 	}
 
 	BeforeEach(func() {
 		fakeSMClient = &smfakes.FakeClient{}
-		fakePlatformBrokerClient = &platformfakes.FakeClient{}
-		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
-		fakePlatformServiceAccess = &platformfakes.FakeServiceAccess{}
-		fakeVisibilityKeyMapper = &platformfakes.FakeServiceVisibilityKeyMapper{}
-		fakeServiceVisibility = &platformfakes.FakeServiceVisibility{}
-		fakeSMVisibilityConverter = &platformfakes.FakeSMVisibilityConverter{}
+		fakePlatformClient = &platformClient{
+			&platformfakes.FakeClient{},
+			&platformfakes.FakeCatalogFetcher{},
+			&platformfakes.FakeServiceVisibilityHandler{},
+		}
 		visibilityCache = cache.New(5*time.Minute, 10*time.Minute)
 
 		waitGroup = &sync.WaitGroup{}
 
-		reconcilationTask = NewTask(context.TODO(), DefaultSettings(), waitGroup, struct {
-			*platformfakes.FakeCatalogFetcher
-			*platformfakes.FakeServiceAccess
-			*platformfakes.FakeClient
-			*platformfakes.FakeServiceVisibility
-			*platformfakes.FakeSMVisibilityConverter
-		}{
-			FakeCatalogFetcher:        fakePlatformCatalogFetcher,
-			FakeServiceAccess:         fakePlatformServiceAccess,
-			FakeClient:                fakePlatformBrokerClient,
-			FakeServiceVisibility:     fakeServiceVisibility,
-			FakeSMVisibilityConverter: fakeSMVisibilityConverter,
-		}, fakeSMClient, fakeAppHost, visibilityCache, fakeVisibilityKeyMapper, &running)
+		reconcilationTask = NewTask(
+			context.TODO(), DefaultSettings(), waitGroup, fakePlatformClient,
+			fakeSMClient, fakeAppHost, visibilityCache, &running)
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
@@ -211,11 +200,10 @@ var _ = Describe("ReconcilationTask", func() {
 		ServiceOfferings []types.ServiceOffering
 	}
 	type expectations struct {
-		reconcileCreateCalledFor  []platform.ServiceBroker
-		reconcileDeleteCalledFor  []platform.ServiceBroker
-		reconcileCatalogCalledFor []platform.ServiceBroker
-		reconcileAccessCalledFor  []catalog
-
+		reconcileCreateCalledFor           []platform.ServiceBroker
+		reconcileDeleteCalledFor           []platform.ServiceBroker
+		reconcileCatalogCalledFor          []platform.ServiceBroker
+		reconcileAccessCalledFor           []catalog
 		reconcileVisibilityCalledFor       []*platform.ServiceVisibilityEntity
 		reconcileDeleteVisibilityCalledFor []*platform.ServiceVisibilityEntity
 	}
@@ -293,10 +281,9 @@ var _ = Describe("ReconcilationTask", func() {
 
 		Entry("When platform broker op fails reconcilation continues with the next broker", testCase{
 			stubs: func() {
-				fakePlatformBrokerClient.DeleteBrokerReturns(fmt.Errorf("error"))
-				fakePlatformServiceAccess.EnableAccessForServiceReturns(fmt.Errorf("error"))
-				fakePlatformCatalogFetcher.FetchReturns(fmt.Errorf("error"))
-				fakePlatformBrokerClient.CreateBrokerStub = stubCreateBrokerToReturnError
+				fakePlatformClient.DeleteBrokerReturns(fmt.Errorf("error"))
+				fakePlatformClient.FetchReturns(fmt.Errorf("error"))
+				fakePlatformClient.CreateBrokerStub = stubCreateBrokerToReturnError
 			},
 			platformBrokers: func() ([]platform.ServiceBroker, error) {
 				return []platform.ServiceBroker{
@@ -636,47 +623,45 @@ var _ = Describe("ReconcilationTask", func() {
 		fakeSMClient.GetBrokersReturns(smBrokers, err1)
 		// TODO: Make error possible here
 		fakeSMClient.GetPlansReturns(smPlans, nil)
-		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
-		fakeServiceVisibility.GetVisibilitiesByPlansReturns(platformVisibilities, err3)
+		fakePlatformClient.GetBrokersReturns(platformBrokers, err2)
+		fakePlatformClient.GetVisibilitiesByPlansReturns(platformVisibilities, err3)
 		fakeSMClient.GetVisibilitiesReturns(smVisibilities, err4)
-		fakeSMVisibilityConverter.ConvertReturnsOnCall(0, convertedVisibilities)
-		fakeSMVisibilityConverter.ConvertReturns(nil)
+		fakePlatformClient.ConvertReturnsOnCall(0, convertedVisibilities)
+		fakePlatformClient.ConvertReturns(nil)
 		t.stubs()
 
 		reconcilationTask.Run()
 
 		if err1 != nil {
-			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
-			Expect(len(fakePlatformCatalogFetcher.Invocations())).To(Equal(0))
-			Expect(len(fakePlatformServiceAccess.Invocations())).To(Equal(0))
+			Expect(len(fakePlatformClient.FakeClient.Invocations())).To(Equal(1))
+			Expect(len(fakePlatformClient.FakeServiceVisibilityHandler.Invocations())).To(Equal(0))
 			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 			return
 		}
 
 		if err2 != nil {
-			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
-			Expect(len(fakePlatformCatalogFetcher.Invocations())).To(Equal(0))
-			Expect(len(fakePlatformServiceAccess.Invocations())).To(Equal(0))
+			Expect(len(fakePlatformClient.FakeClient.Invocations())).To(Equal(1))
+			Expect(len(fakePlatformClient.FakeServiceVisibilityHandler.Invocations())).To(Equal(0))
 			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(0))
 			return
 		}
 
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
-		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
+		Expect(fakePlatformClient.GetBrokersCallCount()).To(Equal(1))
 
 		expected := t.expectations()
-		Expect(fakePlatformBrokerClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreateCalledFor)))
+		Expect(fakePlatformClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreateCalledFor)))
 		for index, broker := range expected.reconcileCreateCalledFor {
-			_, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
+			_, request := fakePlatformClient.CreateBrokerArgsForCall(index)
 			Expect(request).To(Equal(&platform.CreateServiceBrokerRequest{
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
 			}))
 		}
 
-		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
+		Expect(fakePlatformClient.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
 		for index, broker := range expected.reconcileCatalogCalledFor {
-			_, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
+			_, serviceBroker := fakePlatformClient.FetchArgsForCall(index)
 			Expect(serviceBroker).To(Equal(&broker))
 		}
 
@@ -686,29 +671,29 @@ var _ = Describe("ReconcilationTask", func() {
 		// index := 0
 		// for _, catalog := range expected.reconcileAccessCalledFor {
 		// 	for _, service := range catalog.ServiceOfferings {
-		// 		_, _, serviceID := fakePlatformServiceAccess.EnableAccessForServiceArgsForCall(index)
+		// 		_, _, serviceID := fakePlatformClient.EnableAccessForServiceArgsForCall(index)
 		// 		Expect(serviceID).To(Equal(service.CatalogID))
 		// 		servicesCount++
 		// 		index++
 		// 	}
 		// }
-		// Expect(fakePlatformServiceAccess.EnableAccessForServiceCallCount()).To(Equal(servicesCount))
+		// Expect(fakePlatformClient.EnableAccessForServiceCallCount()).To(Equal(servicesCount))
 
-		Expect(fakePlatformServiceAccess.EnableAccessForPlanCallCount()).To(Equal(len(expected.reconcileVisibilityCalledFor)))
+		Expect(fakePlatformClient.EnableAccessForPlanCallCount()).To(Equal(len(expected.reconcileVisibilityCalledFor)))
 		for index, visibility := range expected.reconcileVisibilityCalledFor {
-			_, _, planGUID := fakePlatformServiceAccess.EnableAccessForPlanArgsForCall(index)
+			_, _, planGUID := fakePlatformClient.EnableAccessForPlanArgsForCall(index)
 			Expect(planGUID).To(Equal(visibility.CatalogPlanID))
 		}
 
-		Expect(fakePlatformServiceAccess.DisableAccessForPlanCallCount()).To(Equal(len(expected.reconcileDeleteVisibilityCalledFor)))
+		Expect(fakePlatformClient.DisableAccessForPlanCallCount()).To(Equal(len(expected.reconcileDeleteVisibilityCalledFor)))
 		for index, visibility := range expected.reconcileDeleteVisibilityCalledFor {
-			_, _, planGUID := fakePlatformServiceAccess.DisableAccessForPlanArgsForCall(index)
+			_, _, planGUID := fakePlatformClient.DisableAccessForPlanArgsForCall(index)
 			Expect(planGUID).To(Equal(visibility.CatalogPlanID))
 		}
 
-		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDeleteCalledFor)))
+		Expect(fakePlatformClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDeleteCalledFor)))
 		for index, broker := range expected.reconcileDeleteCalledFor {
-			_, request := fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)
+			_, request := fakePlatformClient.DeleteBrokerArgsForCall(index)
 			Expect(request).To(Equal(&platform.DeleteServiceBrokerRequest{
 				GUID: broker.GUID,
 				Name: broker.Name,

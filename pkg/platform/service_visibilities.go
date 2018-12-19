@@ -18,11 +18,31 @@ package platform
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-//go:generate counterfeiter . ServiceVisibility
-type ServiceVisibility interface {
+// ServiceVisibilityHandler interface for platform clients to implement if they support
+// platform specific service and plan visibilities
+//go:generate counterfeiter . ServiceVisibilityHandler
+type ServiceVisibilityHandler interface {
+	// GetVisibilitiesByPlans get currently available visibilities in the platform for a specific plans
 	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
+
+	// Convert translates visibility from Service Manager and the referenced plan to array of generic visibilities.
+	// These generic visibilities will then be reconciled with the visibilities taken from the platform
+	Convert(*types.Visibility, *types.ServicePlan) []*ServiceVisibilityEntity
+
+	// Map maps a generic visibility to a specific string. These strings will be compared when reconciling
+	// the visibilities taken from the platform and Service Manager
+	Map(*ServiceVisibilityEntity) string
+
+	// EnableAccessForPlan enables the access to the plan with the specified GUID for
+	// the entities in the data
+	EnableAccessForPlan(ctx context.Context, data json.RawMessage, servicePlanGUID string) error
+
+	// DisableAccessForPlan disables the access to the plan with the specified GUID for
+	// the entities in the data
+	DisableAccessForPlan(ctx context.Context, data json.RawMessage, servicePlanGUID string) error
 }

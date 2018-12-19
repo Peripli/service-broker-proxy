@@ -34,14 +34,13 @@ import (
 // the desired state provided by the Service Manager.
 // TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
 type ReconcilationTask struct {
-	options             *Settings
-	group               *sync.WaitGroup
-	platformClient      platform.Client
-	smClient            sm.Client
-	visibilityKeyMapper platform.ServiceVisibilityKeyMapper
-	proxyPath           string
-	ctx                 context.Context
-	cache               *cache.Cache
+	options        *Settings
+	group          *sync.WaitGroup
+	platformClient platform.Client
+	smClient       sm.Client
+	proxyPath      string
+	ctx            context.Context
+	cache          *cache.Cache
 
 	running *bool
 }
@@ -75,18 +74,16 @@ func NewTask(ctx context.Context,
 	smClient sm.Client,
 	proxyPath string,
 	c *cache.Cache,
-	visibilityKeyMapper platform.ServiceVisibilityKeyMapper,
 	running *bool) *ReconcilationTask {
 	return &ReconcilationTask{
-		options:             options,
-		group:               group,
-		platformClient:      platformClient,
-		smClient:            smClient,
-		proxyPath:           proxyPath,
-		ctx:                 ctx,
-		cache:               c,
-		running:             running,
-		visibilityKeyMapper: visibilityKeyMapper,
+		options:        options,
+		group:          group,
+		platformClient: platformClient,
+		smClient:       smClient,
+		proxyPath:      proxyPath,
+		ctx:            ctx,
+		cache:          c,
+		running:        running,
 	}
 }
 

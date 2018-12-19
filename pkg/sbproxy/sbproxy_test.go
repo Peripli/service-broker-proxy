@@ -33,18 +33,21 @@ import (
 	"github.com/spf13/pflag"
 )
 
+type platformClient struct {
+	*platformfakes.FakeClient
+	*platformfakes.FakeServiceVisibilityHandler
+}
+
 var _ = Describe("Sbproxy", func() {
 	var ctx context.Context
 	var cancel context.CancelFunc
-	var fakePlatformClient *platformfakes.FakeClient
-	var fakeVisibilityKeyMapper *platformfakes.FakeServiceVisibilityKeyMapper
+	var fakePlatformClient platformClient
 	var fakeEnv *envfakes.FakeEnvironment
 
 	BeforeEach(func() {
 		ctx = context.TODO()
 		cancel = func() {}
-		fakePlatformClient = &platformfakes.FakeClient{}
-		fakeVisibilityKeyMapper = &platformfakes.FakeServiceVisibilityKeyMapper{}
+		fakePlatformClient = platformClient{&platformfakes.FakeClient{}, &platformfakes.FakeServiceVisibilityHandler{}}
 		fakeEnv = &envfakes.FakeEnvironment{}
 	})
 
@@ -54,7 +57,7 @@ var _ = Describe("Sbproxy", func() {
 				fakeEnv.UnmarshalReturns(fmt.Errorf("error"))
 
 				Expect(func() {
-					New(ctx, cancel, fakeEnv, fakePlatformClient, fakeVisibilityKeyMapper)
+					New(ctx, cancel, fakeEnv, fakePlatformClient)
 				}).To(Panic())
 			})
 		})
@@ -69,7 +72,7 @@ var _ = Describe("Sbproxy", func() {
 						set.Set("sm.url", "http://localhost:8080")
 						set.Set("sm.osb_api_path", "/osb")
 						set.Set("log.level", "")
-					}), fakePlatformClient, fakeVisibilityKeyMapper)
+					}), fakePlatformClient)
 				}).To(Panic())
 			})
 		})
@@ -83,7 +86,7 @@ var _ = Describe("Sbproxy", func() {
 						set.Set("sm.password", "admin")
 						set.Set("sm.url", "http://localhost:8080")
 						set.Set("sm.osb_api_path", "/osb")
-					}), fakePlatformClient, fakeVisibilityKeyMapper)
+					}), fakePlatformClient)
 				}).To(Panic())
 			})
 		})
@@ -102,7 +105,7 @@ var _ = Describe("Sbproxy", func() {
 					set.Set("sm.password", "admin")
 					set.Set("sm.url", "http://localhost:8080")
 					set.Set("sm.osb_api_path", "/osb")
-				}), fakePlatformClient, fakeVisibilityKeyMapper)
+				}), fakePlatformClient)
 				proxy.RegisterControllers(testController{})
 				SMProxy = httpexpect.New(GinkgoT(), httptest.NewServer(proxy.Build().Server.Router).URL)
 			})
