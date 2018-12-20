@@ -18,15 +18,12 @@ package reconcile
 
 import (
 	"context"
-	"fmt"
 	"sync"
-	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
 	cache "github.com/patrickmn/go-cache"
-	"github.com/pkg/errors"
 )
 
 // ReconciliationTask type represents a registration task that takes care of propagating broker creations
@@ -43,27 +40,6 @@ type ReconciliationTask struct {
 	cache          *cache.Cache
 
 	running *bool
-}
-
-// Settings type represents the sbproxy settings
-type Settings struct {
-	URL      string `mapstructure:"url"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
-
-	VisibilityCache bool          `mapstructure:"visibility_cache"`
-	CacheExpiration time.Duration `mapstructure:"cache_expiration"`
-}
-
-// DefaultSettings creates default proxy settings
-func DefaultSettings() *Settings {
-	return &Settings{
-		URL:             "",
-		Username:        "",
-		Password:        "",
-		VisibilityCache: true,
-		CacheExpiration: time.Hour,
-	}
 }
 
 // NewTask builds a new ReconciliationTask
@@ -85,25 +61,6 @@ func NewTask(ctx context.Context,
 		cache:          c,
 		running:        running,
 	}
-}
-
-// Validate validates that the configuration contains all mandatory properties
-func (c *Settings) Validate() error {
-	if c.URL == "" {
-		return fmt.Errorf("validate settings: missing url")
-	}
-	if len(c.Username) == 0 {
-		return errors.New("validate settings: missing username")
-	}
-	if len(c.Password) == 0 {
-		return errors.New("validate settings: missing password")
-	}
-	if c.VisibilityCache {
-		if time.Minute > c.CacheExpiration {
-			return errors.New("validate settings: if cache is enabled, cache_expiration should be at least 1 minute")
-		}
-	}
-	return nil
 }
 
 // Run executes the registration task that is responsible for reconciling the state of the proxy brokers at the
