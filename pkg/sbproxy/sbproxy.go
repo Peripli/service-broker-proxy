@@ -1,6 +1,8 @@
 package sbproxy
 
 import (
+	"sync"
+
 	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/api/healthcheck"
@@ -8,7 +10,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/util"
-	"sync"
 
 	"fmt"
 
@@ -99,7 +100,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 				URL:      cfg.Sm.URL + cfg.Sm.OSBAPIPath,
 				Username: cfg.Sm.User,
 				Password: cfg.Sm.Password,
-			}, &sm.SkipSSLTransport{
+			}, nil, &sm.SkipSSLTransport{
 				SkipSslValidation: cfg.Sm.SkipSSLValidation,
 			}),
 		},
