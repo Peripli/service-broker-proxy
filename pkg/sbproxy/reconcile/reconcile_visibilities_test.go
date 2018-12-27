@@ -80,15 +80,21 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakePlatformCatalogFetcher.FetchReturns(nil)
 	}
 
-	checkAccessArguments := func(data json.RawMessage, servicePlanGUID string, visibility *platform.ServiceVisibilityEntity) {
-		Expect(servicePlanGUID).To(Equal(visibility.CatalogPlanID))
+	checkAccessArguments := func(data json.RawMessage, servicePlanGUID string, visibilities []*platform.ServiceVisibilityEntity) {
+		// Expect(servicePlanGUID).To(Equal(visibility.CatalogPlanID))
 		var labels map[string]string
 		err := json.Unmarshal(data, &labels)
 		Expect(err).To(Not(HaveOccurred()))
 		if labels == nil {
 			labels = map[string]string{}
 		}
-		Expect(labels).To(Equal(visibility.Labels))
+		// Expect(labels).To(Equal(visibility.Labels))
+		visibility := &platform.ServiceVisibilityEntity{
+			Public:        len(labels) == 0,
+			CatalogPlanID: servicePlanGUID,
+			Labels:        labels,
+		}
+		Expect(visibilities).To(ContainElement(visibility))
 	}
 
 	BeforeEach(func() {
@@ -350,6 +356,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
+						Public:        true,
 						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 					},
 				}, nil
@@ -366,12 +373,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
+							Public:        true,
 							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:        map[string]string{},
 						},
 					},
 					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
+							Public:        true,
 							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:        map[string]string{},
 						},
@@ -414,16 +423,16 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(len(expected.enablePlanVisibilityCalledFor)))
 
-		for index, visibility := range expected.enablePlanVisibilityCalledFor {
+		for index := range expected.enablePlanVisibilityCalledFor {
 			_, data, servicePlanGUID := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, visibility)
+			checkAccessArguments(data, servicePlanGUID, expected.enablePlanVisibilityCalledFor)
 		}
 
 		Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(len(expected.disablePlanVisibilityCalledFor)))
 
-		for index, visibility := range expected.disablePlanVisibilityCalledFor {
+		for index := range expected.disablePlanVisibilityCalledFor {
 			_, data, servicePlanGUID := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, visibility)
+			checkAccessArguments(data, servicePlanGUID, expected.disablePlanVisibilityCalledFor)
 		}
 
 	}, entries...)

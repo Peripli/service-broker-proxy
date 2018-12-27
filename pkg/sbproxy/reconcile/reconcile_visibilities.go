@@ -19,6 +19,8 @@ package reconcile
 import (
 	"encoding/json"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -30,6 +32,8 @@ import (
 const (
 	platformVisibilityCacheKey = "platform_visibilities"
 	smPlansCacheKey            = "sm_plans"
+
+	yes int32 = 1
 )
 
 // processVisibilities handles the reconsilation of the service visibilities.
@@ -230,21 +234,51 @@ func (r ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*p
 		}
 	}
 
-	errorOccured := false
 	logger.Debugf("ReconciliationTask %d visibilities will be removed from the platform", len(platformMap))
-	for _, visibility := range platformMap {
-		if err := r.deleteVisibility(visibility); err != nil {
-			errorOccured = true
-		}
-	}
+	errorOccured := r.deleteVisibilities(platformMap)
 
 	logger.Debugf("ReconciliationTask %d visibilities will be created in the platform", len(visibilitiesToCreate))
-	for _, visibility := range visibilitiesToCreate {
-		if err := r.createVisibility(visibility); err != nil {
-			errorOccured = true
-		}
-	}
+	errorOccured = r.createVisibilities(visibilitiesToCreate) || errorOccured
+
 	return errorOccured
+}
+
+// deleteVisibilities deletes visibilities from platform. Returns true if error has occurred
+func (r ReconciliationTask) deleteVisibilities(visibilities map[string]*platform.ServiceVisibilityEntity) bool {
+	var errorOccured int32 // will be used as atomic bool
+	var wg sync.WaitGroup
+
+	for _, visibility := range visibilities {
+		execAsync(&wg, visibility, &errorOccured, r.deleteVisibility)
+	}
+	return await(&wg, &errorOccured)
+
+}
+
+// createVisibilities creates visibilities from platform. Returns true if error has occurred
+func (r ReconciliationTask) createVisibilities(visibilities []*platform.ServiceVisibilityEntity) bool {
+	var errorOccured int32 // will be used as atomic bool
+	var wg sync.WaitGroup
+
+	for _, visibility := range visibilities {
+		execAsync(&wg, visibility, &errorOccured, r.createVisibility)
+	}
+	return await(&wg, &errorOccured)
+}
+
+func execAsync(wg *sync.WaitGroup, visibility *platform.ServiceVisibilityEntity, errorOccured *int32, f func(*platform.ServiceVisibilityEntity) error) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := f(visibility); err != nil {
+			atomic.StoreInt32(errorOccured, yes)
+		}
+	}()
+}
+
+func await(wg *sync.WaitGroup, errorOccured *int32) bool {
+	wg.Wait()
+	return *errorOccured == yes
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans
