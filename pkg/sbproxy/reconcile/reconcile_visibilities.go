@@ -18,6 +18,7 @@ package reconcile
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -35,7 +36,7 @@ const (
 // it gets the service visibilities from SM and the platform and runs the reconciliation
 func (r ReconciliationTask) processVisibilities() {
 	logger := log.C(r.ctx)
-	if r.getVisibilitiesClient() == nil {
+	if r.platformClient.Visibility() == nil {
 		logger.Debug("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
 		return
 	}
@@ -76,11 +77,6 @@ func (r ReconciliationTask) processVisibilities() {
 			r.updateVisibilityCache(visibilityCacheUsed, plansMap, smVisibilities)
 		}
 	}
-}
-
-func (r ReconciliationTask) getVisibilitiesClient() platform.ServiceVisibilityHandler {
-	client, _ := r.platformClient.(platform.ServiceVisibilityHandler)
-	return client
 }
 
 // updateVisibilityCache
@@ -138,7 +134,7 @@ func (r ReconciliationTask) loadPlatformVisibilities(plans []*types.ServicePlan)
 	logger := log.C(r.ctx)
 	logger.Debug("ReconciliationTask getting visibilities from platform")
 
-	platformVisibilities, err := r.getVisibilitiesClient().GetVisibilitiesByPlans(r.ctx, plans)
+	platformVisibilities, err := r.platformClient.Visibility().GetVisibilitiesByPlans(r.ctx, plans)
 	if err != nil {
 		return nil, err
 	}
@@ -170,11 +166,9 @@ func (r ReconciliationTask) getSMVisibilities(smPlansMap map[string]*types.Servi
 	}
 	logger.Debugf("ReconciliationTask successfully retrieved %d visibilities from Service Manager", len(visibilities))
 
-	visibilitiesClient := r.getVisibilitiesClient()
-
 	result := make([]*platform.ServiceVisibilityEntity, 0)
 	for _, visibility := range visibilities {
-		converted := visibilitiesClient.Convert(visibility, smPlansMap[visibility.ServicePlanID])
+		converted := r.convertSMVisibility(visibility, smPlansMap[visibility.ServicePlanID])
 		result = append(result, converted...)
 	}
 	logger.Debugf("ReconciliationTask successfully converted %d SM visibilities to %d platform visibilities", len(visibilities), len(result))
@@ -182,15 +176,53 @@ func (r ReconciliationTask) getSMVisibilities(smPlansMap map[string]*types.Servi
 	return result, nil
 }
 
+func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan) []*platform.ServiceVisibilityEntity {
+	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
+
+	if visibility.PlatformID == "" {
+		return []*platform.ServiceVisibilityEntity{
+			&platform.ServiceVisibilityEntity{
+				Public:        true,
+				CatalogPlanID: smPlan.CatalogID,
+				Labels:        map[string]string{},
+			},
+		}
+	}
+
+	scopeLabelIndex := findOrgLabelIndex(visibility.Labels, scopeLabelKey)
+	if scopeLabelIndex == -1 {
+		return []*platform.ServiceVisibilityEntity{}
+	}
+
+	scopes := visibility.Labels[scopeLabelIndex].Value
+	result := make([]*platform.ServiceVisibilityEntity, 0, len(scopes))
+	for _, scope := range scopes {
+		result = append(result, &platform.ServiceVisibilityEntity{
+			Public:        false,
+			CatalogPlanID: smPlan.CatalogID,
+			Labels:        map[string]string{scopeLabelKey: scope},
+		})
+	}
+	return result
+}
+
+func findOrgLabelIndex(labels []*types.VisibilityLabel, labelKey string) int {
+	for i, label := range labels {
+		if label.Key == labelKey {
+			return i
+		}
+	}
+	return -1
+}
+
 func (r ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {
 	logger := log.C(r.ctx)
 	logger.Debug("ReconciliationTask reconsiling platform and SM visibilities...")
 
-	visibilitiesClient := r.getVisibilitiesClient()
 	platformMap := r.convertVisListToMap(platformVis)
 	visibilitiesToCreate := make([]*platform.ServiceVisibilityEntity, 0)
 	for _, visibility := range smVis {
-		key := visibilitiesClient.Map(visibility)
+		key := r.getVisibilityKey(visibility)
 		existingVis := platformMap[key]
 		delete(platformMap, key)
 		if existingVis == nil {
@@ -215,6 +247,17 @@ func (r ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*p
 	return errorOccured
 }
 
+// getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans
+func (r ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibilityEntity) string {
+	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
+
+	const idSeparator = "|"
+	if visibility.Public {
+		return strings.Join([]string{"public", "", visibility.CatalogPlanID}, idSeparator)
+	}
+	return strings.Join([]string{"!public", visibility.Labels[scopeLabelKey], visibility.CatalogPlanID}, idSeparator)
+}
+
 func (r ReconciliationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) error {
 	logger := log.C(r.ctx)
 	logger.Debugf("Creating visibility for %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
@@ -224,7 +267,7 @@ func (r ReconciliationTask) createVisibility(visibility *platform.ServiceVisibil
 		logger.WithError(err).Error("Could not marshal labels to json")
 		return err
 	}
-	if err = r.getVisibilitiesClient().EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
+	if err = r.platformClient.Visibility().EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
 		logger.WithError(err).Errorf("Could not enable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
@@ -240,7 +283,7 @@ func (r ReconciliationTask) deleteVisibility(visibility *platform.ServiceVisibil
 		logger.WithError(err).Error("Could not marshal labels to json")
 		return err
 	}
-	if err = r.getVisibilitiesClient().DisableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
+	if err = r.platformClient.Visibility().DisableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
 		logger.WithError(err).Errorf("Could not disable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
@@ -248,10 +291,9 @@ func (r ReconciliationTask) deleteVisibility(visibility *platform.ServiceVisibil
 }
 
 func (r ReconciliationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
-	visibilitiesClient := r.getVisibilitiesClient()
 	result := make(map[string]*platform.ServiceVisibilityEntity, len(list))
 	for _, vis := range list {
-		key := visibilitiesClient.Map(vis)
+		key := r.getVisibilityKey(vis)
 		result[key] = vis
 	}
 	return result

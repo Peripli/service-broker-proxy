@@ -33,21 +33,24 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type platformClient struct {
-	*platformfakes.FakeClient
-	*platformfakes.FakeServiceVisibilityHandler
-}
-
 var _ = Describe("Sbproxy", func() {
 	var ctx context.Context
 	var cancel context.CancelFunc
-	var fakePlatformClient platformClient
+	var fakePlatformClient *platformfakes.FakeClient
+	var fakeBrokerClient *platformfakes.FakeBrokerClient
 	var fakeEnv *envfakes.FakeEnvironment
 
 	BeforeEach(func() {
 		ctx = context.TODO()
 		cancel = func() {}
-		fakePlatformClient = platformClient{&platformfakes.FakeClient{}, &platformfakes.FakeServiceVisibilityHandler{}}
+
+		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
+
+		fakePlatformClient = &platformfakes.FakeClient{}
+		fakePlatformClient.BrokerReturns(fakeBrokerClient)
+		fakePlatformClient.VisibilityReturns(&platformfakes.FakeVisibilityClient{})
+		fakePlatformClient.CatalogFetcherReturns(&platformfakes.FakeCatalogFetcher{})
+
 		fakeEnv = &envfakes.FakeEnvironment{}
 	})
 
@@ -95,7 +98,7 @@ var _ = Describe("Sbproxy", func() {
 			var SMProxy *httpexpect.Expect
 
 			BeforeEach(func() {
-				fakePlatformClient.GetBrokersReturns([]platform.ServiceBroker{}, nil)
+				fakeBrokerClient.GetBrokersReturns([]platform.ServiceBroker{}, nil)
 
 				proxy := New(ctx, cancel, DefaultEnv(func(set *pflag.FlagSet) {
 					set.Set("app.url", "http://localhost:8080")

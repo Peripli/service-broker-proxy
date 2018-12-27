@@ -40,7 +40,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakeSMClient *smfakes.FakeClient
 
 		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
-		fakePlatformBrokerClient   *platformfakes.FakeClient
+		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
 
 		running   bool
 		waitGroup *sync.WaitGroup
@@ -75,8 +75,14 @@ var _ = Describe("Reconcile brokers", func() {
 
 	BeforeEach(func() {
 		fakeSMClient = &smfakes.FakeClient{}
-		fakePlatformBrokerClient = &platformfakes.FakeClient{}
+		fakePlatformClient := &platformfakes.FakeClient{}
+
+		fakePlatformBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
+
+		fakePlatformClient.BrokerReturns(fakePlatformBrokerClient)
+		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
+		fakePlatformClient.VisibilityReturns(nil)
 
 		visibilityCache := cache.New(5*time.Minute, 10*time.Minute)
 		waitGroup = &sync.WaitGroup{}
@@ -86,7 +92,7 @@ var _ = Describe("Reconcile brokers", func() {
 			*platformfakes.FakeClient
 		}{
 			FakeCatalogFetcher: fakePlatformCatalogFetcher,
-			FakeClient:         fakePlatformBrokerClient,
+			FakeClient:         fakePlatformClient,
 		}
 
 		reconciliationTask = NewTask(

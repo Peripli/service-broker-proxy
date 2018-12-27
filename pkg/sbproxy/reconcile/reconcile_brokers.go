@@ -32,17 +32,23 @@ const ProxyBrokerPrefix = "sm-proxy-"
 // processBrokers handles the reconsilation of the service brokers.
 // it gets the brokers from SM and the platform and runs the reconciliation
 func (r ReconciliationTask) processBrokers() {
+	logger := log.C(r.ctx)
+	if r.platformClient.Broker() == nil {
+		logger.Debug("Platform client cannot handle brokers. Broker reconciliation will be skipped.")
+		return
+	}
+
 	// get all the registered proxy brokers from the platform
 	brokersFromPlatform, err := r.getBrokersFromPlatform()
 	if err != nil {
-		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining already registered brokers")
+		logger.WithError(err).Error("An error occurred while obtaining already registered brokers")
 		return
 	}
 
 	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
 	brokersFromSM, err := r.getBrokersFromSM()
 	if err != nil {
-		log.C(r.ctx).WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+		logger.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
 		return
 	}
 
@@ -73,7 +79,7 @@ func (r ReconciliationTask) reconcileBrokers(existingBrokers []platform.ServiceB
 func (r ReconciliationTask) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {
 	logger := log.C(r.ctx)
 	logger.Debug("ReconciliationTask task getting proxy brokers from platform...")
-	registeredBrokers, err := r.platformClient.GetBrokers(r.ctx)
+	registeredBrokers, err := r.platformClient.Broker().GetBrokers(r.ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
 	}
@@ -136,7 +142,7 @@ func (r ReconciliationTask) createBrokerRegistration(broker *platform.ServiceBro
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
-	if b, err := r.platformClient.CreateBroker(r.ctx, createRequest); err != nil {
+	if b, err := r.platformClient.Broker().CreateBroker(r.ctx, createRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
 	} else {
 		logger.WithFields(logBroker(b)).Infof("ReconciliationTask task SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
@@ -152,7 +158,7 @@ func (r ReconciliationTask) deleteBrokerRegistration(broker *platform.ServiceBro
 		Name: broker.Name,
 	}
 
-	if err := r.platformClient.DeleteBroker(r.ctx, deleteRequest); err != nil {
+	if err := r.platformClient.Broker().DeleteBroker(r.ctx, deleteRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
 	} else {
 		logger.WithFields(logBroker(broker)).Infof("ReconciliationTask task SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
