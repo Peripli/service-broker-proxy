@@ -39,7 +39,7 @@ const (
 )
 
 // processVisibilities handles the reconsilation of the service visibilities.
-// it gets the service visibilities from SM and the platform and runs the reconciliation
+// It gets the service visibilities from SM and the platform and runs the reconciliation
 func (r ReconciliationTask) processVisibilities() {
 	logger := log.C(r.ctx)
 	if r.platformClient.Visibility() == nil {
@@ -53,12 +53,12 @@ func (r ReconciliationTask) processVisibilities() {
 		return
 	}
 	var platformVisibilities []*platform.ServiceVisibilityEntity
-	if r.options.VisibilityCache {
+	if r.options.VisibilityCache && r.areSMPlansSame(plans) {
 		platformVisibilities = r.getPlatformVisibilitiesFromCache()
 	}
 
 	visibilityCacheUsed := true
-	if platformVisibilities == nil || !r.areSMPlansSame(plans) {
+	if platformVisibilities == nil {
 		platformVisibilities, err = r.loadPlatformVisibilities(plans)
 		if err != nil {
 			logger.WithError(err).Error("An error occurred while loading visibilities from platform")
@@ -99,8 +99,8 @@ func (r ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plan
 	r.cache.Set(platformVisibilityCacheKey, visibilities, cacheExpiration)
 }
 
-// areSMPlansSame checks if there are new or deleted plans in SM
-// returns true if there are no new or deleted plans, false otherwise
+// areSMPlansSame checks if there are new or deleted plans in SM.
+// Returns true if there are no new or deleted plans, false otherwise
 func (r ReconciliationTask) areSMPlansSame(plans []*types.ServicePlan) bool {
 	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
 	if !isPresent {
