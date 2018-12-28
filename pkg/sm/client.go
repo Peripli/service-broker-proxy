@@ -126,7 +126,7 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 func (c *ServiceManagerClient) call(ctx context.Context, url string, queryParams map[string]string, list interface{}) error {
 	response, err := util.SendRequest(ctx, c.httpClient.Do, http.MethodGet, url, queryParams, nil)
 	if err != nil {
-		return err //errors.Wrap(err, "error getting %s from Service Manager")
+		return err
 	}
 
 	if response.StatusCode != http.StatusOK {

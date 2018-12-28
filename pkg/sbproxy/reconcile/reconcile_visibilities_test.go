@@ -31,6 +31,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	cache "github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
 )
 
 var _ = Describe("Reconcile visibilities", func() {
@@ -81,14 +82,12 @@ var _ = Describe("Reconcile visibilities", func() {
 	}
 
 	checkAccessArguments := func(data json.RawMessage, servicePlanGUID string, visibilities []*platform.ServiceVisibilityEntity) {
-		// Expect(servicePlanGUID).To(Equal(visibility.CatalogPlanID))
 		var labels map[string]string
 		err := json.Unmarshal(data, &labels)
 		Expect(err).To(Not(HaveOccurred()))
 		if labels == nil {
 			labels = map[string]string{}
 		}
-		// Expect(labels).To(Equal(visibility.Labels))
 		visibility := &platform.ServiceVisibilityEntity{
 			Public:        len(labels) == 0,
 			CatalogPlanID: servicePlanGUID,
@@ -352,6 +351,157 @@ var _ = Describe("Reconcile visibilities", func() {
 			},
 		}),
 
+		Entry("When enable visibility returns error - should continue with reconciliation", testCase{
+			stubs: func() {
+				fakeVisibilityClient.EnableAccessForPlanReturnsOnCall(0, errors.New("Expected"))
+			},
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return []*platform.ServiceVisibilityEntity{}, nil
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
+					&types.Visibility{
+						PlatformID:    "platformID",
+						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels: []*types.VisibilityLabel{
+							&types.VisibilityLabel{
+								Label: types.Label{
+									Key:   "key",
+									Value: []string{"value0"},
+								},
+							},
+						},
+					},
+					&types.Visibility{
+						PlatformID:    "platformID",
+						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+						Labels: []*types.VisibilityLabel{
+							&types.VisibilityLabel{
+								Label: types.Label{
+									Key:   "key",
+									Value: []string{"value1"},
+								},
+							},
+						},
+					},
+				}, nil
+			},
+			smPlans: stubGetSMPlans,
+			expectations: func() expectations {
+				return expectations{
+					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+						&platform.ServiceVisibilityEntity{
+							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:        map[string]string{"key": "value0"},
+						},
+						&platform.ServiceVisibilityEntity{
+							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+							Labels:        map[string]string{"key": "value1"},
+						},
+					},
+				}
+			},
+		}),
+
+		Entry("When disable visibility returns error - should continue with reconciliation", testCase{
+			stubs: func() {
+				fakeVisibilityClient.DisableAccessForPlanReturnsOnCall(0, errors.New("Expected"))
+			},
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return []*platform.ServiceVisibilityEntity{
+					&platform.ServiceVisibilityEntity{
+						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels:        map[string]string{"key": "value0"},
+					},
+					&platform.ServiceVisibilityEntity{
+						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+						Labels:        map[string]string{"key": "value1"},
+					},
+				}, nil
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{}, nil
+			},
+			smPlans: stubGetSMPlans,
+			expectations: func() expectations {
+				return expectations{
+					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+						&platform.ServiceVisibilityEntity{
+							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:        map[string]string{"key": "value0"},
+						},
+						&platform.ServiceVisibilityEntity{
+							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+							Labels:        map[string]string{"key": "value1"},
+						},
+					},
+				}
+			},
+		}),
+
+		Entry("When visibility from SM doesn't have scope label and scope is enabled - should not enable visibility", testCase{
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return []*platform.ServiceVisibilityEntity{}, nil
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
+					&types.Visibility{
+						PlatformID:    "platformID",
+						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels: []*types.VisibilityLabel{
+							&types.VisibilityLabel{
+								Label: types.Label{
+									Key:   "some key",
+									Value: []string{"some value"},
+								},
+							},
+						},
+					},
+				}, nil
+			},
+			smPlans: stubGetSMPlans,
+			expectations: func() expectations {
+				return expectations{}
+			},
+		}),
+
+		Entry("When visibility from SM doesn't have scope label and scope is disabled - should enable visibility", testCase{
+			stubs: func() {
+				fakeVisibilityClient.VisibilityScopeLabelKeyReturns("")
+			},
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return []*platform.ServiceVisibilityEntity{}, nil
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
+					&types.Visibility{
+						PlatformID:    "platformID",
+						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels: []*types.VisibilityLabel{
+							&types.VisibilityLabel{
+								Label: types.Label{
+									Key:   "some key",
+									Value: []string{"some value"},
+								},
+							},
+						},
+					},
+				}, nil
+			},
+			smPlans: stubGetSMPlans,
+			expectations: func() expectations {
+				return expectations{
+					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+						&platform.ServiceVisibilityEntity{
+							Public:        true,
+							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:        map[string]string{},
+						},
+					},
+				}
+			},
+		}),
+
 		Entry("When visibilities in platform and in SM are both public - should reconcile", testCase{
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
@@ -386,6 +536,63 @@ var _ = Describe("Reconcile visibilities", func() {
 						},
 					},
 				}
+			},
+		}),
+
+		Entry("When plans from SM could not be fetched - should not reconcile", testCase{
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return []*platform.ServiceVisibilityEntity{
+					&platform.ServiceVisibilityEntity{
+						Public:        true,
+						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+					},
+				}, nil
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
+					&types.Visibility{
+						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+					},
+				}, nil
+			},
+			smPlans: func() ([]*types.ServicePlan, error) { return nil, errors.New("Expected") },
+			expectations: func() expectations {
+				return expectations{}
+			},
+		}),
+
+		Entry("When visibilities from SM cannot be fetched - no reconcilation is done", testCase{
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return []*platform.ServiceVisibilityEntity{
+					&platform.ServiceVisibilityEntity{
+						Public:        true,
+						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+					},
+				}, nil
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return nil, errors.New("Expected")
+			},
+			smPlans: stubGetSMPlans,
+			expectations: func() expectations {
+				return expectations{}
+			},
+		}),
+
+		Entry("When visibilities from platform cannot be fetched - no reconcilation is done", testCase{
+			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+				return nil, errors.New("Expected")
+			},
+			smVisibilities: func() ([]*types.Visibility, error) {
+				return []*types.Visibility{
+					&types.Visibility{
+						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+					},
+				}, nil
+			},
+			smPlans: stubGetSMPlans,
+			expectations: func() expectations {
+				return expectations{}
 			},
 		}),
 	}

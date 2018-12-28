@@ -23,6 +23,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/types"
@@ -69,6 +71,7 @@ func (r ReconciliationTask) processVisibilities() {
 	smVisibilities, err := r.getSMVisibilities(plansMap)
 	if err != nil {
 		logger.WithError(err).Error("An error occurred while obtaining SM visibilities")
+		return
 	}
 
 	errorOccured := r.reconcileServiceVisibilities(platformVisibilities, smVisibilities)
@@ -183,7 +186,7 @@ func (r ReconciliationTask) getSMVisibilities(smPlansMap map[string]*types.Servi
 func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan) []*platform.ServiceVisibilityEntity {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
-	if visibility.PlatformID == "" {
+	if visibility.PlatformID == "" || scopeLabelKey == "" {
 		return []*platform.ServiceVisibilityEntity{
 			&platform.ServiceVisibilityEntity{
 				Public:        true,
@@ -296,9 +299,8 @@ func (r ReconciliationTask) createVisibility(visibility *platform.ServiceVisibil
 	logger := log.C(r.ctx)
 	logger.Debugf("Creating visibility for %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
 
-	json, err := json.Marshal(visibility.Labels)
+	json, err := marshalVisibilityLabels(logger, visibility.Labels)
 	if err != nil {
-		logger.WithError(err).Error("Could not marshal labels to json")
 		return err
 	}
 	if err = r.platformClient.Visibility().EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
@@ -312,9 +314,8 @@ func (r ReconciliationTask) deleteVisibility(visibility *platform.ServiceVisibil
 	logger := log.C(r.ctx)
 	logger.Debugf("Deleting visibility for %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
 
-	json, err := json.Marshal(visibility.Labels)
+	json, err := marshalVisibilityLabels(logger, visibility.Labels)
 	if err != nil {
-		logger.WithError(err).Error("Could not marshal labels to json")
 		return err
 	}
 	if err = r.platformClient.Visibility().DisableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
@@ -322,6 +323,14 @@ func (r ReconciliationTask) deleteVisibility(visibility *platform.ServiceVisibil
 		return err
 	}
 	return nil
+}
+
+func marshalVisibilityLabels(logger *logrus.Entry, labels map[string]string) ([]byte, error) {
+	json, err := json.Marshal(labels)
+	if err != nil {
+		logger.WithError(err).Error("Could not marshal labels to json")
+	}
+	return json, err
 }
 
 func (r ReconciliationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
