@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "query-interpreter"
-  digest = "1:92b816f858d108f1f2c0fa6c3d3b63b7855dc3b928704723e0950a02e798ef09"
+  digest = "1:092529ecd0a60e88d508e1e5dcdfefba6e181e960d65a3e42d5498d07472478c"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "ec18a73d0666eb17a7c2a72ffeb7fd838efb731c"
+  revision = "9884da53376af105c2ece57f916ee1e7d18fb7e1"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -300,11 +300,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7b00688590bccf501dc8b1f43f5948a80bc72494c501d9c995abb68be1e766f2"
+  digest = "1:96df5bdca983e4b8c62682af5b67100b187d582ac6db0968d8af52e84138d1e6"
   name = "github.com/onrik/logrus"
   packages = ["filename"]
   pruneopts = "UT"
-  revision = "c9849815bc7c2abf20d58e4bc06c242198ebb741"
+  revision = "11c5d81510976de4ae9feea551b03722ea8d9abc"
 
 [[projects]]
   digest = "1:9dd8858ae7fa91d2477ec05605b000d3c1ad65e3a1e36f9bf8f97a170c05ea05"
@@ -595,7 +595,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:01b27a69b969b2af666b9fcc5c74bfc20781204ba8305f7799b4ba69c5b84cf0"
+  digest = "1:fb256ce5e66ab4d4e47c962f044bfe46c58e070c9298b7f1a9f75fc1fa2c0463"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -607,7 +607,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "e147a9138326bc0e9d4e179541ffd8af41cff8a9"
+  revision = "927f97764cc334a6575f4b7a1584a147864d5723"
 
 [[projects]]
   branch = "master"
@@ -622,14 +622,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ba8cbf57cfd92d5f8592b4aca1a35d92c162363d32aeabd5b12555f8896635e7"
+  digest = "1:ab070eba73decd4e1956c3a12002e0dfad793bda7a9c1174ad62b4418b11ff85"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "4d1cda033e0619309c606fc686de3adcf599539e"
+  revision = "c6cbdbf9e68a68b19802a5c44e537c284b9c8e1a"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -667,7 +667,7 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:08206298775e5b462e6c0333f4471b44e63f1a70e42952b6ede4ecc9572281eb"
+  digest = "1:6f3bd49ddf2e104e52062774d797714371fac1b8bddfd8e124ce78e6b2264a10"
   name = "google.golang.org/appengine"
   packages = [
     "internal",
@@ -679,8 +679,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "4a4468ece617fc8205e99368fa2200e9d1fad421"
-  version = "v1.3.0"
+  revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
+  version = "v1.4.0"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
