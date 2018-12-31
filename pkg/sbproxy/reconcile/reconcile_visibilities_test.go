@@ -96,6 +96,18 @@ var _ = Describe("Reconcile visibilities", func() {
 		Expect(visibilities).To(ContainElement(visibility))
 	}
 
+	setFakeBrokersClients := func() {
+		fakeSMClient.GetBrokersReturns([]sm.Broker{
+			smbroker1,
+			smbroker2,
+		}, nil)
+		fakePlatformBrokerClient.GetBrokersReturns([]platform.ServiceBroker{
+			platformbroker1,
+			platformbroker2,
+			platformbrokerNonProxy,
+		}, nil)
+	}
+
 	BeforeEach(func() {
 		fakeSMClient = &smfakes.FakeClient{}
 		fakePlatformClient = &platformfakes.FakeClient{}
@@ -135,6 +147,21 @@ var _ = Describe("Reconcile visibilities", func() {
 							ID:          "smBroker1ServiceID1PlanID2",
 							CatalogID:   "smBroker1ServiceID1PlanID2",
 							Name:        "smBroker1Service1Plan2",
+							Description: "description",
+						},
+					},
+				},
+				{
+					ID:                  "smBroker2ServiceID1",
+					Name:                "smBroker2Service1",
+					Description:         "description",
+					Bindable:            true,
+					BindingsRetrievable: true,
+					Plans: []*types.ServicePlan{
+						{
+							ID:          "smBroker2ServiceID1PlanID1",
+							CatalogID:   "smBroker2ServiceID1PlanID1",
+							Name:        "smBroker2Service1Plan1",
 							Description: "description",
 						},
 					},
@@ -598,15 +625,7 @@ var _ = Describe("Reconcile visibilities", func() {
 	}
 
 	DescribeTable("Run", func(t testCase) {
-		fakeSMClient.GetBrokersReturns([]sm.Broker{
-			smbroker1,
-			smbroker2,
-		}, nil)
-		fakePlatformBrokerClient.GetBrokersReturns([]platform.ServiceBroker{
-			platformbroker1,
-			platformbroker2,
-			platformbrokerNonProxy,
-		}, nil)
+		setFakeBrokersClients()
 
 		fakeSMClient.GetVisibilitiesReturns(t.smVisibilities())
 		fakeSMClient.GetPlansReturns(t.smPlans())
@@ -643,5 +662,104 @@ var _ = Describe("Reconcile visibilities", func() {
 		}
 
 	}, entries...)
+
+	Describe("Run cache", func() {
+
+		setVisibilityClients := func() {
+			fakeSMClient.GetVisibilitiesReturns([]*types.Visibility{}, nil)
+			fakeSMClient.GetPlansReturns(stubGetSMPlans())
+
+			fakeVisibilityClient.GetVisibilitiesByPlansReturns([]*platform.ServiceVisibilityEntity{}, nil)
+			fakeVisibilityClient.VisibilityScopeLabelKeyReturns("key")
+		}
+
+		setFakes := func() {
+			setFakeBrokersClients()
+			setVisibilityClients()
+			stubPlatformOpsToSucceed()
+		}
+
+		assertCallCounts := func(nonCachedCallsCounts, platformVisibilityCallCount int) {
+			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(nonCachedCallsCounts))
+			Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(nonCachedCallsCounts))
+			Expect(fakeVisibilityClient.GetVisibilitiesByPlansCallCount()).To(Equal(platformVisibilityCallCount))
+			Expect(fakeSMClient.GetVisibilitiesCallCount()).To(Equal(nonCachedCallsCounts))
+		}
+
+		BeforeEach(func() {
+			setFakes()
+			reconciliationTask.Run()
+			assertCallCounts(1, 1)
+		})
+
+		Context("when visibility cache is invalid", func() {
+			It("should call platform", func() {
+				visibilityCache.Replace(platformVisibilityCacheKey, nil, time.Minute)
+				reconciliationTask.Run()
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when visibility cache has expired", func() {
+			It("should call platform", func() {
+				visibilities, found := visibilityCache.Get(platformVisibilityCacheKey)
+				Expect(found).To(BeTrue())
+				visibilityCache.Set(platformVisibilityCacheKey, visibilities, time.Nanosecond)
+				time.Sleep(time.Nanosecond)
+				reconciliationTask.Run()
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when plan cache is invalid", func() {
+			It("should call platform", func() {
+				visibilityCache.Replace(smPlansCacheKey, nil, time.Minute)
+				reconciliationTask.Run()
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when plan cache has expired", func() {
+			It("should call platform", func() {
+				plans, found := visibilityCache.Get(smPlansCacheKey)
+				Expect(found).To(BeTrue())
+				visibilityCache.Set(smPlansCacheKey, plans, time.Nanosecond)
+				time.Sleep(time.Nanosecond)
+				reconciliationTask.Run()
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when there are no changes in SM plans", func() {
+			It("should use cache", func() {
+				reconciliationTask.Run()
+				assertCallCounts(2, 1)
+			})
+		})
+
+		Context("when there are changes in SM plans", func() {
+			Context("and plans are not the same count", func() {
+				It("should not use cache", func() {
+					fakeSMClient.GetPlansReturns([]*types.ServicePlan{
+						smbroker1.ServiceOfferings[0].Plans[0],
+					}, nil)
+					reconciliationTask.Run()
+					assertCallCounts(2, 2)
+				})
+			})
+
+			Context("and plans are the same count but different", func() {
+				It("should not use cache", func() {
+					fakeSMClient.GetPlansReturns([]*types.ServicePlan{
+						smbroker1.ServiceOfferings[0].Plans[0],
+						smbroker1.ServiceOfferings[1].Plans[0],
+					}, nil)
+
+					reconciliationTask.Run()
+					assertCallCounts(2, 2)
+				})
+			})
+		})
+	})
 
 })
