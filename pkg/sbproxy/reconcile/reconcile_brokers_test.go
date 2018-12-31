@@ -42,7 +42,6 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
 		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
 
-		running   bool
 		waitGroup *sync.WaitGroup
 
 		reconciliationTask *ReconciliationTask
@@ -97,7 +96,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		reconciliationTask = NewTask(
 			context.TODO(), DefaultSettings(), waitGroup, platformClient, fakeSMClient,
-			fakeAppHost, visibilityCache, &running)
+			fakeAppHost, visibilityCache)
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",

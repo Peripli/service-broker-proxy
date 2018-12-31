@@ -46,7 +46,6 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakeVisibilityClient       *platformfakes.FakeVisibilityClient
 
 		visibilityCache *cache.Cache
-		running         bool
 
 		waitGroup *sync.WaitGroup
 
@@ -124,7 +123,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		reconciliationTask = NewTask(
 			context.TODO(), DefaultSettings(), waitGroup, fakePlatformClient, fakeSMClient,
-			fakeAppHost, visibilityCache, &running)
+			fakeAppHost, visibilityCache)
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",

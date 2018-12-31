@@ -38,8 +38,6 @@ type ReconciliationTask struct {
 	proxyPath      string
 	ctx            context.Context
 	cache          *cache.Cache
-
-	running *bool
 }
 
 // NewTask builds a new ReconciliationTask
@@ -49,8 +47,7 @@ func NewTask(ctx context.Context,
 	platformClient platform.Client,
 	smClient sm.Client,
 	proxyPath string,
-	c *cache.Cache,
-	running *bool) *ReconciliationTask {
+	c *cache.Cache) *ReconciliationTask {
 	return &ReconciliationTask{
 		options:        options,
 		group:          group,
@@ -59,7 +56,6 @@ func NewTask(ctx context.Context,
 		proxyPath:      proxyPath,
 		ctx:            ctx,
 		cache:          c,
-		running:        running,
 	}
 }
 
@@ -67,19 +63,11 @@ func NewTask(ctx context.Context,
 // platform with the brokers provided by the Service Manager
 func (r ReconciliationTask) Run() {
 	logger := log.C(r.ctx)
-	if *r.running {
-		logger.Info("Another reconcile job is in process... I will skip this one.")
-		return
-	}
 
 	logger.Debug("STARTING scheduled reconciliation task...")
 
 	r.group.Add(1)
-	*r.running = true
-	defer func() {
-		r.group.Done()
-		*r.running = false
-	}()
+	defer r.group.Done()
 	r.run()
 
 	logger.Debug("FINISHED scheduled reconciliation task...")
