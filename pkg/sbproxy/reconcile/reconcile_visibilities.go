@@ -57,14 +57,13 @@ func (r ReconciliationTask) processVisibilities() {
 		platformVisibilities = r.getPlatformVisibilitiesFromCache()
 	}
 
-	visibilityCacheUsed := true
-	if platformVisibilities == nil {
+	visibilityCacheUsed := platformVisibilities != nil
+	if !visibilityCacheUsed {
 		platformVisibilities, err = r.loadPlatformVisibilities(plans)
 		if err != nil {
 			logger.WithError(err).Error("An error occurred while loading visibilities from platform")
 			return
 		}
-		visibilityCacheUsed = false
 	}
 
 	plansMap := smPlansToMap(plans)
@@ -188,7 +187,7 @@ func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, sm
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
 		return []*platform.ServiceVisibilityEntity{
-			&platform.ServiceVisibilityEntity{
+			{
 				Public:        true,
 				CatalogPlanID: smPlan.CatalogID,
 				Labels:        map[string]string{},
@@ -196,12 +195,7 @@ func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, sm
 		}
 	}
 
-	scopeLabelIndex := findOrgLabelIndex(visibility.Labels, scopeLabelKey)
-	if scopeLabelIndex == -1 {
-		return []*platform.ServiceVisibilityEntity{}
-	}
-
-	scopes := visibility.Labels[scopeLabelIndex].Value
+	scopes := visibility.Labels[scopeLabelKey]
 	result := make([]*platform.ServiceVisibilityEntity, 0, len(scopes))
 	for _, scope := range scopes {
 		result = append(result, &platform.ServiceVisibilityEntity{
@@ -211,15 +205,6 @@ func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, sm
 		})
 	}
 	return result
-}
-
-func findOrgLabelIndex(labels []*types.VisibilityLabel, labelKey string) int {
-	for i, label := range labels {
-		if label.Key == labelKey {
-			return i
-		}
-	}
-	return -1
 }
 
 func (r ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {

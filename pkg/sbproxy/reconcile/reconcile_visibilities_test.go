@@ -254,13 +254,8 @@ var _ = Describe("Reconcile visibilities", func() {
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "key",
-									Value: []string{"value0", "value1"},
-								},
-							},
+						Labels: types.Labels{
+							"key": []string{"value0", "value1"},
 						},
 					},
 				}, nil
@@ -301,13 +296,8 @@ var _ = Describe("Reconcile visibilities", func() {
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "key",
-									Value: []string{"value0", "value1"},
-								},
-							},
+						Labels: types.Labels{
+							"key": []string{"value0", "value1"},
 						},
 					},
 				}, nil
@@ -339,13 +329,8 @@ var _ = Describe("Reconcile visibilities", func() {
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "key",
-									Value: []string{"value0", "value1"},
-								},
-							},
+						Labels: types.Labels{
+							"key": []string{"value0", "value1"},
 						},
 					},
 				}, nil
@@ -389,25 +374,15 @@ var _ = Describe("Reconcile visibilities", func() {
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "key",
-									Value: []string{"value0"},
-								},
-							},
+						Labels: types.Labels{
+							"key": []string{"value0"},
 						},
 					},
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "key",
-									Value: []string{"value1"},
-								},
-							},
+						Labels: types.Labels{
+							"key": []string{"value1"},
 						},
 					},
 				}, nil
@@ -474,13 +449,8 @@ var _ = Describe("Reconcile visibilities", func() {
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "some key",
-									Value: []string{"some value"},
-								},
-							},
+						Labels: types.Labels{
+							"some key": []string{"some value"},
 						},
 					},
 				}, nil
@@ -503,13 +473,8 @@ var _ = Describe("Reconcile visibilities", func() {
 					&types.Visibility{
 						PlatformID:    "platformID",
 						ServicePlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels: []*types.VisibilityLabel{
-							&types.VisibilityLabel{
-								Label: types.Label{
-									Key:   "some key",
-									Value: []string{"some value"},
-								},
-							},
+						Labels: types.Labels{
+							"some key": []string{"some value"},
 						},
 					},
 				}, nil

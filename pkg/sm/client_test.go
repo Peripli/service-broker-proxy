@@ -436,21 +436,13 @@ var _ = Describe("Client", func() {
 				  "id": "127b5b3a-c0bc-45be-bcaf-f1083566214f",
 				  "platform_id": "bf092091-76ba-4398-a301-40472b794aea",
 				  "service_plan_id": "180dd7fb-1c6e-41fe-95ee-aefb51513032",
-				  "labels": [
-						{
-							 "key": "organization_guid",
-							 "value": [
-								  "d0761213-012d-4bc5-8a7b-7780875d8913",
-								  "15317fc3-693c-423a-90ba-6f86d6559abe"
-							 ]
-						},
-						{
-							 "key": "something",
-							 "value": [
-								  "generic"
-							 ]
-						}
-				  ],
+				  "labels": {
+						"organization_guid": [
+							"d0761213-012d-4bc5-8a7b-7780875d8913",
+							"15317fc3-693c-423a-90ba-6f86d6559abe"
+						],
+						"something": ["generic"]
+				  },
 				  "created_at": "2018-12-27T14:35:23Z",
 				  "updated_at": "2018-12-27T14:35:23Z"
 			 }
