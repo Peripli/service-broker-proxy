@@ -87,7 +87,7 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]Broker, error)
 	log.C(ctx).Debugf("Getting brokers for proxy from Service Manager at %s", c.host)
 
 	list := &Brokers{}
-	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), map[string]string{"catalog": "true"}, list)
+	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), list)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
@@ -100,7 +100,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 
 	list := &types.Visibilities{}
-	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, list)
+	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), list)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
 	}
@@ -115,7 +115,7 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 	list := &struct {
 		Plans []*types.ServicePlan `json:"service_plans"`
 	}{}
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, list)
+	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), list)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
@@ -123,8 +123,8 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 	return list.Plans, nil
 }
 
-func (c *ServiceManagerClient) call(ctx context.Context, url string, queryParams map[string]string, list interface{}) error {
-	response, err := util.SendRequest(ctx, c.httpClient.Do, http.MethodGet, url, queryParams, nil)
+func (c *ServiceManagerClient) call(ctx context.Context, url string, list interface{}) error {
+	response, err := util.SendRequest(ctx, c.httpClient.Do, http.MethodGet, url, nil, nil)
 	if err != nil {
 		return err
 	}

@@ -281,9 +281,6 @@ var _ = Describe("Client", func() {
 		Entry("Successfully obtain brokers", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
-				Params: map[string]string{
-					"catalog": "true",
-				},
 				Headers: map[string]string{
 					"Authorization": "Basic " + basicAuth("admin", "admin"),
 				},
@@ -300,9 +297,6 @@ var _ = Describe("Client", func() {
 		Entry("Returns error when API returns error", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
-				Params: map[string]string{
-					"catalog": "true",
-				},
 				Headers: map[string]string{
 					"Authorization": "Basic " + basicAuth("admin", "admin"),
 				},
@@ -318,9 +312,6 @@ var _ = Describe("Client", func() {
 		Entry("Returns error when API response body is invalid", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
-				Params: map[string]string{
-					"catalog": "true",
-				},
 				Headers: map[string]string{
 					"Authorization": "Basic " + basicAuth("admin", "admin"),
 				},
@@ -337,9 +328,6 @@ var _ = Describe("Client", func() {
 		Entry("Returns error when API returns error", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
-				Params: map[string]string{
-					"catalog": "true",
-				},
 				Headers: map[string]string{
 					"Authorization": "Basic " + basicAuth("admin", "admin"),
 				},

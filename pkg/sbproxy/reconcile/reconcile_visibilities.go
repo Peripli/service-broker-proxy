@@ -17,10 +17,10 @@
 package reconcile
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -34,14 +34,12 @@ import (
 const (
 	platformVisibilityCacheKey = "platform_visibilities"
 	smPlansCacheKey            = "sm_plans"
-
-	yes int32 = 1
 )
 
 // processVisibilities handles the reconsilation of the service visibilities.
 // It gets the service visibilities from SM and the platform and runs the reconciliation
-func (r ReconciliationTask) processVisibilities() {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) processVisibilities() {
+	logger := log.C(r.runContext)
 	if r.platformClient.Visibility() == nil {
 		logger.Debug("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
 		return
@@ -86,7 +84,7 @@ func (r ReconciliationTask) processVisibilities() {
 }
 
 // updateVisibilityCache
-func (r ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plansMap map[string]*types.ServicePlan, visibilities []*platform.ServiceVisibilityEntity) {
+func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plansMap map[string]*types.ServicePlan, visibilities []*platform.ServiceVisibilityEntity) {
 	r.cache.Set(smPlansCacheKey, plansMap, r.options.CacheExpiration)
 	cacheExpiration := r.options.CacheExpiration
 	if visibilityCacheUsed {
@@ -100,14 +98,14 @@ func (r ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plan
 
 // areSMPlansSame checks if there are new or deleted plans in SM.
 // Returns true if there are no new or deleted plans, false otherwise
-func (r ReconciliationTask) areSMPlansSame(plans []*types.ServicePlan) bool {
+func (r *ReconciliationTask) areSMPlansSame(plans []*types.ServicePlan) bool {
 	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
 	if !isPresent {
 		return false
 	}
 	cachedPlansMap, ok := cachedPlans.(map[string]*types.ServicePlan)
 	if !ok {
-		log.C(r.ctx).Error("SM plans cache is in invalid state! Clearing...")
+		log.C(r.runContext).Error("SM plans cache is in invalid state! Clearing...")
 		r.cache.Delete(smPlansCacheKey)
 		return false
 	}
@@ -122,25 +120,25 @@ func (r ReconciliationTask) areSMPlansSame(plans []*types.ServicePlan) bool {
 	return true
 }
 
-func (r ReconciliationTask) getPlatformVisibilitiesFromCache() []*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) getPlatformVisibilitiesFromCache() []*platform.ServiceVisibilityEntity {
 	platformVisibilities, found := r.cache.Get(platformVisibilityCacheKey)
 	if !found {
 		return nil
 	}
 	if result, ok := platformVisibilities.([]*platform.ServiceVisibilityEntity); ok {
-		log.C(r.ctx).Debugf("ReconciliationTask fetched %d platform visibilities from cache", len(result))
+		log.C(r.runContext).Debugf("ReconciliationTask fetched %d platform visibilities from cache", len(result))
 		return result
 	}
-	log.C(r.ctx).Error("Platform visibilities cache is in invalid state! Clearing...")
+	log.C(r.runContext).Error("Platform visibilities cache is in invalid state! Clearing...")
 	r.cache.Delete(platformVisibilityCacheKey)
 	return nil
 }
 
-func (r ReconciliationTask) loadPlatformVisibilities(plans []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) loadPlatformVisibilities(plans []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
+	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask getting visibilities from platform")
 
-	platformVisibilities, err := r.platformClient.Visibility().GetVisibilitiesByPlans(r.ctx, plans)
+	platformVisibilities, err := r.platformClient.Visibility().GetVisibilitiesByPlans(r.runContext, plans)
 	if err != nil {
 		return nil, err
 	}
@@ -149,11 +147,11 @@ func (r ReconciliationTask) loadPlatformVisibilities(plans []*types.ServicePlan)
 	return platformVisibilities, nil
 }
 
-func (r ReconciliationTask) getSMPlans() ([]*types.ServicePlan, error) {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) getSMPlans() ([]*types.ServicePlan, error) {
+	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask getting plans from Service Manager")
 
-	plans, err := r.smClient.GetPlans(r.ctx)
+	plans, err := r.smClient.GetPlans(r.runContext)
 	if err != nil {
 		return nil, errors.Wrap(err, "error gettings plans from SM")
 	}
@@ -162,11 +160,11 @@ func (r ReconciliationTask) getSMPlans() ([]*types.ServicePlan, error) {
 	return plans, nil
 }
 
-func (r ReconciliationTask) getSMVisibilities(smPlansMap map[string]*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[string]*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
+	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask getting visibilities from Service Manager")
 
-	visibilities, err := r.smClient.GetVisibilities(r.ctx)
+	visibilities, err := r.smClient.GetVisibilities(r.runContext)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +180,7 @@ func (r ReconciliationTask) getSMVisibilities(smPlansMap map[string]*types.Servi
 	return result, nil
 }
 
-func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan) []*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan) []*platform.ServiceVisibilityEntity {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -207,8 +205,8 @@ func (r ReconciliationTask) convertSMVisibility(visibility *types.Visibility, sm
 	return result
 }
 
-func (r ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {
+	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask reconsiling platform and SM visibilities...")
 
 	platformMap := r.convertVisListToMap(platformVis)
@@ -223,54 +221,82 @@ func (r ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*p
 	}
 
 	logger.Debugf("ReconciliationTask %d visibilities will be removed from the platform", len(platformMap))
-	errorOccured := r.deleteVisibilities(platformMap)
+	if errorOccured := r.deleteVisibilities(platformMap); errorOccured != nil {
+		logger.WithError(errorOccured).Error("ReconciliationTask - could not remove visibilities from platform")
+		return true
+	}
 
 	logger.Debugf("ReconciliationTask %d visibilities will be created in the platform", len(visibilitiesToCreate))
-	errorOccured = r.createVisibilities(visibilitiesToCreate) || errorOccured
+	if errorOccured := r.createVisibilities(visibilitiesToCreate); errorOccured != nil {
+		logger.WithError(errorOccured).Error("ReconciliationTask - could not create visibilities in platform")
+		return true
+	}
 
-	return errorOccured
+	return false
+}
+
+type visibilityProcessingState struct {
+	Mutex          sync.Mutex
+	Ctx            context.Context
+	StopProcessing context.CancelFunc
+	WaitGroup      sync.WaitGroup
+	ErrorOccured   error
+}
+
+func (r *ReconciliationTask) newVisibilityProcessingState() *visibilityProcessingState {
+	visibilitiesContext, cancel := context.WithCancel(r.runContext)
+	return &visibilityProcessingState{
+		Ctx:            visibilitiesContext,
+		StopProcessing: cancel,
+	}
 }
 
 // deleteVisibilities deletes visibilities from platform. Returns true if error has occurred
-func (r ReconciliationTask) deleteVisibilities(visibilities map[string]*platform.ServiceVisibilityEntity) bool {
-	var errorOccured int32 // will be used as atomic bool
-	var wg sync.WaitGroup
+func (r *ReconciliationTask) deleteVisibilities(visibilities map[string]*platform.ServiceVisibilityEntity) error {
+	state := r.newVisibilityProcessingState()
+	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
-		execAsync(&wg, visibility, &errorOccured, r.deleteVisibility)
+		execAsync(state, visibility, r.deleteVisibility)
 	}
-	return await(&wg, &errorOccured)
-
+	return await(state)
 }
 
 // createVisibilities creates visibilities from platform. Returns true if error has occurred
-func (r ReconciliationTask) createVisibilities(visibilities []*platform.ServiceVisibilityEntity) bool {
-	var errorOccured int32 // will be used as atomic bool
-	var wg sync.WaitGroup
+func (r *ReconciliationTask) createVisibilities(visibilities []*platform.ServiceVisibilityEntity) error {
+	state := r.newVisibilityProcessingState()
+	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
-		execAsync(&wg, visibility, &errorOccured, r.createVisibility)
+		execAsync(state, visibility, r.createVisibility)
 	}
-	return await(&wg, &errorOccured)
+	return await(state)
 }
 
-func execAsync(wg *sync.WaitGroup, visibility *platform.ServiceVisibilityEntity, errorOccured *int32, f func(*platform.ServiceVisibilityEntity) error) {
-	wg.Add(1)
+func execAsync(state *visibilityProcessingState, visibility *platform.ServiceVisibilityEntity, f func(context.Context, *platform.ServiceVisibilityEntity) error) {
+	state.WaitGroup.Add(1)
+
 	go func() {
-		defer wg.Done()
-		if err := f(visibility); err != nil {
-			atomic.StoreInt32(errorOccured, yes)
+		defer state.WaitGroup.Done()
+		err := f(state.Ctx, visibility)
+		if err == nil {
+			return
+		}
+		state.Mutex.Lock()
+		defer state.Mutex.Unlock()
+		if state.ErrorOccured == nil {
+			state.ErrorOccured = err
 		}
 	}()
 }
 
-func await(wg *sync.WaitGroup, errorOccured *int32) bool {
-	wg.Wait()
-	return *errorOccured == yes
+func await(state *visibilityProcessingState) error {
+	state.WaitGroup.Wait()
+	return state.ErrorOccured
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans
-func (r ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibilityEntity) string {
+func (r *ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibilityEntity) string {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	const idSeparator = "|"
@@ -280,30 +306,30 @@ func (r ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibil
 	return strings.Join([]string{"!public", visibility.Labels[scopeLabelKey], visibility.CatalogPlanID}, idSeparator)
 }
 
-func (r ReconciliationTask) createVisibility(visibility *platform.ServiceVisibilityEntity) error {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *platform.ServiceVisibilityEntity) error {
+	logger := log.C(r.runContext)
 	logger.Debugf("Creating visibility for %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
 
 	json, err := marshalVisibilityLabels(logger, visibility.Labels)
 	if err != nil {
 		return err
 	}
-	if err = r.platformClient.Visibility().EnableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
+	if err = r.platformClient.Visibility().EnableAccessForPlan(ctx, json, visibility.CatalogPlanID); err != nil {
 		logger.WithError(err).Errorf("Could not enable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
 	return nil
 }
 
-func (r ReconciliationTask) deleteVisibility(visibility *platform.ServiceVisibilityEntity) error {
-	logger := log.C(r.ctx)
+func (r *ReconciliationTask) deleteVisibility(ctx context.Context, visibility *platform.ServiceVisibilityEntity) error {
+	logger := log.C(r.runContext)
 	logger.Debugf("Deleting visibility for %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
 
 	json, err := marshalVisibilityLabels(logger, visibility.Labels)
 	if err != nil {
 		return err
 	}
-	if err = r.platformClient.Visibility().DisableAccessForPlan(r.ctx, json, visibility.CatalogPlanID); err != nil {
+	if err = r.platformClient.Visibility().DisableAccessForPlan(ctx, json, visibility.CatalogPlanID); err != nil {
 		logger.WithError(err).Errorf("Could not disable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
@@ -318,7 +344,7 @@ func marshalVisibilityLabels(logger *logrus.Entry, labels map[string]string) ([]
 	return json, err
 }
 
-func (r ReconciliationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
 	result := make(map[string]*platform.ServiceVisibilityEntity, len(list))
 	for _, vis := range list {
 		key := r.getVisibilityKey(vis)

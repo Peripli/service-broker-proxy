@@ -19,16 +19,22 @@ package reconcile
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
+	"github.com/gofrs/uuid"
 	cache "github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
 )
 
-// ReconciliationTask type represents a registration task that takes care of propagating broker creations
-// and deletions to the platform. It reconciles the state of the proxy brokers in the platform to match
-// the desired state provided by the Service Manager.
+const running int32 = 1
+const notRunning int32 = 0
+
+// ReconciliationTask type represents a registration task that takes care of propagating broker and visibility
+// creations and deletions to the platform. It reconciles the state of the proxy brokers and visibilities
+// in the platform to match the desired state provided by the Service Manager.
 // TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
 type ReconciliationTask struct {
 	options        *Settings
@@ -36,8 +42,10 @@ type ReconciliationTask struct {
 	platformClient platform.Client
 	smClient       sm.Client
 	proxyPath      string
-	ctx            context.Context
+	globalContext  context.Context
 	cache          *cache.Cache
+	runContext     context.Context
+	state          *int32
 }
 
 // NewTask builds a new ReconciliationTask
@@ -54,26 +62,58 @@ func NewTask(ctx context.Context,
 		platformClient: platformClient,
 		smClient:       smClient,
 		proxyPath:      proxyPath,
-		ctx:            ctx,
+		globalContext:  ctx,
 		cache:          c,
+		runContext:     nil,
+		state:          new(int32),
 	}
 }
 
-// Run executes the registration task that is responsible for reconciling the state of the proxy brokers at the
-// platform with the brokers provided by the Service Manager
-func (r ReconciliationTask) Run() {
-	logger := log.C(r.ctx)
+// Run executes the registration task that is responsible for reconciling the state of the proxy
+// brokers and visibilities at the platform with the brokers provided by the Service Manager
+func (r *ReconciliationTask) Run() {
+	newRunContext, err := r.generateRunContext()
+	if err != nil {
+		log.C(r.globalContext).WithError(err).Error("reconsilation task will not be sheduled")
+		return
+	}
 
-	logger.Debug("STARTING scheduled reconciliation task...")
+	if !r.prepare(newRunContext) {
+		return
+	}
+	defer r.end()
 
 	r.group.Add(1)
 	defer r.group.Done()
 	r.run()
-
-	logger.Debug("FINISHED scheduled reconciliation task...")
 }
 
-func (r ReconciliationTask) run() {
+func (r *ReconciliationTask) run() {
 	r.processBrokers()
 	r.processVisibilities()
+}
+
+func (r *ReconciliationTask) prepare(runContext context.Context) bool {
+	isAlreadyRunnning := !atomic.CompareAndSwapInt32(r.state, notRunning, running)
+	if isAlreadyRunnning {
+		log.C(runContext).Warning("Reconciliation task cannot start. Another reconciliation task is already running")
+		return false
+	}
+	r.runContext = runContext
+	log.C(runContext).Debug("STARTING scheduled reconciliation task...")
+	return true
+}
+
+func (r *ReconciliationTask) end() {
+	log.C(r.runContext).Debug("FINISHED scheduled reconciliation task...")
+	atomic.StoreInt32(r.state, notRunning)
+}
+
+func (r *ReconciliationTask) generateRunContext() (context.Context, error) {
+	correlationID, err := uuid.NewV4()
+	if err != nil {
+		return nil, errors.Wrap(err, "could not generate correlationID")
+	}
+	entry := log.C(r.globalContext).WithField(log.FieldCorrelationID, correlationID)
+	return log.ContextWithLogger(r.globalContext, entry), nil
 }
