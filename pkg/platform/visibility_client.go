@@ -19,23 +19,23 @@ package platform
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/Peripli/service-manager/pkg/types"
 )
 
-// ServiceAccess provides a way to add a hook for a platform specific way of enabling and disabling
-// service and plan access.
-//go:generate counterfeiter . ServiceAccess
-type ServiceAccess interface {
-	// EnableAccessForService enables the access to all plans of the service with the specified GUID
-	// for the entities in the data
-	EnableAccessForService(ctx context.Context, data json.RawMessage, serviceGUID string) error
+// VisibilityClient interface for platform clients to implement if they support
+// platform specific service and plan visibilities
+//go:generate counterfeiter . VisibilityClient
+type VisibilityClient interface {
+	// GetVisibilitiesByPlans get currently available visibilities in the platform for a specific plans
+	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
+
+	// VisibilityScopeLabelKey returns a specific label key which should be used when converting SM visibilities to platform.Visibilities
+	VisibilityScopeLabelKey() string
 
 	// EnableAccessForPlan enables the access to the plan with the specified GUID for
 	// the entities in the data
 	EnableAccessForPlan(ctx context.Context, data json.RawMessage, servicePlanGUID string) error
-
-	// DisableAccessForService disables the access to all plans of the service with the specified GUID
-	// for the entities in the data
-	DisableAccessForService(ctx context.Context, data json.RawMessage, serviceGUID string) error
 
 	// DisableAccessForPlan disables the access to the plan with the specified GUID for
 	// the entities in the data
