@@ -72,20 +72,25 @@ func NewTask(ctx context.Context,
 // Run executes the registration task that is responsible for reconciling the state of the proxy
 // brokers and visibilities at the platform with the brokers provided by the Service Manager
 func (r *ReconciliationTask) Run() {
-	newRunContext, err := r.generateRunContext()
-	if err != nil {
-		log.C(r.globalContext).WithError(err).Error("reconsilation task will not be sheduled")
-		return
-	}
-
-	if !r.prepare(newRunContext) {
+	isAlreadyRunnning := !atomic.CompareAndSwapInt32(r.state, notRunning, running)
+	if isAlreadyRunnning {
+		log.C(r.globalContext).Warning("Reconciliation task cannot start. Another reconciliation task is already running")
 		return
 	}
 	defer r.end()
 
+	newRunContext, taskID, err := r.generateRunContext()
+	if err != nil {
+		log.C(r.globalContext).WithError(err).Error("reconsilation task will not be sheduled")
+		return
+	}
+	r.runContext = newRunContext
+	log.C(r.globalContext).Debugf("STARTING scheduled reconciliation task %s...", taskID)
+
 	r.group.Add(1)
 	defer r.group.Done()
 	r.run()
+	log.C(r.globalContext).Debugf("FINISHED scheduled reconciliation task %s...", taskID)
 }
 
 func (r *ReconciliationTask) run() {
@@ -93,27 +98,15 @@ func (r *ReconciliationTask) run() {
 	r.processVisibilities()
 }
 
-func (r *ReconciliationTask) prepare(runContext context.Context) bool {
-	isAlreadyRunnning := !atomic.CompareAndSwapInt32(r.state, notRunning, running)
-	if isAlreadyRunnning {
-		log.C(runContext).Warning("Reconciliation task cannot start. Another reconciliation task is already running")
-		return false
-	}
-	r.runContext = runContext
-	log.C(runContext).Debug("STARTING scheduled reconciliation task...")
-	return true
-}
-
 func (r *ReconciliationTask) end() {
-	log.C(r.runContext).Debug("FINISHED scheduled reconciliation task...")
 	atomic.StoreInt32(r.state, notRunning)
 }
 
-func (r *ReconciliationTask) generateRunContext() (context.Context, error) {
+func (r *ReconciliationTask) generateRunContext() (context.Context, string, error) {
 	correlationID, err := uuid.NewV4()
 	if err != nil {
-		return nil, errors.Wrap(err, "could not generate correlationID")
+		return nil, "", errors.Wrap(err, "could not generate correlationID")
 	}
-	entry := log.C(r.globalContext).WithField(log.FieldCorrelationID, correlationID)
-	return log.ContextWithLogger(r.globalContext, entry), nil
+	entry := log.C(r.globalContext).WithField(log.FieldCorrelationID, correlationID.String())
+	return log.ContextWithLogger(r.globalContext, entry), correlationID.String(), nil
 }
