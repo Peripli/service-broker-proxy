@@ -2,8 +2,7 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:596aa23c759cebce46dd2f3f0a75508c47f259f93fbdf3d3983f489221fb495d"
+  digest = "1:82e89db6d36bec610f4933bfe02113938928d0b37091cd0710dcf6949ffdb88f"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +39,8 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "a3725fda935d8616a9a59b549865a394bb75924b"
+  revision = "f11633863979b692795e1ec8ec1aa9771dcfdca3"
+  version = "v0.1.8"
 
 [[projects]]
   digest = "1:2aff5edb9bccd2974090fddb17ca7ab05a3f5c983db567c30c7f0b53404f5783"
@@ -486,12 +486,12 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:af00cfacf37413a3eee137e7f5b38e86b22496964f1f2b31e8fd88efd23e8c32"
+  digest = "1:e406c8abe158c24e64775a6381085014943301ffa175a7b53c33cb391ff9b4f2"
   name = "github.com/tidwall/gjson"
   packages = ["."]
   pruneopts = "UT"
-  revision = "081192fa2e471ddff3ec98a3cc04fecfd031ed57"
-  version = "v1.1.4"
+  revision = "5a96cfda705e1762dc0671e26b0b78925ad97e29"
+  version = "v1.1.5"
 
 [[projects]]
   digest = "1:8453ddbed197809ee8ca28b06bd04e127bec9912deb4ba451fea7a1eca578328"
@@ -611,25 +611,25 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0977fc80383ba48e634c807e8e47d4ceab54759944587c2233bf3c624bed91cc"
+  digest = "1:e007b54f54cbd4214aa6d97a67d57bc2539991adb4e22ea92c482bbece8de469"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "UT"
-  revision = "fd3eaa146cbb5c89ce187c275fb79bd3a36a5ffc"
+  revision = "5dab4167f31cbd76b407f1486c86b40748bc5073"
 
 [[projects]]
   branch = "master"
-  digest = "1:5ee4df7ab18e945607ac822de8d10b180baea263b5e8676a1041727543b9c1e4"
+  digest = "1:43cde116ff48f299eddb7e6515677e6d0a2c915854bb05a333877f07c3bb3033"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "48ac38b7c8cbedd50b1613c0fccacfc7d88dfcdf"
+  revision = "11f53e03133963fb11ae0588e08b5e0b85be8be5"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -739,6 +739,7 @@
     "github.com/Peripli/service-manager/test/common",
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
+    "github.com/gofrs/uuid",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
