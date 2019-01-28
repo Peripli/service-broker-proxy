@@ -60,11 +60,11 @@ func (r *ReconciliationTask) processBrokers() {
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
 func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
 	urlBrokersMap := convertBrokersRegListToMap(existingBrokers, mapByWholeURL)
-	existingMap := convertBrokersRegListToMap(filterBrokers(existingBrokers, r.isProxyBroker), mapByUrlSmIDSuffix)
+	proxyBrokersMap := convertBrokersRegListToMap(filterBrokers(existingBrokers, r.isProxyBroker), mapByURLSmIDSuffix)
 
 	for _, payloadBroker := range payloadBrokers {
-		existingBroker := existingMap[payloadBroker.GUID]
-		delete(existingMap, payloadBroker.GUID)
+		existingBroker := proxyBrokersMap[payloadBroker.GUID]
+		delete(proxyBrokersMap, payloadBroker.GUID)
 
 		platformBroker, knownToPlatform := urlBrokersMap[payloadBroker.BrokerURL]
 		// Broker is registered in platform, but not already known to this broker proxy
@@ -77,7 +77,7 @@ func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.Service
 		}
 	}
 
-	for _, existingBroker := range existingMap {
+	for _, existingBroker := range proxyBrokersMap {
 		r.deleteBrokerRegistration(existingBroker)
 	}
 }
@@ -201,15 +201,14 @@ type filterBrokerPredicate func(broker *platform.ServiceBroker) bool
 func filterBrokers(brokers []platform.ServiceBroker, predicate filterBrokerPredicate) []platform.ServiceBroker {
 	result := make([]platform.ServiceBroker, 0)
 	for i := range brokers {
-		if !predicate(&brokers[i]) {
-			continue
+		if predicate(&brokers[i]) {
+			result = append(result, brokers[i])
 		}
-		result = append(result, brokers[i])
 	}
 	return result
 }
 
-func mapByUrlSmIDSuffix(broker platform.ServiceBroker) string {
+func mapByURLSmIDSuffix(broker platform.ServiceBroker) string {
 	return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:]
 }
 
