@@ -397,6 +397,11 @@ var _ = Describe("Reconcile brokers", func() {
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker()
+				fakePlatformBrokerClient.UpdateBrokerReturns(&platform.ServiceBroker{
+					GUID:      platformbrokerNonProxy.GUID,
+					Name:      "sm-proxy-smBrokerID",
+					BrokerURL: fakeAppHost + "/smBrokerID",
+				}, nil)
 			},
 			platformBrokers: func() ([]platform.ServiceBroker, error) {
 				return []platform.ServiceBroker{
@@ -406,6 +411,12 @@ var _ = Describe("Reconcile brokers", func() {
 			smBrokers: func() ([]sm.Broker, error) {
 				return []sm.Broker{
 					smbroker3,
+					sm.Broker{
+						ID:               "smBrokerID",
+						BrokerURL:        platformbrokerNonProxy.BrokerURL,
+						Metadata:         platformbrokerNonProxy.Metadata,
+						ServiceOfferings: platformbrokerNonProxy.ServiceOfferings,
+					},
 				}, nil
 			},
 			expectations: func() expectations {
@@ -415,6 +426,11 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []platform.ServiceBroker{},
 					reconcileUpdateCalledFor: []platform.ServiceBroker{
 						platformBrokerProxy,
+						platform.ServiceBroker{
+							GUID:      platformbrokerNonProxy.GUID,
+							Name:      "sm-proxy-smBrokerID",
+							BrokerURL: fakeAppHost + "/smBrokerID",
+						},
 					},
 				}
 			},
