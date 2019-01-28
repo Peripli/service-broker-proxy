@@ -173,6 +173,7 @@ var _ = Describe("Reconcile brokers", func() {
 		reconcileCreateCalledFor  []platform.ServiceBroker
 		reconcileDeleteCalledFor  []platform.ServiceBroker
 		reconcileCatalogCalledFor []platform.ServiceBroker
+		reconcileUpdateCalledFor  []platform.ServiceBroker
 	}
 
 	type testCase struct {
@@ -373,6 +374,46 @@ var _ = Describe("Reconcile brokers", func() {
 				}
 			},
 		}),
+
+		Entry("When broker is registered in the platform, but not yet known to the proxy, it should be updated", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+				fakePlatformBrokerClient.UpdateBrokerReturns(&platform.ServiceBroker{
+					GUID:      platformbrokerNonProxy.GUID,
+					Name:      "sm-proxy-smBrokerID",
+					BrokerURL: fakeAppHost + "/smBrokerID",
+				}, nil)
+			},
+			platformBrokers: func() ([]platform.ServiceBroker, error) {
+				return []platform.ServiceBroker{
+					platformbrokerNonProxy,
+				}, nil
+			},
+			smBrokers: func() ([]sm.Broker, error) {
+				return []sm.Broker{
+					sm.Broker{
+						ID:               "smBrokerID",
+						BrokerURL:        platformbrokerNonProxy.BrokerURL,
+						Metadata:         platformbrokerNonProxy.Metadata,
+						ServiceOfferings: platformbrokerNonProxy.ServiceOfferings,
+					},
+				}, nil
+			},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
+					reconcileUpdateCalledFor: []platform.ServiceBroker{
+						platform.ServiceBroker{
+							GUID:      platformbrokerNonProxy.GUID,
+							Name:      "sm-proxy-smBrokerID",
+							BrokerURL: fakeAppHost + "/smBrokerID",
+						},
+					},
+				}
+			},
+		}),
 	}
 
 	DescribeTable("Run", func(t testCase) {
@@ -426,6 +467,17 @@ var _ = Describe("Reconcile brokers", func() {
 				Name: broker.Name,
 			}))
 		}
+
+		Expect(fakePlatformBrokerClient.UpdateBrokerCallCount()).To(Equal(len(expected.reconcileUpdateCalledFor)))
+		for index, broker := range expected.reconcileUpdateCalledFor {
+			_, request := fakePlatformBrokerClient.UpdateBrokerArgsForCall(index)
+			Expect(request).To(Equal(&platform.UpdateServiceBrokerRequest{
+				GUID:      broker.GUID,
+				Name:      broker.Name,
+				BrokerURL: broker.BrokerURL,
+			}))
+		}
+
 	}, entries...)
 
 })
