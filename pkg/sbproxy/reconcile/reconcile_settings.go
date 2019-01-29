@@ -23,8 +23,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const cacheDefaultExpirationTime = 2 * time.Hour
-
 // Settings type represents the sbproxy settings
 type Settings struct {
 	URL      string `mapstructure:"url"`
@@ -42,7 +40,7 @@ func DefaultSettings() *Settings {
 		Username:        "",
 		Password:        "",
 		VisibilityCache: true,
-		CacheExpiration: cacheDefaultExpirationTime,
+		CacheExpiration: 2 * time.Hour,
 	}
 }
 
