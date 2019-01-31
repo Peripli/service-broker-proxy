@@ -59,5 +59,6 @@ type ServiceBrokerList struct {
 type ServiceVisibilityEntity struct {
 	Public        bool
 	CatalogPlanID string
+	BrokerID      string
 	Labels        map[string]string
 }

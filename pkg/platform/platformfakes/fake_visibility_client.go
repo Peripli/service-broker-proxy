@@ -37,6 +37,20 @@ type FakeVisibilityClient struct {
 	enableAccessForPlanReturnsOnCall map[int]struct {
 		result1 error
 	}
+	GetVisibilitiesByBrokersStub        func(context.Context, []platform.ServiceBroker) ([]*platform.ServiceVisibilityEntity, error)
+	getVisibilitiesByBrokersMutex       sync.RWMutex
+	getVisibilitiesByBrokersArgsForCall []struct {
+		arg1 context.Context
+		arg2 []platform.ServiceBroker
+	}
+	getVisibilitiesByBrokersReturns struct {
+		result1 []*platform.ServiceVisibilityEntity
+		result2 error
+	}
+	getVisibilitiesByBrokersReturnsOnCall map[int]struct {
+		result1 []*platform.ServiceVisibilityEntity
+		result2 error
+	}
 	GetVisibilitiesByPlansStub        func(context.Context, []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)
 	getVisibilitiesByPlansMutex       sync.RWMutex
 	getVisibilitiesByPlansArgsForCall []struct {
@@ -189,6 +203,75 @@ func (fake *FakeVisibilityClient) EnableAccessForPlanReturnsOnCall(i int, result
 	}{result1}
 }
 
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokers(arg1 context.Context, arg2 []platform.ServiceBroker) ([]*platform.ServiceVisibilityEntity, error) {
+	var arg2Copy []platform.ServiceBroker
+	if arg2 != nil {
+		arg2Copy = make([]platform.ServiceBroker, len(arg2))
+		copy(arg2Copy, arg2)
+	}
+	fake.getVisibilitiesByBrokersMutex.Lock()
+	ret, specificReturn := fake.getVisibilitiesByBrokersReturnsOnCall[len(fake.getVisibilitiesByBrokersArgsForCall)]
+	fake.getVisibilitiesByBrokersArgsForCall = append(fake.getVisibilitiesByBrokersArgsForCall, struct {
+		arg1 context.Context
+		arg2 []platform.ServiceBroker
+	}{arg1, arg2Copy})
+	fake.recordInvocation("GetVisibilitiesByBrokers", []interface{}{arg1, arg2Copy})
+	fake.getVisibilitiesByBrokersMutex.Unlock()
+	if fake.GetVisibilitiesByBrokersStub != nil {
+		return fake.GetVisibilitiesByBrokersStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.getVisibilitiesByBrokersReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersCallCount() int {
+	fake.getVisibilitiesByBrokersMutex.RLock()
+	defer fake.getVisibilitiesByBrokersMutex.RUnlock()
+	return len(fake.getVisibilitiesByBrokersArgsForCall)
+}
+
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersCalls(stub func(context.Context, []platform.ServiceBroker) ([]*platform.ServiceVisibilityEntity, error)) {
+	fake.getVisibilitiesByBrokersMutex.Lock()
+	defer fake.getVisibilitiesByBrokersMutex.Unlock()
+	fake.GetVisibilitiesByBrokersStub = stub
+}
+
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersArgsForCall(i int) (context.Context, []platform.ServiceBroker) {
+	fake.getVisibilitiesByBrokersMutex.RLock()
+	defer fake.getVisibilitiesByBrokersMutex.RUnlock()
+	argsForCall := fake.getVisibilitiesByBrokersArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturns(result1 []*platform.ServiceVisibilityEntity, result2 error) {
+	fake.getVisibilitiesByBrokersMutex.Lock()
+	defer fake.getVisibilitiesByBrokersMutex.Unlock()
+	fake.GetVisibilitiesByBrokersStub = nil
+	fake.getVisibilitiesByBrokersReturns = struct {
+		result1 []*platform.ServiceVisibilityEntity
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturnsOnCall(i int, result1 []*platform.ServiceVisibilityEntity, result2 error) {
+	fake.getVisibilitiesByBrokersMutex.Lock()
+	defer fake.getVisibilitiesByBrokersMutex.Unlock()
+	fake.GetVisibilitiesByBrokersStub = nil
+	if fake.getVisibilitiesByBrokersReturnsOnCall == nil {
+		fake.getVisibilitiesByBrokersReturnsOnCall = make(map[int]struct {
+			result1 []*platform.ServiceVisibilityEntity
+			result2 error
+		})
+	}
+	fake.getVisibilitiesByBrokersReturnsOnCall[i] = struct {
+		result1 []*platform.ServiceVisibilityEntity
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeVisibilityClient) GetVisibilitiesByPlans(arg1 context.Context, arg2 []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
 	var arg2Copy []*types.ServicePlan
 	if arg2 != nil {
@@ -317,6 +400,8 @@ func (fake *FakeVisibilityClient) Invocations() map[string][][]interface{} {
 	defer fake.disableAccessForPlanMutex.RUnlock()
 	fake.enableAccessForPlanMutex.RLock()
 	defer fake.enableAccessForPlanMutex.RUnlock()
+	fake.getVisibilitiesByBrokersMutex.RLock()
+	defer fake.getVisibilitiesByBrokersMutex.RUnlock()
 	fake.getVisibilitiesByPlansMutex.RLock()
 	defer fake.getVisibilitiesByPlansMutex.RUnlock()
 	fake.visibilityScopeLabelKeyMutex.RLock()

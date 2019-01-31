@@ -27,8 +27,10 @@ import (
 // platform specific service and plan visibilities
 //go:generate counterfeiter . VisibilityClient
 type VisibilityClient interface {
-	// GetVisibilitiesByPlans get currently available visibilities in the platform for a specific plans
+	// GetVisibilitiesByPlans get currently available visibilities in the platform for specific plans
 	GetVisibilitiesByPlans(context.Context, []*types.ServicePlan) ([]*ServiceVisibilityEntity, error)
+	// GetVisibilitiesByBrokers get currently available visibilities in the platform for specific brokers
+	GetVisibilitiesByBrokers(context.Context, []ServiceBroker) ([]*ServiceVisibilityEntity, error)
 
 	// VisibilityScopeLabelKey returns a specific label key which should be used when converting SM visibilities to platform.Visibilities
 	VisibilityScopeLabelKey() string
