@@ -46,7 +46,7 @@ type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
-	GetServiceOfferingsByBrokerID(ctx context.Context, brokerID string) (*types.ServiceOfferings, error)
+	GetServiceOfferingsByBrokerID(ctx context.Context, brokerID string) ([]*types.ServiceOffering, error)
 	GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error)
 }
 
@@ -127,21 +127,23 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 }
 
 // GetServiceOfferingsByBrokerID returns plans from Service Manager
-func (c *ServiceManagerClient) GetServiceOfferingsByBrokerID(ctx context.Context, brokerID string) (*types.ServiceOfferings, error) {
+func (c *ServiceManagerClient) GetServiceOfferingsByBrokerID(ctx context.Context, brokerID string) ([]*types.ServiceOffering, error) {
 	log.C(ctx).Debugf("Getting service offerings from Service Manager at %s", c.host)
 
-	fieldQuery := fmt.Sprintf("broker_id = %s", brokerID)
+	fieldQuery := "broker_id = " + brokerID
 	params := map[string]string{
 		"fieldQuery": fieldQuery,
 	}
 
-	var result *types.ServiceOfferings
+	var result struct {
+		ServiceOfferings []*types.ServiceOffering `json:"service_offerings"`
+	}
 	err := c.call(ctx, fmt.Sprintf(APIServiceOfferings, c.host), params, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service offerings from Service Manager")
 	}
 
-	return result, nil
+	return result.ServiceOfferings, nil
 }
 
 // GetPlansByServiceOfferings returns plans from Service Manager
@@ -150,11 +152,11 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 
 	soIDs := ""
 	for _, so := range sos {
-		soIDs += "|" + so.ID
+		soIDs += "||" + so.ID
 	}
-	soIDs = soIDs[1:]
+	soIDs = soIDs[2:]
 
-	fieldQuery := fmt.Sprintf("service_offering_id IN [%s]", soIDs)
+	fieldQuery := fmt.Sprintf("service_offering_id in [%s]", soIDs)
 	params := map[string]string{
 		"fieldQuery": fieldQuery,
 	}

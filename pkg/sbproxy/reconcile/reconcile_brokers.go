@@ -45,7 +45,6 @@ func (r *ReconciliationTask) processBrokers() {
 		return
 	}
 
-	// get all the brokers that are in SM and for which a proxy broker should be present in the platform
 	brokersFromSM, err := r.getBrokersFromSM()
 	if err != nil {
 		logger.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")

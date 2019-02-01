@@ -50,11 +50,16 @@ func (r *ReconciliationTask) processVisibilities() {
 		logger.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
 		return
 	}
+	if len(smBrokers) == 0 {
+		return
+	}
+
 	smOfferings, err := r.getSMServiceOfferingsByBrokers(smBrokers)
 	if err != nil {
 		logger.WithError(err).Error("An error occurred while obtaining service offerings from Service Manager")
 		return
 	}
+
 	smPlans, err := r.getSMPlansByBrokersAndOfferings(smOfferings)
 	if err != nil {
 		logger.WithError(err).Error("An error occurred while obtaining plans from Service Manager")
@@ -163,28 +168,37 @@ func (r *ReconciliationTask) loadPlatformVisibilitiesByBrokers(brokers []platfor
 
 func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
 	result := make(map[string][]*types.ServicePlan)
-
+	count := 0
 	for brokerID, sos := range offerings {
+		if len(sos) == 0 {
+			continue
+		}
+		// TODO: Do in multiple go routines? The request query might become very long if there are many offerings in one broker
 		brokerPlans, err := r.smClient.GetPlansByServiceOfferings(r.runContext, sos)
 		if err != nil {
 			return nil, err
 		}
 		result[brokerID] = brokerPlans
+		count += len(brokerPlans)
 	}
+	log.C(r.runContext).Debugf("ReconciliationTask successfully retrieved %d plans from Service Manager", count)
 
 	return result, nil
 }
 
 func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
 	result := make(map[string][]*types.ServiceOffering)
+	count := 0
 	for _, broker := range brokers {
 		// TODO: check broker.GUID??
 		offerings, err := r.smClient.GetServiceOfferingsByBrokerID(r.runContext, broker.GUID)
 		if err != nil {
 			return nil, err
 		}
-		result[broker.GUID] = offerings.ServiceOfferings
+		result[broker.GUID] = offerings
+		count += len(offerings)
 	}
+	log.C(r.runContext).Debugf("ReconciliationTask successfully retrieved %d services from Service Manager", count)
 
 	return result, nil
 }
@@ -212,8 +226,7 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 	}
 	logger.Debugf("ReconciliationTask successfully retrieved %d visibilities from Service Manager", len(visibilities))
 
-	visCount := 0
-	result := []*platform.ServiceVisibilityEntity{}
+	result := make([]*platform.ServiceVisibilityEntity, 0)
 
 	for _, visibility := range visibilities {
 		for _, broker := range smBrokers {
@@ -226,7 +239,6 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 				continue
 			}
 			converted := r.convertSMVisibility(visibility, smPlan, broker.GUID)
-			visCount += len(converted)
 			result = append(result, converted...)
 		}
 	}
@@ -255,6 +267,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 		result = append(result, &platform.ServiceVisibilityEntity{
 			Public:        false,
 			CatalogPlanID: smPlan.CatalogID,
+			BrokerID:      brokerGUID,
 			Labels:        map[string]string{scopeLabelKey: scope},
 		})
 	}

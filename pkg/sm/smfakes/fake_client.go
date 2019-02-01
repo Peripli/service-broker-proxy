@@ -50,18 +50,18 @@ type FakeClient struct {
 		result1 []*types.ServicePlan
 		result2 error
 	}
-	GetServiceOfferingsByBrokerIDStub        func(context.Context, string) (*types.ServiceOfferings, error)
+	GetServiceOfferingsByBrokerIDStub        func(context.Context, string) ([]*types.ServiceOffering, error)
 	getServiceOfferingsByBrokerIDMutex       sync.RWMutex
 	getServiceOfferingsByBrokerIDArgsForCall []struct {
 		arg1 context.Context
 		arg2 string
 	}
 	getServiceOfferingsByBrokerIDReturns struct {
-		result1 *types.ServiceOfferings
+		result1 []*types.ServiceOffering
 		result2 error
 	}
 	getServiceOfferingsByBrokerIDReturnsOnCall map[int]struct {
-		result1 *types.ServiceOfferings
+		result1 []*types.ServiceOffering
 		result2 error
 	}
 	GetVisibilitiesStub        func(context.Context) ([]*types.Visibility, error)
@@ -276,7 +276,7 @@ func (fake *FakeClient) GetPlansByServiceOfferingsReturnsOnCall(i int, result1 [
 	}{result1, result2}
 }
 
-func (fake *FakeClient) GetServiceOfferingsByBrokerID(arg1 context.Context, arg2 string) (*types.ServiceOfferings, error) {
+func (fake *FakeClient) GetServiceOfferingsByBrokerID(arg1 context.Context, arg2 string) ([]*types.ServiceOffering, error) {
 	fake.getServiceOfferingsByBrokerIDMutex.Lock()
 	ret, specificReturn := fake.getServiceOfferingsByBrokerIDReturnsOnCall[len(fake.getServiceOfferingsByBrokerIDArgsForCall)]
 	fake.getServiceOfferingsByBrokerIDArgsForCall = append(fake.getServiceOfferingsByBrokerIDArgsForCall, struct {
@@ -301,7 +301,7 @@ func (fake *FakeClient) GetServiceOfferingsByBrokerIDCallCount() int {
 	return len(fake.getServiceOfferingsByBrokerIDArgsForCall)
 }
 
-func (fake *FakeClient) GetServiceOfferingsByBrokerIDCalls(stub func(context.Context, string) (*types.ServiceOfferings, error)) {
+func (fake *FakeClient) GetServiceOfferingsByBrokerIDCalls(stub func(context.Context, string) ([]*types.ServiceOffering, error)) {
 	fake.getServiceOfferingsByBrokerIDMutex.Lock()
 	defer fake.getServiceOfferingsByBrokerIDMutex.Unlock()
 	fake.GetServiceOfferingsByBrokerIDStub = stub
@@ -314,28 +314,28 @@ func (fake *FakeClient) GetServiceOfferingsByBrokerIDArgsForCall(i int) (context
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeClient) GetServiceOfferingsByBrokerIDReturns(result1 *types.ServiceOfferings, result2 error) {
+func (fake *FakeClient) GetServiceOfferingsByBrokerIDReturns(result1 []*types.ServiceOffering, result2 error) {
 	fake.getServiceOfferingsByBrokerIDMutex.Lock()
 	defer fake.getServiceOfferingsByBrokerIDMutex.Unlock()
 	fake.GetServiceOfferingsByBrokerIDStub = nil
 	fake.getServiceOfferingsByBrokerIDReturns = struct {
-		result1 *types.ServiceOfferings
+		result1 []*types.ServiceOffering
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeClient) GetServiceOfferingsByBrokerIDReturnsOnCall(i int, result1 *types.ServiceOfferings, result2 error) {
+func (fake *FakeClient) GetServiceOfferingsByBrokerIDReturnsOnCall(i int, result1 []*types.ServiceOffering, result2 error) {
 	fake.getServiceOfferingsByBrokerIDMutex.Lock()
 	defer fake.getServiceOfferingsByBrokerIDMutex.Unlock()
 	fake.GetServiceOfferingsByBrokerIDStub = nil
 	if fake.getServiceOfferingsByBrokerIDReturnsOnCall == nil {
 		fake.getServiceOfferingsByBrokerIDReturnsOnCall = make(map[int]struct {
-			result1 *types.ServiceOfferings
+			result1 []*types.ServiceOffering
 			result2 error
 		})
 	}
 	fake.getServiceOfferingsByBrokerIDReturnsOnCall[i] = struct {
-		result1 *types.ServiceOfferings
+		result1 []*types.ServiceOffering
 		result2 error
 	}{result1, result2}
 }
