@@ -7,16 +7,16 @@ import (
 	sync "sync"
 
 	platform "github.com/Peripli/service-broker-proxy/pkg/platform"
-	types "github.com/Peripli/service-manager/pkg/types"
 )
 
 type FakeVisibilityClient struct {
-	DisableAccessForPlanStub        func(context.Context, json.RawMessage, string) error
+	DisableAccessForPlanStub        func(context.Context, json.RawMessage, string, string) error
 	disableAccessForPlanMutex       sync.RWMutex
 	disableAccessForPlanArgsForCall []struct {
 		arg1 context.Context
 		arg2 json.RawMessage
 		arg3 string
+		arg4 string
 	}
 	disableAccessForPlanReturns struct {
 		result1 error
@@ -24,12 +24,13 @@ type FakeVisibilityClient struct {
 	disableAccessForPlanReturnsOnCall map[int]struct {
 		result1 error
 	}
-	EnableAccessForPlanStub        func(context.Context, json.RawMessage, string) error
+	EnableAccessForPlanStub        func(context.Context, json.RawMessage, string, string) error
 	enableAccessForPlanMutex       sync.RWMutex
 	enableAccessForPlanArgsForCall []struct {
 		arg1 context.Context
 		arg2 json.RawMessage
 		arg3 string
+		arg4 string
 	}
 	enableAccessForPlanReturns struct {
 		result1 error
@@ -51,20 +52,6 @@ type FakeVisibilityClient struct {
 		result1 []*platform.ServiceVisibilityEntity
 		result2 error
 	}
-	GetVisibilitiesByPlansStub        func(context.Context, []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)
-	getVisibilitiesByPlansMutex       sync.RWMutex
-	getVisibilitiesByPlansArgsForCall []struct {
-		arg1 context.Context
-		arg2 []*types.ServicePlan
-	}
-	getVisibilitiesByPlansReturns struct {
-		result1 []*platform.ServiceVisibilityEntity
-		result2 error
-	}
-	getVisibilitiesByPlansReturnsOnCall map[int]struct {
-		result1 []*platform.ServiceVisibilityEntity
-		result2 error
-	}
 	VisibilityScopeLabelKeyStub        func() string
 	visibilityScopeLabelKeyMutex       sync.RWMutex
 	visibilityScopeLabelKeyArgsForCall []struct {
@@ -79,18 +66,19 @@ type FakeVisibilityClient struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeVisibilityClient) DisableAccessForPlan(arg1 context.Context, arg2 json.RawMessage, arg3 string) error {
+func (fake *FakeVisibilityClient) DisableAccessForPlan(arg1 context.Context, arg2 json.RawMessage, arg3 string, arg4 string) error {
 	fake.disableAccessForPlanMutex.Lock()
 	ret, specificReturn := fake.disableAccessForPlanReturnsOnCall[len(fake.disableAccessForPlanArgsForCall)]
 	fake.disableAccessForPlanArgsForCall = append(fake.disableAccessForPlanArgsForCall, struct {
 		arg1 context.Context
 		arg2 json.RawMessage
 		arg3 string
-	}{arg1, arg2, arg3})
-	fake.recordInvocation("DisableAccessForPlan", []interface{}{arg1, arg2, arg3})
+		arg4 string
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("DisableAccessForPlan", []interface{}{arg1, arg2, arg3, arg4})
 	fake.disableAccessForPlanMutex.Unlock()
 	if fake.DisableAccessForPlanStub != nil {
-		return fake.DisableAccessForPlanStub(arg1, arg2, arg3)
+		return fake.DisableAccessForPlanStub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
@@ -105,17 +93,17 @@ func (fake *FakeVisibilityClient) DisableAccessForPlanCallCount() int {
 	return len(fake.disableAccessForPlanArgsForCall)
 }
 
-func (fake *FakeVisibilityClient) DisableAccessForPlanCalls(stub func(context.Context, json.RawMessage, string) error) {
+func (fake *FakeVisibilityClient) DisableAccessForPlanCalls(stub func(context.Context, json.RawMessage, string, string) error) {
 	fake.disableAccessForPlanMutex.Lock()
 	defer fake.disableAccessForPlanMutex.Unlock()
 	fake.DisableAccessForPlanStub = stub
 }
 
-func (fake *FakeVisibilityClient) DisableAccessForPlanArgsForCall(i int) (context.Context, json.RawMessage, string) {
+func (fake *FakeVisibilityClient) DisableAccessForPlanArgsForCall(i int) (context.Context, json.RawMessage, string, string) {
 	fake.disableAccessForPlanMutex.RLock()
 	defer fake.disableAccessForPlanMutex.RUnlock()
 	argsForCall := fake.disableAccessForPlanArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *FakeVisibilityClient) DisableAccessForPlanReturns(result1 error) {
@@ -141,18 +129,19 @@ func (fake *FakeVisibilityClient) DisableAccessForPlanReturnsOnCall(i int, resul
 	}{result1}
 }
 
-func (fake *FakeVisibilityClient) EnableAccessForPlan(arg1 context.Context, arg2 json.RawMessage, arg3 string) error {
+func (fake *FakeVisibilityClient) EnableAccessForPlan(arg1 context.Context, arg2 json.RawMessage, arg3 string, arg4 string) error {
 	fake.enableAccessForPlanMutex.Lock()
 	ret, specificReturn := fake.enableAccessForPlanReturnsOnCall[len(fake.enableAccessForPlanArgsForCall)]
 	fake.enableAccessForPlanArgsForCall = append(fake.enableAccessForPlanArgsForCall, struct {
 		arg1 context.Context
 		arg2 json.RawMessage
 		arg3 string
-	}{arg1, arg2, arg3})
-	fake.recordInvocation("EnableAccessForPlan", []interface{}{arg1, arg2, arg3})
+		arg4 string
+	}{arg1, arg2, arg3, arg4})
+	fake.recordInvocation("EnableAccessForPlan", []interface{}{arg1, arg2, arg3, arg4})
 	fake.enableAccessForPlanMutex.Unlock()
 	if fake.EnableAccessForPlanStub != nil {
-		return fake.EnableAccessForPlanStub(arg1, arg2, arg3)
+		return fake.EnableAccessForPlanStub(arg1, arg2, arg3, arg4)
 	}
 	if specificReturn {
 		return ret.result1
@@ -167,17 +156,17 @@ func (fake *FakeVisibilityClient) EnableAccessForPlanCallCount() int {
 	return len(fake.enableAccessForPlanArgsForCall)
 }
 
-func (fake *FakeVisibilityClient) EnableAccessForPlanCalls(stub func(context.Context, json.RawMessage, string) error) {
+func (fake *FakeVisibilityClient) EnableAccessForPlanCalls(stub func(context.Context, json.RawMessage, string, string) error) {
 	fake.enableAccessForPlanMutex.Lock()
 	defer fake.enableAccessForPlanMutex.Unlock()
 	fake.EnableAccessForPlanStub = stub
 }
 
-func (fake *FakeVisibilityClient) EnableAccessForPlanArgsForCall(i int) (context.Context, json.RawMessage, string) {
+func (fake *FakeVisibilityClient) EnableAccessForPlanArgsForCall(i int) (context.Context, json.RawMessage, string, string) {
 	fake.enableAccessForPlanMutex.RLock()
 	defer fake.enableAccessForPlanMutex.RUnlock()
 	argsForCall := fake.enableAccessForPlanArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3, argsForCall.arg4
 }
 
 func (fake *FakeVisibilityClient) EnableAccessForPlanReturns(result1 error) {
@@ -272,75 +261,6 @@ func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturnsOnCall(i int, r
 	}{result1, result2}
 }
 
-func (fake *FakeVisibilityClient) GetVisibilitiesByPlans(arg1 context.Context, arg2 []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error) {
-	var arg2Copy []*types.ServicePlan
-	if arg2 != nil {
-		arg2Copy = make([]*types.ServicePlan, len(arg2))
-		copy(arg2Copy, arg2)
-	}
-	fake.getVisibilitiesByPlansMutex.Lock()
-	ret, specificReturn := fake.getVisibilitiesByPlansReturnsOnCall[len(fake.getVisibilitiesByPlansArgsForCall)]
-	fake.getVisibilitiesByPlansArgsForCall = append(fake.getVisibilitiesByPlansArgsForCall, struct {
-		arg1 context.Context
-		arg2 []*types.ServicePlan
-	}{arg1, arg2Copy})
-	fake.recordInvocation("GetVisibilitiesByPlans", []interface{}{arg1, arg2Copy})
-	fake.getVisibilitiesByPlansMutex.Unlock()
-	if fake.GetVisibilitiesByPlansStub != nil {
-		return fake.GetVisibilitiesByPlansStub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	fakeReturns := fake.getVisibilitiesByPlansReturns
-	return fakeReturns.result1, fakeReturns.result2
-}
-
-func (fake *FakeVisibilityClient) GetVisibilitiesByPlansCallCount() int {
-	fake.getVisibilitiesByPlansMutex.RLock()
-	defer fake.getVisibilitiesByPlansMutex.RUnlock()
-	return len(fake.getVisibilitiesByPlansArgsForCall)
-}
-
-func (fake *FakeVisibilityClient) GetVisibilitiesByPlansCalls(stub func(context.Context, []*types.ServicePlan) ([]*platform.ServiceVisibilityEntity, error)) {
-	fake.getVisibilitiesByPlansMutex.Lock()
-	defer fake.getVisibilitiesByPlansMutex.Unlock()
-	fake.GetVisibilitiesByPlansStub = stub
-}
-
-func (fake *FakeVisibilityClient) GetVisibilitiesByPlansArgsForCall(i int) (context.Context, []*types.ServicePlan) {
-	fake.getVisibilitiesByPlansMutex.RLock()
-	defer fake.getVisibilitiesByPlansMutex.RUnlock()
-	argsForCall := fake.getVisibilitiesByPlansArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *FakeVisibilityClient) GetVisibilitiesByPlansReturns(result1 []*platform.ServiceVisibilityEntity, result2 error) {
-	fake.getVisibilitiesByPlansMutex.Lock()
-	defer fake.getVisibilitiesByPlansMutex.Unlock()
-	fake.GetVisibilitiesByPlansStub = nil
-	fake.getVisibilitiesByPlansReturns = struct {
-		result1 []*platform.ServiceVisibilityEntity
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeVisibilityClient) GetVisibilitiesByPlansReturnsOnCall(i int, result1 []*platform.ServiceVisibilityEntity, result2 error) {
-	fake.getVisibilitiesByPlansMutex.Lock()
-	defer fake.getVisibilitiesByPlansMutex.Unlock()
-	fake.GetVisibilitiesByPlansStub = nil
-	if fake.getVisibilitiesByPlansReturnsOnCall == nil {
-		fake.getVisibilitiesByPlansReturnsOnCall = make(map[int]struct {
-			result1 []*platform.ServiceVisibilityEntity
-			result2 error
-		})
-	}
-	fake.getVisibilitiesByPlansReturnsOnCall[i] = struct {
-		result1 []*platform.ServiceVisibilityEntity
-		result2 error
-	}{result1, result2}
-}
-
 func (fake *FakeVisibilityClient) VisibilityScopeLabelKey() string {
 	fake.visibilityScopeLabelKeyMutex.Lock()
 	ret, specificReturn := fake.visibilityScopeLabelKeyReturnsOnCall[len(fake.visibilityScopeLabelKeyArgsForCall)]
@@ -402,8 +322,6 @@ func (fake *FakeVisibilityClient) Invocations() map[string][][]interface{} {
 	defer fake.enableAccessForPlanMutex.RUnlock()
 	fake.getVisibilitiesByBrokersMutex.RLock()
 	defer fake.getVisibilitiesByBrokersMutex.RUnlock()
-	fake.getVisibilitiesByPlansMutex.RLock()
-	defer fake.getVisibilitiesByPlansMutex.RUnlock()
 	fake.visibilityScopeLabelKeyMutex.RLock()
 	defer fake.visibilityScopeLabelKeyMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

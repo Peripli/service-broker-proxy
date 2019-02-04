@@ -45,9 +45,9 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
-	smBrokers, err := r.getBrokersFromSM()
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
+	smBrokers, ok := r.stat(smBrokersStats).([]platform.ServiceBroker)
+	if !ok {
+		logger.Error("Could not get SM brokers from stats")
 		return
 	}
 	if len(smBrokers) == 0 {
@@ -383,7 +383,7 @@ func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *p
 	if err != nil {
 		return err
 	}
-	if err = r.platformClient.Visibility().EnableAccessForPlan(ctx, json, visibility.CatalogPlanID); err != nil {
+	if err = r.platformClient.Visibility().EnableAccessForPlan(ctx, json, visibility.CatalogPlanID, visibility.BrokerID); err != nil {
 		logger.WithError(err).Errorf("Could not enable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
@@ -398,7 +398,7 @@ func (r *ReconciliationTask) deleteVisibility(ctx context.Context, visibility *p
 	if err != nil {
 		return err
 	}
-	if err = r.platformClient.Visibility().DisableAccessForPlan(ctx, json, visibility.CatalogPlanID); err != nil {
+	if err = r.platformClient.Visibility().DisableAccessForPlan(ctx, json, visibility.CatalogPlanID, visibility.BrokerID); err != nil {
 		logger.WithError(err).Errorf("Could not disable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}

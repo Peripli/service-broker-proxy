@@ -50,6 +50,7 @@ func (r *ReconciliationTask) processBrokers() {
 		logger.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
 		return
 	}
+	r.stats[smBrokersStats] = brokersFromSM
 
 	// control logic - make sure current state matches desired state
 	r.reconcileBrokers(brokersFromPlatform, brokersFromSM)
