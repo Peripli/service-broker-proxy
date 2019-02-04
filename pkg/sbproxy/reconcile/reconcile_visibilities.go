@@ -28,7 +28,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/types"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -66,18 +65,17 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
+	var platformVisibilities []*platform.ServiceVisibilityEntity
+	if r.options.VisibilityCache && r.areSMPlansSame(smPlans) {
+		platformVisibilities = r.getPlatformVisibilitiesFromCache()
+	}
+
 	plansMap := smPlansToMap(smPlans)
 	smVisibilities, err := r.getSMVisibilities(plansMap, smBrokers)
 	if err != nil {
 		logger.WithError(err).Error("An error occurred while obtaining SM visibilities")
 		return
 	}
-
-	var platformVisibilities []*platform.ServiceVisibilityEntity
-	// TODO: uncomment the following 3 lines and rework code
-	// if r.options.VisibilityCache && r.areSMPlansSame(plans) {
-	// 	platformVisibilities = r.getPlatformVisibilitiesFromCache()
-	// }
 
 	visibilityCacheUsed := platformVisibilities != nil
 	if !visibilityCacheUsed {
@@ -92,18 +90,19 @@ func (r *ReconciliationTask) processVisibilities() {
 	if errorOccured {
 		logger.Error("Could not reconcile visibilities")
 	}
-	// if r.options.VisibilityCache {
-	// 	if errorOccured {
-	// 		r.cache.Delete(platformVisibilityCacheKey)
-	// 		r.cache.Delete(smPlansCacheKey)
-	// 	} else {
-	// 		r.updateVisibilityCache(visibilityCacheUsed, plansMap, smVisibilities)
-	// 	}
-	// }
+
+	if r.options.VisibilityCache {
+		if errorOccured {
+			r.cache.Delete(platformVisibilityCacheKey)
+			r.cache.Delete(smPlansCacheKey)
+		} else {
+			r.updateVisibilityCache(visibilityCacheUsed, plansMap, smVisibilities)
+		}
+	}
 }
 
 // updateVisibilityCache
-func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plansMap map[string]*types.ServicePlan, visibilities []*platform.ServiceVisibilityEntity) {
+func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plansMap map[brokerPlanKey]*types.ServicePlan, visibilities []*platform.ServiceVisibilityEntity) {
 	r.cache.Set(smPlansCacheKey, plansMap, r.options.CacheExpiration)
 	cacheExpiration := r.options.CacheExpiration
 	if visibilityCacheUsed {
@@ -117,23 +116,27 @@ func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, pla
 
 // areSMPlansSame checks if there are new or deleted plans in SM.
 // Returns true if there are no new or deleted plans, false otherwise
-func (r *ReconciliationTask) areSMPlansSame(plans []*types.ServicePlan) bool {
+func (r *ReconciliationTask) areSMPlansSame(plans map[string][]*types.ServicePlan) bool {
 	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
 	if !isPresent {
 		return false
 	}
-	cachedPlansMap, ok := cachedPlans.(map[string]*types.ServicePlan)
+	cachedPlansMap, ok := cachedPlans.(map[brokerPlanKey]*types.ServicePlan)
 	if !ok {
 		log.C(r.runContext).Error("SM plans cache is in invalid state! Clearing...")
 		r.cache.Delete(smPlansCacheKey)
 		return false
 	}
-	if len(cachedPlansMap) != len(plans) {
-		return false
-	}
-	for _, plan := range plans {
-		if cachedPlansMap[plan.ID] == nil {
-			return false
+
+	for brokerID, brokerPlans := range plans {
+		for _, plan := range brokerPlans {
+			key := brokerPlanKey{
+				brokerID: brokerID,
+				planID:   plan.ID,
+			}
+			if cachedPlansMap[key] == nil {
+				return false
+			}
 		}
 	}
 	return true
@@ -201,19 +204,6 @@ func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.S
 	log.C(r.runContext).Debugf("ReconciliationTask successfully retrieved %d services from Service Manager", count)
 
 	return result, nil
-}
-
-func (r *ReconciliationTask) getSMPlans() ([]*types.ServicePlan, error) {
-	logger := log.C(r.runContext)
-	logger.Debug("ReconciliationTask getting plans from Service Manager")
-
-	plans, err := r.smClient.GetPlans(r.runContext)
-	if err != nil {
-		return nil, errors.Wrap(err, "error gettings plans from SM")
-	}
-	logger.Debugf("ReconciliationTask successfully retrieved %d plans from Service Manager", len(plans))
-
-	return plans, nil
 }
 
 func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []platform.ServiceBroker) ([]*platform.ServiceVisibilityEntity, error) {
