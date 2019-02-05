@@ -191,17 +191,23 @@ func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[strin
 
 func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
 	result := make(map[string][]*types.ServiceOffering)
-	count := 0
+	brokerIDs := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		// TODO: check broker.GUID??
-		offerings, err := r.smClient.GetServiceOfferingsByBrokerID(r.runContext, broker.GUID)
-		if err != nil {
-			return nil, err
-		}
-		result[broker.GUID] = offerings
-		count += len(offerings)
+		brokerIDs = append(brokerIDs, broker.GUID)
 	}
-	log.C(r.runContext).Debugf("ReconciliationTask successfully retrieved %d services from Service Manager", count)
+
+	offerings, err := r.smClient.GetServiceOfferingsByBrokerIDs(r.runContext, brokerIDs)
+	if err != nil {
+		return nil, err
+	}
+	log.C(r.runContext).Debugf("ReconciliationTask successfully retrieved %d services from Service Manager", len(offerings))
+
+	for _, offering := range offerings {
+		if result[offering.BrokerID] == nil {
+			result[offering.BrokerID] = make([]*types.ServiceOffering, 0)
+		}
+		result[offering.BrokerID] = append(result[offering.BrokerID], offering)
+	}
 
 	return result, nil
 }

@@ -19,6 +19,7 @@ package sm
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Peripli/service-manager/pkg/types"
 
@@ -46,7 +47,7 @@ type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
-	GetServiceOfferingsByBrokerID(ctx context.Context, brokerID string) ([]*types.ServiceOffering, error)
+	GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error)
 	GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error)
 }
 
@@ -126,11 +127,11 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 	return list.Plans, nil
 }
 
-// GetServiceOfferingsByBrokerID returns plans from Service Manager
-func (c *ServiceManagerClient) GetServiceOfferingsByBrokerID(ctx context.Context, brokerID string) ([]*types.ServiceOffering, error) {
+// GetServiceOfferingsByBrokerIDs returns plans from Service Manager
+func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
 	log.C(ctx).Debugf("Getting service offerings from Service Manager at %s", c.host)
 
-	fieldQuery := "broker_id = " + brokerID
+	fieldQuery := fmt.Sprintf("broker_id in [%s]", strings.Join(brokerIDs, "||"))
 	params := map[string]string{
 		"fieldQuery": fieldQuery,
 	}
