@@ -35,6 +35,7 @@ import (
 
 var _ = Describe("Reconcile brokers", func() {
 	const fakeAppHost = "https://smproxy.com"
+	const brokerPrefix = "sm-proxy-"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
@@ -158,13 +159,13 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      ProxyBrokerPrefix + "smBrokerID1",
+			Name:      brokerPrefix + "smBrokerID1",
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      ProxyBrokerPrefix + "smBrokerID2",
+			Name:      brokerPrefix + "smBrokerID2",
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
