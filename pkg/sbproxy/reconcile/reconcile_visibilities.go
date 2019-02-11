@@ -187,7 +187,6 @@ func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[strin
 		if len(sos) == 0 {
 			continue
 		}
-		// TODO: Do in multiple go routines? The request query might become very long if there are many offerings in one broker
 		brokerPlans, err := r.smClient.GetPlansByServiceOfferings(r.runContext, sos)
 		if err != nil {
 			return nil, err
