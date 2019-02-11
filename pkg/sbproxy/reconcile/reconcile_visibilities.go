@@ -36,7 +36,7 @@ const (
 )
 
 // processVisibilities handles the reconsilation of the service visibilities.
-// It gets the service visibilities from SM and the platform and runs the reconciliation
+// It gets the service visibilities from Service Manager and the platform and runs the reconciliation
 func (r *ReconciliationTask) processVisibilities() {
 	logger := log.C(r.runContext)
 	if r.platformClient.Visibility() == nil {
@@ -46,10 +46,11 @@ func (r *ReconciliationTask) processVisibilities() {
 
 	smBrokers, ok := r.stat(smBrokersStats).([]platform.ServiceBroker)
 	if !ok {
-		logger.Error("Could not get SM brokers from stats")
+		logger.Error("Could not get Service Manager brokers from stats")
 		return
 	}
 	if len(smBrokers) == 0 {
+		logger.Debugf("No brokers from Service Manager found. Skip reconcile visibilities")
 		return
 	}
 
@@ -73,7 +74,7 @@ func (r *ReconciliationTask) processVisibilities() {
 	plansMap := smPlansToMap(smPlans)
 	smVisibilities, err := r.getSMVisibilities(plansMap, smBrokers)
 	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining SM visibilities")
+		logger.WithError(err).Error("An error occurred while obtaining Service Manager visibilities")
 		return
 	}
 
@@ -123,7 +124,7 @@ func (r *ReconciliationTask) areSMPlansSame(plans map[string][]*types.ServicePla
 	}
 	cachedPlansMap, ok := cachedPlans.(map[brokerPlanKey]*types.ServicePlan)
 	if !ok {
-		log.C(r.runContext).Error("SM plans cache is in invalid state! Clearing...")
+		log.C(r.runContext).Error("Service Manager plans cache is in invalid state! Clearing...")
 		r.cache.Delete(smPlansCacheKey)
 		return false
 	}
@@ -238,7 +239,7 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 			result = append(result, converted...)
 		}
 	}
-	logger.Debugf("ReconciliationTask successfully converted %d SM visibilities to %d platform visibilities", len(visibilities), len(result))
+	logger.Debugf("ReconciliationTask successfully converted %d Service Manager visibilities to %d platform visibilities", len(visibilities), len(result))
 
 	return result, nil
 }
@@ -272,7 +273,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 
 func (r *ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {
 	logger := log.C(r.runContext)
-	logger.Debug("ReconciliationTask reconsiling platform and SM visibilities...")
+	logger.Debug("ReconciliationTask reconsiling platform and Service Manager visibilities...")
 
 	platformMap := r.convertVisListToMap(platformVis)
 	visibilitiesToCreate := make([]*platform.ServiceVisibilityEntity, 0)
@@ -419,13 +420,12 @@ func (r *ReconciliationTask) convertVisListToMap(list []*platform.ServiceVisibil
 }
 
 func smPlansToMap(plansByBroker map[string][]*types.ServicePlan) map[brokerPlanKey]*types.ServicePlan {
-	// TODO: check map length
 	plansMap := make(map[brokerPlanKey]*types.ServicePlan, len(plansByBroker))
 	for brokerID, brokerPlans := range plansByBroker {
 		for _, plan := range brokerPlans {
 			key := brokerPlanKey{
-				brokerID: brokerID, // SM broker ID
-				planID:   plan.ID,  // SM plan ID
+				brokerID: brokerID,
+				planID:   plan.ID,
 			}
 			plansMap[key] = plan
 		}

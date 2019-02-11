@@ -165,7 +165,7 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 	var result *types.ServicePlans
 	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), params, &result)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting service offerings from Service Manager")
+		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
 
 	return result.ServicePlans, nil
