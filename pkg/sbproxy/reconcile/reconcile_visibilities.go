@@ -44,9 +44,10 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
-	smBrokers, ok := r.stat(smBrokersStats).([]platform.ServiceBroker)
+	brokerFromStats := r.stat(smBrokersStats)
+	smBrokers, ok := brokerFromStats.([]platform.ServiceBroker)
 	if !ok {
-		logger.Error("Could not get Service Manager brokers from stats")
+		logger.Errorf("Expected %T to be %T", brokerFromStats, smBrokers)
 		return
 	}
 	if len(smBrokers) == 0 {
