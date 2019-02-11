@@ -25,17 +25,17 @@ import (
 // platform specific service and plan visibilities
 //go:generate counterfeiter . VisibilityClient
 type VisibilityClient interface {
-	// GetVisibilitiesByBrokers get currently available visibilities in the platform for specific brokers
-	GetVisibilitiesByBrokers(context.Context, []ServiceBroker) ([]*ServiceVisibilityEntity, error)
+	// GetVisibilitiesByBrokers get currently available visibilities in the platform for specific broker names
+	GetVisibilitiesByBrokers(context.Context, []string) ([]*ServiceVisibilityEntity, error)
 
 	// VisibilityScopeLabelKey returns a specific label key which should be used when converting SM visibilities to platform.Visibilities
 	VisibilityScopeLabelKey() string
 
 	// EnableAccessForPlan enables the access to the plan with the specified GUID for
 	// the entities in the data
-	EnableAccessForPlan(ctx context.Context, data json.RawMessage, catalogPlanID, brokerGUID string) error
+	EnableAccessForPlan(ctx context.Context, data json.RawMessage, catalogPlanID, platformBrokerName string) error
 
 	// DisableAccessForPlan disables the access to the plan with the specified GUID for
 	// the entities in the data
-	DisableAccessForPlan(ctx context.Context, data json.RawMessage, catalogPlanID, brokerGUID string) error
+	DisableAccessForPlan(ctx context.Context, data json.RawMessage, catalogPlanID, platformBrokerName string) error
 }

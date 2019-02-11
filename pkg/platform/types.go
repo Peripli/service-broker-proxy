@@ -57,8 +57,8 @@ type ServiceBrokerList struct {
 
 // ServiceVisibilityEntity generic visibility entity
 type ServiceVisibilityEntity struct {
-	Public        bool
-	CatalogPlanID string
-	BrokerID      string
-	Labels        map[string]string
+	Public             bool
+	CatalogPlanID      string
+	PlatformBrokerName string
+	Labels             map[string]string
 }

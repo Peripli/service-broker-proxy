@@ -114,7 +114,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		return result, nil
 	}
 
-	checkAccessArguments := func(data json.RawMessage, servicePlanGUID, brokerGUID string, visibilities []*platform.ServiceVisibilityEntity) {
+	checkAccessArguments := func(data json.RawMessage, servicePlanGUID, platformBrokerName string, visibilities []*platform.ServiceVisibilityEntity) {
 		var labels map[string]string
 		err := json.Unmarshal(data, &labels)
 		Expect(err).To(Not(HaveOccurred()))
@@ -122,10 +122,10 @@ var _ = Describe("Reconcile visibilities", func() {
 			labels = map[string]string{}
 		}
 		visibility := &platform.ServiceVisibilityEntity{
-			Public:        len(labels) == 0,
-			CatalogPlanID: servicePlanGUID,
-			Labels:        labels,
-			BrokerID:      brokerGUID,
+			Public:             len(labels) == 0,
+			CatalogPlanID:      servicePlanGUID,
+			Labels:             labels,
+			PlatformBrokerName: platformBrokerName,
 		}
 		Expect(visibilities).To(ContainElement(visibility))
 	}
@@ -326,14 +326,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							BrokerID:      smbroker1.ID,
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value0"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value0"},
 						},
 						&platform.ServiceVisibilityEntity{
-							BrokerID:      smbroker1.ID,
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value1"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value1"},
 						},
 					},
 					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{},
@@ -345,14 +345,14 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels:        map[string]string{"key": "value0"},
-						BrokerID:      smbroker1.ID,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels:             map[string]string{"key": "value0"},
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 					&platform.ServiceVisibilityEntity{
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels:        map[string]string{"key": "value1"},
-						BrokerID:      smbroker1.ID,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels:             map[string]string{"key": "value1"},
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 				}, nil
 			},
@@ -380,14 +380,14 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels:        map[string]string{"key": "value2"},
-						BrokerID:      smbroker1.ID,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels:             map[string]string{"key": "value2"},
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 					&platform.ServiceVisibilityEntity{
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels:        map[string]string{"key": "value3"},
-						BrokerID:      smbroker1.ID,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels:             map[string]string{"key": "value3"},
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 				}, nil
 			},
@@ -407,26 +407,26 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value0"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value0"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value1"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value1"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value2"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value2"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value3"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value3"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 				}
@@ -463,14 +463,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value0"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value0"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-							Labels:        map[string]string{"key": "value1"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+							Labels:             map[string]string{"key": "value1"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 				}
@@ -484,14 +484,14 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-						Labels:        map[string]string{"key": "value0"},
-						BrokerID:      smbroker1.ID,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+						Labels:             map[string]string{"key": "value0"},
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 					&platform.ServiceVisibilityEntity{
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						Labels:        map[string]string{"key": "value1"},
-						BrokerID:      smbroker1.ID,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+						Labels:             map[string]string{"key": "value1"},
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 				}, nil
 			},
@@ -503,14 +503,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{"key": "value0"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{"key": "value0"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 						&platform.ServiceVisibilityEntity{
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-							Labels:        map[string]string{"key": "value1"},
-							BrokerID:      smbroker1.ID,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+							Labels:             map[string]string{"key": "value1"},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 				}
@@ -561,10 +561,10 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							Public:        true,
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{},
-							BrokerID:      smbroker1.ID,
+							Public:             true,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 				}
@@ -575,9 +575,9 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
-						Public:        true,
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						BrokerID:      smbroker1.ID,
+						Public:             true,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 				}, nil
 			},
@@ -593,18 +593,18 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							Public:        true,
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
-							Labels:        map[string]string{},
-							BrokerID:      smbroker1.ID,
+							Public:             true,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
+							Labels:             map[string]string{},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
 						&platform.ServiceVisibilityEntity{
-							Public:        true,
-							CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-							Labels:        map[string]string{},
-							BrokerID:      smbroker1.ID,
+							Public:             true,
+							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+							Labels:             map[string]string{},
+							PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 						},
 					},
 				}
@@ -615,9 +615,9 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
-						Public:        true,
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						BrokerID:      smbroker1.ID,
+						Public:             true,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 				}, nil
 			},
@@ -639,9 +639,9 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
 				return []*platform.ServiceVisibilityEntity{
 					&platform.ServiceVisibilityEntity{
-						Public:        true,
-						CatalogPlanID: smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						BrokerID:      smbroker1.ID,
+						Public:             true,
+						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
+						PlatformBrokerName: ProxyBrokerPrefix + smbroker1.ID,
 					},
 				}, nil
 			},
@@ -702,15 +702,15 @@ var _ = Describe("Reconcile visibilities", func() {
 		Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(len(expected.enablePlanVisibilityCalledFor)))
 
 		for index := range expected.enablePlanVisibilityCalledFor {
-			_, data, servicePlanGUID, brokerGUID := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, brokerGUID, expected.enablePlanVisibilityCalledFor)
+			_, data, servicePlanGUID, platformBrokerName := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
+			checkAccessArguments(data, servicePlanGUID, platformBrokerName, expected.enablePlanVisibilityCalledFor)
 		}
 
 		Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(len(expected.disablePlanVisibilityCalledFor)))
 
 		for index := range expected.disablePlanVisibilityCalledFor {
-			_, data, servicePlanGUID, brokerGUID := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, brokerGUID, expected.disablePlanVisibilityCalledFor)
+			_, data, servicePlanGUID, platformBrokerName := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
+			checkAccessArguments(data, servicePlanGUID, platformBrokerName, expected.disablePlanVisibilityCalledFor)
 		}
 
 	}, entries...)

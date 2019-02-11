@@ -161,13 +161,22 @@ func (r *ReconciliationTask) loadPlatformVisibilitiesByBrokers(brokers []platfor
 	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask getting visibilities from platform")
 
-	visibilities, err := r.platformClient.Visibility().GetVisibilitiesByBrokers(r.runContext, brokers)
+	names := brokerNames(brokers)
+	visibilities, err := r.platformClient.Visibility().GetVisibilitiesByBrokers(r.runContext, names)
 	if err != nil {
 		return nil, err
 	}
 	logger.Debugf("ReconciliationTask successfully retrieved %d visibilities from platform", len(visibilities))
 
 	return visibilities, nil
+}
+
+func brokerNames(brokers []platform.ServiceBroker) []string {
+	names := make([]string, 0, len(brokers))
+	for _, broker := range brokers {
+		names = append(names, ProxyBrokerPrefix+broker.GUID)
+	}
+	return names
 }
 
 func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
@@ -250,10 +259,10 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
 		return []*platform.ServiceVisibilityEntity{
 			{
-				Public:        true,
-				CatalogPlanID: smPlan.CatalogID,
-				BrokerID:      brokerGUID,
-				Labels:        map[string]string{},
+				Public:             true,
+				CatalogPlanID:      smPlan.CatalogID,
+				PlatformBrokerName: ProxyBrokerPrefix + brokerGUID,
+				Labels:             map[string]string{},
 			},
 		}
 	}
@@ -262,10 +271,10 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 	result := make([]*platform.ServiceVisibilityEntity, 0, len(scopes))
 	for _, scope := range scopes {
 		result = append(result, &platform.ServiceVisibilityEntity{
-			Public:        false,
-			CatalogPlanID: smPlan.CatalogID,
-			BrokerID:      brokerGUID,
-			Labels:        map[string]string{scopeLabelKey: scope},
+			Public:             false,
+			CatalogPlanID:      smPlan.CatalogID,
+			PlatformBrokerName: ProxyBrokerPrefix + brokerGUID,
+			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
 	return result
@@ -367,9 +376,9 @@ func (r *ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibi
 
 	const idSeparator = "|"
 	if visibility.Public {
-		return strings.Join([]string{"public", "", visibility.BrokerID, visibility.CatalogPlanID}, idSeparator)
+		return strings.Join([]string{"public", "", visibility.PlatformBrokerName, visibility.CatalogPlanID}, idSeparator)
 	}
-	return strings.Join([]string{"!public", visibility.Labels[scopeLabelKey], visibility.BrokerID, visibility.CatalogPlanID}, idSeparator)
+	return strings.Join([]string{"!public", visibility.Labels[scopeLabelKey], visibility.PlatformBrokerName, visibility.CatalogPlanID}, idSeparator)
 }
 
 func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *platform.ServiceVisibilityEntity) error {
@@ -380,7 +389,7 @@ func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *p
 	if err != nil {
 		return err
 	}
-	if err = r.platformClient.Visibility().EnableAccessForPlan(ctx, json, visibility.CatalogPlanID, visibility.BrokerID); err != nil {
+	if err = r.platformClient.Visibility().EnableAccessForPlan(ctx, json, visibility.CatalogPlanID, visibility.PlatformBrokerName); err != nil {
 		logger.WithError(err).Errorf("Could not enable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
@@ -395,7 +404,7 @@ func (r *ReconciliationTask) deleteVisibility(ctx context.Context, visibility *p
 	if err != nil {
 		return err
 	}
-	if err = r.platformClient.Visibility().DisableAccessForPlan(ctx, json, visibility.CatalogPlanID, visibility.BrokerID); err != nil {
+	if err = r.platformClient.Visibility().DisableAccessForPlan(ctx, json, visibility.CatalogPlanID, visibility.PlatformBrokerName); err != nil {
 		logger.WithError(err).Errorf("Could not disable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
