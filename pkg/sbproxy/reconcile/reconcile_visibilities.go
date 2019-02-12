@@ -37,6 +37,7 @@ const (
 
 // processVisibilities handles the reconsilation of the service visibilities.
 // It gets the service visibilities from Service Manager and the platform and runs the reconciliation
+// nolint: gocyclo
 func (r *ReconciliationTask) processVisibilities() {
 	logger := log.C(r.runContext)
 	if r.platformClient.Visibility() == nil {
