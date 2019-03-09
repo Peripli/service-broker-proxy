@@ -106,6 +106,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
+			Name:      "smBroker1",
 			BrokerURL: "https://smBroker1.com",
 			ServiceOfferings: []types.ServiceOffering{
 				{
@@ -132,6 +133,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		smbroker2 = sm.Broker{
 			ID:        "smBrokerID2",
+			Name:      "smBroker2",
 			BrokerURL: "https://smBroker2.com",
 			ServiceOfferings: []types.ServiceOffering{
 				{
@@ -176,6 +178,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		smbroker3 = sm.Broker{
 			ID:        "smBrokerID3",
+			Name:      platformbrokerNonProxy.Name,
 			BrokerURL: platformbrokerNonProxy.BrokerURL,
 			// ServiceOfferings: []types.ServiceOffering{},
 		}

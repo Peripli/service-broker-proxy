@@ -59,15 +59,15 @@ func (r *ReconciliationTask) processBrokers() {
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
 func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
-	groupedExistingBrokers := groupBrokersByConditions(existingBrokers, mapByWholeURL, mapByURLSmIDSuffix(r.isProxyBroker))
-	existingBrokersByURLMap := groupedExistingBrokers[0]
+	groupedExistingBrokers := groupBrokersByConditions(existingBrokers, mapByNameAndWholeURL, mapByURLSmIDSuffix(r.isProxyBroker))
+	existingBrokersByNameAndURLMap := groupedExistingBrokers[0]
 	existingBrokersByURLSmIDSuffixMap := groupedExistingBrokers[1]
 
 	for _, payloadBroker := range payloadBrokers {
 		existingBroker := existingBrokersByURLSmIDSuffixMap[payloadBroker.GUID]
 		delete(existingBrokersByURLSmIDSuffixMap, payloadBroker.GUID)
 
-		platformBroker, knownToPlatform := existingBrokersByURLMap[payloadBroker.BrokerURL]
+		platformBroker, knownToPlatform := existingBrokersByNameAndURLMap[getBrokerNameURLCombination(&payloadBroker)]
 		// Broker is registered in platform, but not already known to this broker proxy
 		if knownToPlatform {
 			r.updateBrokerRegistration(platformBroker.GUID, &payloadBroker)
@@ -113,6 +113,7 @@ func (r *ReconciliationTask) getBrokersFromSM() ([]platform.ServiceBroker, error
 	for _, broker := range proxyBrokers {
 		brokerReg := platform.ServiceBroker{
 			GUID:             broker.ID,
+			Name:             broker.Name,
 			BrokerURL:        broker.BrokerURL,
 			ServiceOfferings: broker.ServiceOfferings,
 			Metadata:         broker.Metadata,
@@ -208,8 +209,12 @@ func mapByURLSmIDSuffix(predicate filterBrokerPredicate) func(platform.ServiceBr
 	}
 }
 
-func mapByWholeURL(broker platform.ServiceBroker) (string, bool) {
-	return broker.BrokerURL, true
+func mapByNameAndWholeURL(broker platform.ServiceBroker) (string, bool) {
+	return getBrokerNameURLCombination(&broker), true
+}
+
+func getBrokerNameURLCombination(broker *platform.ServiceBroker) string {
+	return broker.Name + "-" + broker.BrokerURL
 }
 
 func groupBrokersByConditions(brokerList []platform.ServiceBroker, groupBy ...func(platform.ServiceBroker) (string, bool)) []map[string]*platform.ServiceBroker {
