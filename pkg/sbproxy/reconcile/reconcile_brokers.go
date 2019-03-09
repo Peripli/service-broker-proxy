@@ -29,7 +29,7 @@ import (
 // ProxyBrokerPrefix prefixes names of brokers registered at the platform
 const ProxyBrokerPrefix = "sm-proxy-"
 
-// processBrokers handles the reconsilation of the service brokers.
+// processBrokers handles the reconciliation of the service brokers.
 // it gets the brokers from SM and the platform and runs the reconciliation
 func (r *ReconciliationTask) processBrokers() {
 	logger := log.C(r.runContext)
