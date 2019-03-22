@@ -34,8 +34,6 @@ type brokerKey struct {
 	url  string
 }
 
-type brokersMap map[brokerKey]*platform.ServiceBroker
-
 // processBrokers handles the reconciliation of the service brokers.
 // it gets the brokers from SM and the platform and runs the reconciliation
 func (r *ReconciliationTask) processBrokers() {
@@ -207,8 +205,8 @@ func getBrokerKey(broker *platform.ServiceBroker) brokerKey {
 	}
 }
 
-func indexBrokersByKey(brokerList []platform.ServiceBroker) brokersMap {
-	brokerMap := brokersMap{}
+func indexBrokersByKey(brokerList []platform.ServiceBroker) map[brokerKey]*platform.ServiceBroker {
+	brokerMap := map[brokerKey]*platform.ServiceBroker{}
 	for _, broker := range brokerList {
 		brokerMap[getBrokerKey(&broker)] = &broker
 	}
