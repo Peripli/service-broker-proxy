@@ -271,6 +271,7 @@ var _ = Describe("Client", func() {
 	clientBrokersResponse := []Broker{
 		{
 			ID:               "brokerID",
+			Name:             "brokerName",
 			BrokerURL:        "https://service-broker-url",
 			ServiceOfferings: catalogObject(okBrokerResponse),
 			Metadata:         map[string]json.RawMessage{},

@@ -22,7 +22,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-// BrokerDetailsFetcher implements osb.BrokerFetchervalidatable
+// BrokerDetailsFetcher implements osb.BrokerFetcher
 type BrokerDetailsFetcher struct {
 	Username string
 	Password string

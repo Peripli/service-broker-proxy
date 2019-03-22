@@ -88,7 +88,7 @@ func (r *ReconciliationTask) Run() {
 
 	newRunContext, taskID, err := r.generateRunContext()
 	if err != nil {
-		log.C(r.globalContext).WithError(err).Error("reconsilation task will not be sheduled")
+		log.C(r.globalContext).WithError(err).Error("reconsilation task will not be scheduled")
 		return
 	}
 	r.runContext = newRunContext
