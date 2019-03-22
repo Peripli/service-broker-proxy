@@ -29,6 +29,13 @@ import (
 // ProxyBrokerPrefix prefixes names of brokers registered at the platform
 const ProxyBrokerPrefix = "sm-proxy-"
 
+type brokerKey struct {
+	name string
+	url  string
+}
+
+type brokersMap map[brokerKey]*platform.ServiceBroker
+
 // processBrokers handles the reconciliation of the service brokers.
 // it gets the brokers from SM and the platform and runs the reconciliation
 func (r *ReconciliationTask) processBrokers() {
@@ -59,15 +66,14 @@ func (r *ReconciliationTask) processBrokers() {
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
 func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
-	groupedExistingBrokers := groupBrokersByConditions(existingBrokers, mapByNameAndWholeURL, mapByURLSmIDSuffix(r.isProxyBroker))
-	existingBrokersByNameAndURLMap := groupedExistingBrokers[0]
-	existingBrokersByURLSmIDSuffixMap := groupedExistingBrokers[1]
+	brokerKeyMap := indexBrokersByKey(existingBrokers)
+	proxyBrokerIDMap := indexProxyBrokersByID(existingBrokers, r.proxyPath)
 
 	for _, payloadBroker := range payloadBrokers {
-		existingBroker := existingBrokersByURLSmIDSuffixMap[payloadBroker.GUID]
-		delete(existingBrokersByURLSmIDSuffixMap, payloadBroker.GUID)
+		existingBroker := proxyBrokerIDMap[payloadBroker.GUID]
+		delete(proxyBrokerIDMap, payloadBroker.GUID)
 
-		platformBroker, knownToPlatform := existingBrokersByNameAndURLMap[getBrokerNameURLCombination(&payloadBroker)]
+		platformBroker, knownToPlatform := brokerKeyMap[getBrokerKey(&payloadBroker)]
 		// Broker is registered in platform, but not already known to this broker proxy
 		if knownToPlatform {
 			r.updateBrokerRegistration(platformBroker.GUID, &payloadBroker)
@@ -78,7 +84,7 @@ func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.Service
 		}
 	}
 
-	for _, existingBroker := range existingBrokersByURLSmIDSuffixMap {
+	for _, existingBroker := range proxyBrokerIDMap {
 		r.deleteBrokerRegistration(existingBroker)
 	}
 }
@@ -186,10 +192,6 @@ func (r *ReconciliationTask) deleteBrokerRegistration(broker *platform.ServiceBr
 	}
 }
 
-func (r *ReconciliationTask) isProxyBroker(broker *platform.ServiceBroker) bool {
-	return strings.HasPrefix(broker.BrokerURL, r.proxyPath)
-}
-
 func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 	return logrus.Fields{
 		"broker_guid": broker.GUID,
@@ -198,39 +200,29 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 	}
 }
 
-type filterBrokerPredicate func(broker *platform.ServiceBroker) bool
-
-func mapByURLSmIDSuffix(predicate filterBrokerPredicate) func(platform.ServiceBroker) (string, bool) {
-	return func(broker platform.ServiceBroker) (string, bool) {
-		if !predicate(&broker) {
-			return "", false
-		}
-		return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:], true
+func getBrokerKey(broker *platform.ServiceBroker) brokerKey {
+	return brokerKey{
+		name: broker.Name,
+		url:  broker.BrokerURL,
 	}
 }
 
-func mapByNameAndWholeURL(broker platform.ServiceBroker) (string, bool) {
-	return getBrokerNameURLCombination(&broker), true
-}
-
-func getBrokerNameURLCombination(broker *platform.ServiceBroker) string {
-	return broker.Name + "-" + broker.BrokerURL
-}
-
-func groupBrokersByConditions(brokerList []platform.ServiceBroker, groupBy ...func(platform.ServiceBroker) (string, bool)) []map[string]*platform.ServiceBroker {
-	brokerMaps := make([]map[string]*platform.ServiceBroker, len(groupBy))
-	for i := range groupBy {
-		brokerMaps[i] = make(map[string]*platform.ServiceBroker)
+func indexBrokersByKey(brokerList []platform.ServiceBroker) brokersMap {
+	brokerMap := brokersMap{}
+	for _, broker := range brokerList {
+		brokerMap[getBrokerKey(&broker)] = &broker
 	}
+	return brokerMap
+}
 
-	for i, broker := range brokerList {
-		for groupIndex, groupFunc := range groupBy {
-			group, mapped := groupFunc(broker)
-			if mapped {
-				brokerMaps[groupIndex][group] = &brokerList[i]
-			}
+func indexProxyBrokersByID(brokerList []platform.ServiceBroker, proxyPath string) map[string]*platform.ServiceBroker {
+	brokerMap := map[string]*platform.ServiceBroker{}
+	for _, broker := range brokerList {
+		broker := broker
+		if strings.HasPrefix(broker.BrokerURL, proxyPath) {
+			brokerID := broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:]
+			brokerMap[brokerID] = &broker
 		}
 	}
-
-	return brokerMaps
+	return brokerMap
 }
