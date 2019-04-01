@@ -161,9 +161,9 @@ func (smb *SMProxyBuilder) installHealth() {
 
 // Run starts the proxy
 func (p *SMProxy) Run() {
+	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
 	p.scheduler.Start()
 	defer p.scheduler.Stop()
-	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
 
 	log.C(p.ctx).Info("Running SBProxy...")
 
