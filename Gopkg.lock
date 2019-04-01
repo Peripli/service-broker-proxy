@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:9ee3167785a87faf12757cb0e8d8028071861cb3d13b102315f4502f73ef1732"
+  digest = "1:7bebd9a92c61e1e500ac29dc857babfe93ab2c6c39547c3babe1901e9d20f725"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -39,8 +39,8 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "a4dafb1b2c7855cd7c07fab4188469bddfab2992"
-  version = "v0.1.11"
+  revision = "0d118c51d27d52c59d40b7af7f061bda3f195c17"
+  version = "v0.1.12"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -603,7 +603,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f6326bdcace7492e2806219ddeb137b0b03a492dfcc686131c6d35226ab59bc7"
+  digest = "1:e6b963cfd255c232a9613b0d12438d2972b055915ede2f6d905f8da113a86dc7"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -615,7 +615,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "63eda1eb0650888965ead1296efd04d0b2b61128"
+  revision = "74de082e2cca95839e88aa0aeee5aadf6ce7710f"
 
 [[projects]]
   branch = "master"
@@ -630,14 +630,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6b3e6ddcebac95be1d690dbd53b5aa2e520715becb7e521bb526ccf3b4c53c15"
+  digest = "1:f6321364014431568a59b49b449d6ae60c017f3afa3f4ab787a5636853b16b1e"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "f49334f85ddcf0f08d7fb6dd7363e9e6d6b777eb"
+  revision = "9eb1bfa1ce65ae8a6ff3114b0aaf9a41a6cf3560"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
