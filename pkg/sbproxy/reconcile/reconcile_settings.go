@@ -23,11 +23,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+const defaultProxyBrokerPrefix = "sm-proxy-"
+
 // Settings type represents the sbproxy settings
 type Settings struct {
 	URL      string `mapstructure:"url"`
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+
+	BrokerPrefix string `mapstructure:"broker_prefix"`
 
 	VisibilityCache bool          `mapstructure:"visibility_cache"`
 	CacheExpiration time.Duration `mapstructure:"cache_expiration"`
@@ -39,6 +43,7 @@ func DefaultSettings() *Settings {
 		URL:             "",
 		Username:        "",
 		Password:        "",
+		BrokerPrefix:    defaultProxyBrokerPrefix,
 		VisibilityCache: true,
 		CacheExpiration: 2 * time.Hour,
 	}

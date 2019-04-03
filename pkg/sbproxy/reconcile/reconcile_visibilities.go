@@ -163,7 +163,7 @@ func (r *ReconciliationTask) loadPlatformVisibilitiesByBrokers(brokers []platfor
 	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask getting visibilities from platform")
 
-	names := brokerNames(brokers)
+	names := r.brokerNames(brokers)
 	visibilities, err := r.platformClient.Visibility().GetVisibilitiesByBrokers(r.runContext, names)
 	if err != nil {
 		return nil, err
@@ -173,10 +173,10 @@ func (r *ReconciliationTask) loadPlatformVisibilitiesByBrokers(brokers []platfor
 	return visibilities, nil
 }
 
-func brokerNames(brokers []platform.ServiceBroker) []string {
+func (r *ReconciliationTask) brokerNames(brokers []platform.ServiceBroker) []string {
 	names := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		names = append(names, ProxyBrokerPrefix+broker.GUID)
+		names = append(names, r.options.BrokerPrefix+broker.GUID)
 	}
 	return names
 }
@@ -262,7 +262,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: ProxyBrokerPrefix + brokerGUID,
+				PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
 				Labels:             map[string]string{},
 			},
 		}
@@ -274,7 +274,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 		result = append(result, &platform.ServiceVisibilityEntity{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: ProxyBrokerPrefix + brokerGUID,
+			PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
