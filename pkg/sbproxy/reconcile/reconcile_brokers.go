@@ -26,9 +26,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ProxyBrokerPrefix prefixes names of brokers registered at the platform
-const ProxyBrokerPrefix = "sm-proxy-"
-
 type brokerKey struct {
 	name string
 	url  string
@@ -146,7 +143,7 @@ func (r *ReconciliationTask) createBrokerRegistration(broker *platform.ServiceBr
 	logger.WithFields(logBroker(broker)).Info("ReconciliationTask task attempting to create proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      ProxyBrokerPrefix + broker.GUID,
+		Name:      r.options.BrokerPrefix + broker.GUID,
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
@@ -163,7 +160,7 @@ func (r *ReconciliationTask) updateBrokerRegistration(brokerGUID string, broker 
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		GUID:      brokerGUID,
-		Name:      ProxyBrokerPrefix + broker.GUID,
+		Name:      r.options.BrokerPrefix + broker.GUID,
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
