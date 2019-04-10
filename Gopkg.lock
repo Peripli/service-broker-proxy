@@ -2,21 +2,16 @@
 
 
 [[projects]]
-  digest = "1:7bebd9a92c61e1e500ac29dc857babfe93ab2c6c39547c3babe1901e9d20f725"
+  digest = "1:c3eb0388f4f40243c2ffb917d1d0e58afe8a228743f8f833be2d6ba7418e2a7b"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
-    "api/broker",
     "api/filters",
     "api/filters/authn/basic",
     "api/filters/authn/oauth",
     "api/healthcheck",
     "api/info",
     "api/osb",
-    "api/platform",
-    "api/service_offering",
-    "api/service_plan",
-    "api/visibility",
     "cf",
     "config",
     "pkg/env",
@@ -27,6 +22,7 @@
     "pkg/security",
     "pkg/security/authenticators",
     "pkg/security/filters",
+    "pkg/security/http",
     "pkg/security/middlewares",
     "pkg/server",
     "pkg/sm",
@@ -35,12 +31,14 @@
     "pkg/util/slice",
     "pkg/web",
     "storage",
+    "storage/catalog",
+    "storage/interceptors",
     "storage/postgres",
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "0d118c51d27d52c59d40b7af7f061bda3f195c17"
-  version = "v0.1.12"
+  revision = "33d6c67ae7a768e4a85c1f4f9664b6a1616e7cea"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -233,7 +231,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8cee81a073db4671115d1cb70f4ea83d015764d7b884346e89ffc08a2d3353bf"
+  digest = "1:5fe871eb8905c1f38d41a136a678125e5cdf9238c6c9a1711180b9b84b5c33a2"
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
@@ -241,7 +239,7 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "cdf62fdf55f66fb2484fe214f89c059f0bd3f567"
+  revision = "1d3423c595d749e4613fce663591b44ae539d377"
 
 [[projects]]
   digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
@@ -365,12 +363,12 @@
   version = "v2.1.0"
 
 [[projects]]
-  digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
+  digest = "1:e0f50a07c0def90588d69f77178712c6fdc67eb6576365f551cce98b44b501bf"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
-  version = "v1.2.0"
+  revision = "63909f0a90ab0f36909e8e044e46ace10cf13ba2"
+  version = "v1.3.0"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -599,7 +597,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "a5d413f7728c81fb97d96a2b722368945f651e78"
+  revision = "38d8ce5564a5b71b2e3a00553993f1b9a7ae852f"
 
 [[projects]]
   branch = "master"
@@ -615,7 +613,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "74de082e2cca95839e88aa0aeee5aadf6ce7710f"
+  revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
 
 [[projects]]
   branch = "master"
@@ -626,18 +624,18 @@
     "internal",
   ]
   pruneopts = "UT"
-  revision = "c85d3e98c914e3a33234ad863dcbff5dbc425bb8"
+  revision = "9f3314589c9a9136388751d9adae6b0ed400978a"
 
 [[projects]]
   branch = "master"
-  digest = "1:f6321364014431568a59b49b449d6ae60c017f3afa3f4ab787a5636853b16b1e"
+  digest = "1:503f66aac79cb9135d73679c7fa3e95a6fad82a3da399c505ea282b50ff03723"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "9eb1bfa1ce65ae8a6ff3114b0aaf9a41a6cf3560"
+  revision = "4b34438f7a67ee5f45cc6132e2bad873a20324e9"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"

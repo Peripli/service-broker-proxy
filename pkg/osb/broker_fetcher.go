@@ -32,8 +32,8 @@ type BrokerDetailsFetcher struct {
 var _ osb.BrokerFetcher = &BrokerDetailsFetcher{}
 
 // FetchBroker implements osb.BrokerRoundTripper and returns the coordinates of the broker with the specified id
-func (b *BrokerDetailsFetcher) FetchBroker(ctx context.Context, brokerID string) (*types.Broker, error) {
-	return &types.Broker{
+func (b *BrokerDetailsFetcher) FetchBroker(ctx context.Context, brokerID string) (*types.ServiceBroker, error) {
+	return &types.ServiceBroker{
 		BrokerURL: b.URL + "/" + brokerID,
 		Credentials: &types.Credentials{
 			Basic: &types.Basic{
