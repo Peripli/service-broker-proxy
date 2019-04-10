@@ -30,7 +30,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 )
 
 var _ = Describe("Reconcile brokers", func() {
@@ -111,19 +111,25 @@ var _ = Describe("Reconcile brokers", func() {
 			BrokerURL: "https://smBroker1.com",
 			ServiceOfferings: []types.ServiceOffering{
 				{
-					ID:                  "smBroker1ServiceID1",
+					Base: types.Base{
+						ID: "smBroker1ServiceID1",
+					},
 					Name:                "smBroker1Service1",
 					Description:         "description",
 					Bindable:            true,
 					BindingsRetrievable: true,
 					Plans: []*types.ServicePlan{
 						{
-							ID:          "smBroker1ServiceID1PlanID1",
+							Base: types.Base{
+								ID: "smBroker1ServiceID1PlanID1",
+							},
 							Name:        "smBroker1Service1Plan1",
 							Description: "description",
 						},
 						{
-							ID:          "smBroker1ServiceID1PlanID2",
+							Base: types.Base{
+								ID: "smBroker1ServiceID1PlanID2",
+							},
 							Name:        "smBroker1Service1Plan2",
 							Description: "description",
 						},
@@ -138,19 +144,25 @@ var _ = Describe("Reconcile brokers", func() {
 			BrokerURL: "https://smBroker2.com",
 			ServiceOfferings: []types.ServiceOffering{
 				{
-					ID:                  "smBroker2ServiceID1",
+					Base: types.Base{
+						ID: "smBroker2ServiceID1",
+					},
 					Name:                "smBroker2Service1",
 					Description:         "description",
 					Bindable:            true,
 					BindingsRetrievable: true,
 					Plans: []*types.ServicePlan{
 						{
-							ID:          "smBroker2ServiceID1PlanID1",
+							Base: types.Base{
+								ID: "smBroker2ServiceID1PlanID1",
+							},
 							Name:        "smBroker2Service1Plan1",
 							Description: "description",
 						},
 						{
-							ID:          "smBroker2ServiceID1PlanID2",
+							Base: types.Base{
+								ID: "smBroker2ServiceID1PlanID2",
+							},
 							Name:        "smBroker2Service1Plan2",
 							Description: "description",
 						},
