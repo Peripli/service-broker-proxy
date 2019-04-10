@@ -35,7 +35,7 @@ import (
 
 const (
 	// APIInternalBrokers is the SM API for obtaining the brokers for this proxy
-	APIInternalBrokers = "%s" + web.BrokersURL
+	APIInternalBrokers = "%s" + web.ServiceBrokersURL
 
 	// APIVisibilities is the SM API for obtaining plan visibilities
 	APIVisibilities = "%s" + web.VisibilitiesURL
