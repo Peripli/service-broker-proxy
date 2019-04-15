@@ -86,7 +86,7 @@ func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.Service
 
 func (r *ReconciliationTask) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {
 	logger := log.C(r.runContext)
-	logger.Debug("ReconciliationTask task getting brokers from platform...")
+	logger.Info("ReconciliationTask task getting brokers from platform...")
 	registeredBrokers, err := r.platformClient.Broker().GetBrokers(r.runContext)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
@@ -97,13 +97,13 @@ func (r *ReconciliationTask) getBrokersFromPlatform() ([]platform.ServiceBroker,
 		logger.WithFields(logBroker(&broker)).Debug("ReconciliationTask task FOUND registered broker... ")
 		brokersFromPlatform = append(brokersFromPlatform, broker)
 	}
-	logger.Debugf("ReconciliationTask task SUCCESSFULLY retrieved %d brokers from platform", len(brokersFromPlatform))
+	logger.Infof("ReconciliationTask task SUCCESSFULLY retrieved %d brokers from platform", len(brokersFromPlatform))
 	return brokersFromPlatform, nil
 }
 
 func (r *ReconciliationTask) getBrokersFromSM() ([]platform.ServiceBroker, error) {
 	logger := log.C(r.runContext)
-	logger.Debug("ReconciliationTask task getting brokers from Service Manager")
+	logger.Info("ReconciliationTask task getting brokers from Service Manager")
 
 	proxyBrokers, err := r.smClient.GetBrokers(r.runContext)
 	if err != nil {
@@ -121,7 +121,7 @@ func (r *ReconciliationTask) getBrokersFromSM() ([]platform.ServiceBroker, error
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
-	logger.Debugf("ReconciliationTask task SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
+	logger.Infof("ReconciliationTask task SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
 
 	return brokersFromSM, nil
 }
@@ -129,11 +129,11 @@ func (r *ReconciliationTask) getBrokersFromSM() ([]platform.ServiceBroker, error
 func (r *ReconciliationTask) fetchBrokerCatalog(broker *platform.ServiceBroker) {
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 		logger := log.C(r.runContext)
-		logger.WithFields(logBroker(broker)).Debugf("ReconciliationTask task refetching catalog for broker")
+		logger.WithFields(logBroker(broker)).Infof("ReconciliationTask task refetching catalog for broker")
 		if err := f.Fetch(r.runContext, broker); err != nil {
 			logger.WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
 		} else {
-			logger.WithFields(logBroker(broker)).Debug("ReconciliationTask task SUCCESSFULLY refetched catalog for broker")
+			logger.WithFields(logBroker(broker)).Info("ReconciliationTask task SUCCESSFULLY refetched catalog for broker")
 		}
 	}
 }
