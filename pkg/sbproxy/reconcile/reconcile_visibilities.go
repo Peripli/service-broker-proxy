@@ -70,8 +70,10 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
-	var platformVisibilities []*platform.ServiceVisibilityEntity
+	var platformVisibilities []platform.ServiceVisibilityEntity
 	visibilityCacheUsed := false
+
+	//TODO cache is always invalided? why
 	if r.options.VisibilityCache && r.areSMPlansSame(smPlans) {
 		logger.Infof("Actual SM plans and cached SM plans are same. Attempting to pick up cached platform visibilities...")
 		platformVisibilities = r.getPlatformVisibilitiesFromCache()
@@ -110,7 +112,7 @@ func (r *ReconciliationTask) processVisibilities() {
 }
 
 // updateVisibilityCache
-func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plansMap map[brokerPlanKey]*types.ServicePlan, visibilities []*platform.ServiceVisibilityEntity) {
+func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, plansMap map[brokerPlanKey]types.ServicePlan, visibilities []platform.ServiceVisibilityEntity) {
 	log.C(r.globalContext).Infof("Updating cache with the %d newly fetched SM plans as cached-SM-plans and expiration duration %s", len(plansMap), r.options.CacheExpiration)
 	r.cache.Set(smPlansCacheKey, plansMap, r.options.CacheExpiration)
 	visibilitiesExpiration := r.options.CacheExpiration
@@ -127,12 +129,12 @@ func (r *ReconciliationTask) updateVisibilityCache(visibilityCacheUsed bool, pla
 
 // areSMPlansSame checks if there are new or deleted plans in SM.
 // Returns true if there are no new or deleted plans, false otherwise
-func (r *ReconciliationTask) areSMPlansSame(plans map[string][]*types.ServicePlan) bool {
+func (r *ReconciliationTask) areSMPlansSame(plans map[string][]types.ServicePlan) bool {
 	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
 	if !isPresent {
 		return false
 	}
-	cachedPlansMap, ok := cachedPlans.(map[brokerPlanKey]*types.ServicePlan)
+	cachedPlansMap, ok := cachedPlans.(map[brokerPlanKey]types.ServicePlan)
 	if !ok {
 		log.C(r.runContext).Error("Service Manager plans cache is in invalid state! Clearing...")
 		r.cache.Delete(smPlansCacheKey)
@@ -145,20 +147,21 @@ func (r *ReconciliationTask) areSMPlansSame(plans map[string][]*types.ServicePla
 				brokerID: brokerID,
 				planID:   plan.ID,
 			}
-			if cachedPlansMap[key] == nil {
+			if _, ok := cachedPlansMap[key]; !ok {
 				return false
 			}
 		}
 	}
+
 	return true
 }
 
-func (r *ReconciliationTask) getPlatformVisibilitiesFromCache() []*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) getPlatformVisibilitiesFromCache() []platform.ServiceVisibilityEntity {
 	platformVisibilities, found := r.cache.Get(platformVisibilityCacheKey)
 	if !found {
 		return nil
 	}
-	if result, ok := platformVisibilities.([]*platform.ServiceVisibilityEntity); ok {
+	if result, ok := platformVisibilities.([]platform.ServiceVisibilityEntity); ok {
 		log.C(r.runContext).Infof("ReconciliationTask fetched %d platform visibilities from cache", len(result))
 		return result
 	}
@@ -167,7 +170,7 @@ func (r *ReconciliationTask) getPlatformVisibilitiesFromCache() []*platform.Serv
 	return nil
 }
 
-func (r *ReconciliationTask) getPlatformVisibilitiesByBrokersFromPlatform(brokers []platform.ServiceBroker) ([]*platform.ServiceVisibilityEntity, error) {
+func (r *ReconciliationTask) getPlatformVisibilitiesByBrokersFromPlatform(brokers []platform.ServiceBroker) ([]platform.ServiceVisibilityEntity, error) {
 	logger := log.C(r.runContext)
 	logger.Debug("ReconciliationTask getting visibilities from platform")
 
@@ -189,8 +192,8 @@ func (r *ReconciliationTask) brokerNames(brokers []platform.ServiceBroker) []str
 	return names
 }
 
-func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
-	result := make(map[string][]*types.ServicePlan)
+func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[string][]types.ServiceOffering) (map[string][]types.ServicePlan, error) {
+	result := make(map[string][]types.ServicePlan)
 	count := 0
 	for brokerID, sos := range offerings {
 		if len(sos) == 0 {
@@ -208,8 +211,8 @@ func (r *ReconciliationTask) getSMPlansByBrokersAndOfferings(offerings map[strin
 	return result, nil
 }
 
-func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
-	result := make(map[string][]*types.ServiceOffering)
+func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.ServiceBroker) (map[string][]types.ServiceOffering, error) {
+	result := make(map[string][]types.ServiceOffering)
 	brokerIDs := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
 		brokerIDs = append(brokerIDs, broker.GUID)
@@ -223,7 +226,7 @@ func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.S
 
 	for _, offering := range offerings {
 		if result[offering.BrokerID] == nil {
-			result[offering.BrokerID] = make([]*types.ServiceOffering, 0)
+			result[offering.BrokerID] = make([]types.ServiceOffering, 0)
 		}
 		result[offering.BrokerID] = append(result[offering.BrokerID], offering)
 	}
@@ -231,7 +234,7 @@ func (r *ReconciliationTask) getSMServiceOfferingsByBrokers(brokers []platform.S
 	return result, nil
 }
 
-func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []platform.ServiceBroker) ([]*platform.ServiceVisibilityEntity, error) {
+func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]types.ServicePlan, smBrokers []platform.ServiceBroker) ([]platform.ServiceVisibilityEntity, error) {
 	logger := log.C(r.runContext)
 	logger.Info("ReconciliationTask getting visibilities from Service Manager...")
 
@@ -241,19 +244,19 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 	}
 	logger.Infof("ReconciliationTask SUCCESSFULLY retrieved %d visibilities from Service Manager", len(visibilities))
 
-	result := make([]*platform.ServiceVisibilityEntity, 0)
+	result := make([]platform.ServiceVisibilityEntity, 0)
 
-	for _, visibility := range visibilities {
+	for visIndex := range visibilities {
 		for _, broker := range smBrokers {
 			key := brokerPlanKey{
 				brokerID: broker.GUID,
-				planID:   visibility.ServicePlanID,
+				planID:   visibilities[visIndex].ServicePlanID,
 			}
 			smPlan, found := smPlansMap[key]
 			if !found {
 				continue
 			}
-			converted := r.convertSMVisibility(visibility, smPlan, broker.GUID)
+			converted := r.convertSMVisibility(visibilities[visIndex], smPlan, broker.GUID)
 			result = append(result, converted...)
 		}
 	}
@@ -262,11 +265,11 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 	return result, nil
 }
 
-func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerGUID string) []*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) convertSMVisibility(visibility types.Visibility, smPlan types.ServicePlan, brokerGUID string) []platform.ServiceVisibilityEntity {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
-		return []*platform.ServiceVisibilityEntity{
+		return []platform.ServiceVisibilityEntity{
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
@@ -277,30 +280,32 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 	}
 
 	scopes := visibility.Labels[scopeLabelKey]
-	result := make([]*platform.ServiceVisibilityEntity, 0, len(scopes))
+	result := make([]platform.ServiceVisibilityEntity, 0, len(scopes))
 	for _, scope := range scopes {
-		result = append(result, &platform.ServiceVisibilityEntity{
+		result = append(result, platform.ServiceVisibilityEntity{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
 			PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
+
 	return result
 }
 
-func (r *ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []*platform.ServiceVisibilityEntity) bool {
+func (r *ReconciliationTask) reconcileServiceVisibilities(platformVis, smVis []platform.ServiceVisibilityEntity) bool {
 	logger := log.C(r.runContext)
 	logger.Info("ReconciliationTask reconciling platform and Service Manager visibilities...")
 
 	platformMap := r.convertVisListToMap(platformVis)
-	visibilitiesToCreate := make([]*platform.ServiceVisibilityEntity, 0)
-	for _, visibility := range smVis {
-		key := r.getVisibilityKey(visibility)
-		existingVis := platformMap[key]
+	visibilitiesToCreate := make([]platform.ServiceVisibilityEntity, 0)
+
+	for index := range smVis {
+		key := r.getVisibilityKey(smVis[index])
+		_, ok := platformMap[key]
 		delete(platformMap, key)
-		if existingVis == nil {
-			visibilitiesToCreate = append(visibilitiesToCreate, visibility)
+		if !ok {
+			visibilitiesToCreate = append(visibilitiesToCreate, smVis[index])
 		}
 	}
 
@@ -336,28 +341,33 @@ func (r *ReconciliationTask) newVisibilityProcessingState() *visibilityProcessin
 }
 
 // deleteVisibilities deletes visibilities from platform. Returns true if error has occurred
-func (r *ReconciliationTask) deleteVisibilities(visibilities map[string]*platform.ServiceVisibilityEntity) error {
+func (r *ReconciliationTask) deleteVisibilities(visibilities map[string]platform.ServiceVisibilityEntity) error {
 	state := r.newVisibilityProcessingState()
 	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
+		visibility := visibility
+
 		execAsync(state, visibility, r.deleteVisibility)
 	}
 	return await(state)
 }
 
 // createVisibilities creates visibilities from platform. Returns true if error has occurred
-func (r *ReconciliationTask) createVisibilities(visibilities []*platform.ServiceVisibilityEntity) error {
+func (r *ReconciliationTask) createVisibilities(visibilities []platform.ServiceVisibilityEntity) error {
 	state := r.newVisibilityProcessingState()
 	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
+		visibility := visibility
+
 		execAsync(state, visibility, r.createVisibility)
 	}
+
 	return await(state)
 }
 
-func execAsync(state *visibilityProcessingState, visibility *platform.ServiceVisibilityEntity, f func(context.Context, *platform.ServiceVisibilityEntity) error) {
+func execAsync(state *visibilityProcessingState, visibility platform.ServiceVisibilityEntity, f func(context.Context, platform.ServiceVisibilityEntity) error) {
 	state.WaitGroup.Add(1)
 
 	go func() {
@@ -380,7 +390,7 @@ func await(state *visibilityProcessingState) error {
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans
-func (r *ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibilityEntity) string {
+func (r *ReconciliationTask) getVisibilityKey(visibility platform.ServiceVisibilityEntity) string {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	const idSeparator = "|"
@@ -390,7 +400,7 @@ func (r *ReconciliationTask) getVisibilityKey(visibility *platform.ServiceVisibi
 	return strings.Join([]string{"!public", visibility.Labels[scopeLabelKey], visibility.PlatformBrokerName, visibility.CatalogPlanID}, idSeparator)
 }
 
-func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *platform.ServiceVisibilityEntity) error {
+func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility platform.ServiceVisibilityEntity) error {
 	logger := log.C(r.runContext)
 	logger.Infof("Reconciliation task attempting to create visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
 
@@ -407,7 +417,7 @@ func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *p
 	return nil
 }
 
-func (r *ReconciliationTask) deleteVisibility(ctx context.Context, visibility *platform.ServiceVisibilityEntity) error {
+func (r *ReconciliationTask) deleteVisibility(ctx context.Context, visibility platform.ServiceVisibilityEntity) error {
 	logger := log.C(r.runContext)
 	logger.Infof("Reconciliation task attempting to delete visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
 
@@ -432,26 +442,29 @@ func marshalVisibilityLabels(logger *logrus.Entry, labels map[string]string) ([]
 	return json, err
 }
 
-func (r *ReconciliationTask) convertVisListToMap(list []*platform.ServiceVisibilityEntity) map[string]*platform.ServiceVisibilityEntity {
-	result := make(map[string]*platform.ServiceVisibilityEntity, len(list))
-	for _, vis := range list {
-		key := r.getVisibilityKey(vis)
-		result[key] = vis
+func (r *ReconciliationTask) convertVisListToMap(list []platform.ServiceVisibilityEntity) map[string]platform.ServiceVisibilityEntity {
+	result := make(map[string]platform.ServiceVisibilityEntity, len(list))
+	for index := range list {
+		key := r.getVisibilityKey(list[index])
+		result[key] = list[index]
 	}
+
 	return result
 }
 
-func smPlansToMap(plansByBroker map[string][]*types.ServicePlan) map[brokerPlanKey]*types.ServicePlan {
-	plansMap := make(map[brokerPlanKey]*types.ServicePlan, len(plansByBroker))
+func smPlansToMap(plansByBroker map[string][]types.ServicePlan) map[brokerPlanKey]types.ServicePlan {
+	plansMap := make(map[brokerPlanKey]types.ServicePlan, len(plansByBroker))
+
 	for brokerID, brokerPlans := range plansByBroker {
-		for _, plan := range brokerPlans {
+		for index := range brokerPlans {
 			key := brokerPlanKey{
 				brokerID: brokerID,
-				planID:   plan.ID,
+				planID:   brokerPlans[index].ID,
 			}
-			plansMap[key] = plan
+			plansMap[key] = brokerPlans[index]
 		}
 	}
+
 	return plansMap
 }
 

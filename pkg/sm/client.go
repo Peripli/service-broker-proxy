@@ -51,10 +51,10 @@ const (
 //go:generate counterfeiter . Client
 type Client interface {
 	GetBrokers(ctx context.Context) ([]Broker, error)
-	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
-	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
-	GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error)
-	GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error)
+	GetVisibilities(ctx context.Context) ([]types.Visibility, error)
+	GetPlans(ctx context.Context) ([]types.ServicePlan, error)
+	GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]types.ServiceOffering, error)
+	GetPlansByServiceOfferings(ctx context.Context, sos []types.ServiceOffering) ([]types.ServicePlan, error)
 }
 
 // ServiceManagerClient allows consuming Service Manager APIs
@@ -106,11 +106,13 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]Broker, error)
 }
 
 // GetVisibilities returns plan visibilities from Service Manager
-func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
+func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 
-	result := &types.Visibilities{}
-	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, result)
+	var result struct {
+		Visibilities []types.Visibility `json:"visibilities"`
+	}
+	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
 	}
@@ -119,11 +121,13 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 }
 
 // GetPlans returns plans from Service Manager
-func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePlan, error) {
+func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]types.ServicePlan, error) {
 	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
 
-	result := &types.ServicePlans{}
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, result)
+	var result struct {
+		ServicePlans []types.ServicePlan `json:"service_plans"`
+	}
+	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
@@ -132,7 +136,7 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 }
 
 // GetServiceOfferingsByBrokerIDs returns plans from Service Manager
-func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
+func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]types.ServiceOffering, error) {
 	log.C(ctx).Debugf("Getting service offerings from Service Manager at %s", c.host)
 
 	fieldQuery := fmt.Sprintf("broker_id in [%s]", strings.Join(brokerIDs, "||"))
@@ -141,7 +145,7 @@ func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Contex
 	}
 
 	var result struct {
-		ServiceOfferings []*types.ServiceOffering `json:"service_offerings"`
+		ServiceOfferings []types.ServiceOffering `json:"service_offerings"`
 	}
 	err := c.call(ctx, fmt.Sprintf(APIServiceOfferings, c.host), params, &result)
 	if err != nil {
@@ -152,7 +156,7 @@ func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Contex
 }
 
 // GetPlansByServiceOfferings returns plans from Service Manager
-func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error) {
+func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, sos []types.ServiceOffering) ([]types.ServicePlan, error) {
 	log.C(ctx).Debugf("Getting service plans from Service Manager at %s", c.host)
 
 	soIDs := ""
@@ -166,8 +170,11 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 		"fieldQuery": fieldQuery,
 	}
 
-	result := &types.ServicePlans{}
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), params, result)
+	var result struct {
+		ServicePlans []types.ServicePlan `json:"service_plans"`
+	}
+
+	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), params, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}

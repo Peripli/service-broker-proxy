@@ -2,11 +2,11 @@
 package platformfakes
 
 import (
-	context "context"
-	json "encoding/json"
-	sync "sync"
+	"context"
+	"encoding/json"
+	"sync"
 
-	platform "github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/platform"
 )
 
 type FakeVisibilityClient struct {
@@ -38,18 +38,18 @@ type FakeVisibilityClient struct {
 	enableAccessForPlanReturnsOnCall map[int]struct {
 		result1 error
 	}
-	GetVisibilitiesByBrokersStub        func(context.Context, []string) ([]*platform.ServiceVisibilityEntity, error)
+	GetVisibilitiesByBrokersStub        func(context.Context, []string) ([]platform.ServiceVisibilityEntity, error)
 	getVisibilitiesByBrokersMutex       sync.RWMutex
 	getVisibilitiesByBrokersArgsForCall []struct {
 		arg1 context.Context
 		arg2 []string
 	}
 	getVisibilitiesByBrokersReturns struct {
-		result1 []*platform.ServiceVisibilityEntity
+		result1 []platform.ServiceVisibilityEntity
 		result2 error
 	}
 	getVisibilitiesByBrokersReturnsOnCall map[int]struct {
-		result1 []*platform.ServiceVisibilityEntity
+		result1 []platform.ServiceVisibilityEntity
 		result2 error
 	}
 	VisibilityScopeLabelKeyStub        func() string
@@ -192,7 +192,7 @@ func (fake *FakeVisibilityClient) EnableAccessForPlanReturnsOnCall(i int, result
 	}{result1}
 }
 
-func (fake *FakeVisibilityClient) GetVisibilitiesByBrokers(arg1 context.Context, arg2 []string) ([]*platform.ServiceVisibilityEntity, error) {
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokers(arg1 context.Context, arg2 []string) ([]platform.ServiceVisibilityEntity, error) {
 	var arg2Copy []string
 	if arg2 != nil {
 		arg2Copy = make([]string, len(arg2))
@@ -222,7 +222,7 @@ func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersCallCount() int {
 	return len(fake.getVisibilitiesByBrokersArgsForCall)
 }
 
-func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersCalls(stub func(context.Context, []string) ([]*platform.ServiceVisibilityEntity, error)) {
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersCalls(stub func(context.Context, []string) ([]platform.ServiceVisibilityEntity, error)) {
 	fake.getVisibilitiesByBrokersMutex.Lock()
 	defer fake.getVisibilitiesByBrokersMutex.Unlock()
 	fake.GetVisibilitiesByBrokersStub = stub
@@ -235,28 +235,28 @@ func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersArgsForCall(i int) (co
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturns(result1 []*platform.ServiceVisibilityEntity, result2 error) {
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturns(result1 []platform.ServiceVisibilityEntity, result2 error) {
 	fake.getVisibilitiesByBrokersMutex.Lock()
 	defer fake.getVisibilitiesByBrokersMutex.Unlock()
 	fake.GetVisibilitiesByBrokersStub = nil
 	fake.getVisibilitiesByBrokersReturns = struct {
-		result1 []*platform.ServiceVisibilityEntity
+		result1 []platform.ServiceVisibilityEntity
 		result2 error
 	}{result1, result2}
 }
 
-func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturnsOnCall(i int, result1 []*platform.ServiceVisibilityEntity, result2 error) {
+func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersReturnsOnCall(i int, result1 []platform.ServiceVisibilityEntity, result2 error) {
 	fake.getVisibilitiesByBrokersMutex.Lock()
 	defer fake.getVisibilitiesByBrokersMutex.Unlock()
 	fake.GetVisibilitiesByBrokersStub = nil
 	if fake.getVisibilitiesByBrokersReturnsOnCall == nil {
 		fake.getVisibilitiesByBrokersReturnsOnCall = make(map[int]struct {
-			result1 []*platform.ServiceVisibilityEntity
+			result1 []platform.ServiceVisibilityEntity
 			result2 error
 		})
 	}
 	fake.getVisibilitiesByBrokersReturnsOnCall[i] = struct {
-		result1 []*platform.ServiceVisibilityEntity
+		result1 []platform.ServiceVisibilityEntity
 		result2 error
 	}{result1, result2}
 }

@@ -101,6 +101,7 @@ func (r *ReconciliationTask) Run() {
 }
 
 func (r *ReconciliationTask) run() {
+	log.C(r.globalContext).Errorf("===========================================================================HALOooooOOOOOo===========================================================================")
 	r.processBrokers()
 	r.processVisibilities()
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+//TODO add test and fix tests
 package reconcile
 
 import (
