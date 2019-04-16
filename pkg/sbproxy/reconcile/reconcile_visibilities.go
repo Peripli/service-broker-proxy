@@ -70,6 +70,13 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
+	plansMap := smPlansToMap(smPlans)
+	smVisibilities, err := r.getSMVisibilities(plansMap, smBrokers)
+	if err != nil {
+		logger.WithError(err).Error("An error occurred while obtaining Service Manager visibilities")
+		return
+	}
+
 	var platformVisibilities []*platform.ServiceVisibilityEntity
 	visibilityCacheUsed := false
 	if r.options.VisibilityCache && r.areSMPlansSame(smPlans) {
@@ -85,13 +92,6 @@ func (r *ReconciliationTask) processVisibilities() {
 			logger.WithError(err).Error("An error occurred while loading visibilities from platform")
 			return
 		}
-	}
-
-	plansMap := smPlansToMap(smPlans)
-	smVisibilities, err := r.getSMVisibilities(plansMap, smBrokers)
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining Service Manager visibilities")
-		return
 	}
 
 	errorOccured := r.reconcileServiceVisibilities(platformVisibilities, smVisibilities)
