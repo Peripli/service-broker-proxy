@@ -86,7 +86,7 @@ func (r *ReconciliationTask) processVisibilities() {
 	}
 
 	if platformVisibilities == nil {
-		logger.Infof("Actual SM plans and cached SM plans are different or cache has expired. Calling platform API to fetch actual platform visibilities...")
+		logger.Infof("Actual SM plans and cached SM plans are different. Invalidating cached platform visibilities and calling platform API to fetch actual platform visibilities...")
 		platformVisibilities, err = r.getPlatformVisibilitiesByBrokersFromPlatform(smBrokers)
 		if err != nil {
 			logger.WithError(err).Error("An error occurred while loading visibilities from platform")
