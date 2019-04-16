@@ -19,9 +19,10 @@ package sm
 import (
 	"time"
 
+	"net/http"
+
 	"github.com/Peripli/service-manager/pkg/env"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 // DefaultSettings builds a default Service Manager Settings
@@ -53,13 +54,14 @@ func NewSettings(env env.Environment) (*Settings, error) {
 
 // Settings type holds SM Client config properties
 type Settings struct {
-	User              string
-	Password          string
-	URL               string
-	OSBAPIPath        string        `mapstructure:"osb_api_path"`
-	RequestTimeout    time.Duration `mapstructure:"request_timeout"`
-	ResyncPeriod      time.Duration `mapstructure:"resync_period"`
-	SkipSSLValidation bool          `mapstructure:"skip_ssl_validation"`
+	User                 string
+	Password             string
+	URL                  string
+	OSBAPIPath           string        `mapstructure:"osb_api_path"`
+	NotificationsAPIPath string        `mapstructure:"notifications_api_path"`
+	RequestTimeout       time.Duration `mapstructure:"request_timeout"`
+	ResyncPeriod         time.Duration `mapstructure:"resync_period"`
+	SkipSSLValidation    bool          `mapstructure:"skip_ssl_validation"`
 
 	Transport http.RoundTripper
 }

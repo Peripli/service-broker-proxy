@@ -43,7 +43,7 @@
 
 [[constraint]]
   name = "github.com/Peripli/service-manager"
-  version = "=0.2.2"
+  branch = "notifications"
 
 # Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
@@ -53,3 +53,7 @@
 [[constraint]]
   name = "github.com/patrickmn/go-cache"
   version = "2.1.0"
+
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.4.0"

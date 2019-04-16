@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:7f1cab9aed7c779bb36c09401c2cdff31db93cd46426abbf0bbb4da51992a26b"
+  branch = "notifications"
+  digest = "1:3dc16d9740a9eb1f78f24f4fca6f949f711e83ece828b21bb2357883f5b9aa96"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -37,8 +38,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "d9dcfac9658b892715c9b85bbee6f1ed88bf6969"
-  version = "v0.2.2"
+  revision = "cc71d9c6c2a3b6c4777a69fc206addbf893b99c2"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -189,6 +189,14 @@
   version = "v1.6.1"
 
 [[projects]]
+  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
+
+[[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -263,14 +271,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ea48d0267528b81d20f1c3e90b4a6b50ce5ece03f33b1afe18020ec96ac6d92f"
+  digest = "1:bc1c0be40c67b6b4aee09d7508d5a2a52c1c116b1fa43806dad2b0d6b4d4003b"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "oid",
+    "scram",
   ]
   pruneopts = "UT"
-  revision = "d6156e141ac6c06345c7c73f450987a9ed4b751f"
+  revision = "51e2106eed1cea199c802d2a49e91e2491b02056"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -613,7 +622,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
+  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
 
 [[projects]]
   branch = "master"
@@ -628,14 +637,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ae913c44e70b411817f8d4d352dc10e595d6b970ba23f2f1e668c95901f8a46a"
+  digest = "1:788df6ab16e3b77c72cc916185de590254d2498027337005e0ed3e2c1f10ff7b"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "b44545bcd369ef9ff9bebcfebf5f3370ef9b1932"
+  revision = "3fd5a3612ccd7907f26270fa92579a0f2f76f734"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -746,6 +755,7 @@
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
     "github.com/gofrs/uuid",
+    "github.com/gorilla/websocket",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
