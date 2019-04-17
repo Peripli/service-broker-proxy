@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 The Service Manager Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package sbproxy
 
 import (
@@ -9,6 +25,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
+	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/Peripli/service-manager/pkg/util"
 	cache "github.com/patrickmn/go-cache"
 
@@ -19,6 +36,7 @@ import (
 
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/api/filters"
@@ -118,23 +136,39 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	}
 
 	var group sync.WaitGroup
+	resyncChan := make(chan struct{}, 10) // TODO: make configurable for both
+	notificationsChan := make(chan *types.Notification, 1024)
+
 	c := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
-	regJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
+	resyncJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
+	go resyncJob.Process(resyncChan, notificationsChan)
 
-	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
-	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)
+	go resyncTicker(ctx, cfg.Sm.ResyncPeriod, resyncChan)
 
-	cronScheduler := cron.New()
-	if err := cronScheduler.AddJob(resyncSchedule, regJob); err != nil {
+	notificationsHandler, err := notifications.NewHandler(ctx, cfg.Sm)
+	if err != nil {
 		panic(err)
 	}
+	notificationsHandler.Start(resyncChan, notificationsChan)
 
 	return &SMProxyBuilder{
 		API:   api,
-		Cron:  cronScheduler,
 		ctx:   ctx,
 		cfg:   cfg,
 		group: &group,
+	}
+}
+
+func resyncTicker(ctx context.Context, resyncPeriod time.Duration, resyncChan chan struct{}) {
+	ticker := time.NewTicker(resyncPeriod)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			resyncChan <- struct{}{}
+		}
 	}
 }
 
