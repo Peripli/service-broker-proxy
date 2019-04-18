@@ -22,9 +22,9 @@ import (
 	"sync/atomic"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
-	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/gofrs/uuid"
 	cache "github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
@@ -75,15 +75,16 @@ func NewTask(ctx context.Context,
 	}
 }
 
-func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan chan *types.Notification) {
+func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsQueue notifications.Queue) {
 	for {
 		select {
 		case <-r.globalContext.Done():
 			return
 		case <-resyncChan:
+			notificationsQueue.Clean()
 			r.run()
 			// resync + toggle queue switch
-		case <-notificationsChan:
+		case <-notificationsQueue.Listen():
 			// apply notifications or queue depending on the switch
 		}
 	}

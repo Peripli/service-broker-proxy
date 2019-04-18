@@ -25,7 +25,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
-	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/Peripli/service-manager/pkg/util"
 	cache "github.com/patrickmn/go-cache"
 
@@ -137,11 +136,11 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 
 	var group sync.WaitGroup
 	resyncChan := make(chan struct{}, 10) // TODO: make configurable for both
-	notificationsChan := make(chan *types.Notification, 1024)
+	notificationsQueue := make(notifications.ChannelQueue, 1024)
 
 	c := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
 	resyncJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
-	go resyncJob.Process(resyncChan, notificationsChan)
+	go resyncJob.Process(resyncChan, notificationsQueue)
 
 	go resyncTicker(ctx, cfg.Sm.ResyncPeriod, resyncChan)
 
@@ -149,7 +148,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	if err != nil {
 		panic(err)
 	}
-	notificationsHandler.Start(resyncChan, notificationsChan)
+	notificationsHandler.Start(resyncChan, notificationsQueue)
 
 	return &SMProxyBuilder{
 		API:   api,

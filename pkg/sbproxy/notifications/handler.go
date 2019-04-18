@@ -45,14 +45,14 @@ type Handler struct {
 	pongTimeout              time.Duration
 }
 
-func NewHandler(ctx context.Context, options *sm.Settings) (*Handler, error) {
+func NewHandler(ctx context.Context, settings *sm.Settings) *Handler {
 	return &Handler{
 		ctx:        ctx,
-		smSettings: options,
-	}, nil
+		smSettings: settings,
+	}
 }
 
-func (h *Handler) Start(fullResyncChan chan struct{}, notificationsChan chan *types.Notification) {
+func (h *Handler) Start(fullResyncChan chan struct{}, notificationsQueue Queue) {
 	for {
 		var err error
 		h.conn, err = h.dial()
@@ -75,9 +75,9 @@ func (h *Handler) Start(fullResyncChan chan struct{}, notificationsChan chan *ty
 			return nil
 		})
 		childContext, stopChildren := context.WithCancel(h.ctx)
-		done := make(chan bool, 1)
-		go wsReader(childContext, h.conn, h.pongTimeout, notificationsChan, done)
-		go wsWriter(childContext, h.conn, h.pingPeriod, done)
+		done := make(chan struct{}, 1)
+		go h.wsReader(childContext, notificationsQueue, done)
+		go h.wsWriter(childContext, done)
 
 		<-done // wait for at least one child goroutine (reader/writer) to exit
 		stopChildren()
@@ -90,38 +90,38 @@ func (h *Handler) Start(fullResyncChan chan struct{}, notificationsChan chan *ty
 	}
 }
 
-func wsReader(ctx context.Context, conn *websocket.Conn, pongTimeout time.Duration, notificationsChan chan *types.Notification, done chan<- bool) {
+func (h *Handler) wsReader(ctx context.Context, notificationsQueue Queue, done chan<- struct{}) {
 	defer close(done)
 	for {
 		if ctx.Err() != nil {
 			return
 		}
-		_, bytes, err := conn.ReadMessage()
+		_, bytes, err := h.conn.ReadMessage()
 		if err != nil {
-			log.C(ctx).WithError(err).Info("Error reading from web socket")
+			log.C(ctx).WithError(err).Error("Error reading from web socket")
 			return
 		}
-		conn.SetReadDeadline(time.Now().Add(pongTimeout))
+		h.conn.SetReadDeadline(time.Now().Add(h.pongTimeout))
 		var notification types.Notification
 		if err := json.Unmarshal(bytes, &notification); err != nil {
 			log.C(ctx).WithError(err).Error("Could not unmarshal WS message into a notification")
 			return
 		}
-		notificationsChan <- &notification
+		notificationsQueue.Push(&notification)
+		h.lastNotificationRevision = notification.Revision
 	}
 }
 
-func wsWriter(ctx context.Context, conn *websocket.Conn, pingPeriod time.Duration, done chan<- bool) {
+func (h *Handler) wsWriter(ctx context.Context, done chan<- struct{}) {
 	defer close(done)
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(h.pingPeriod)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			err := conn.WriteMessage(websocket.PingMessage, []byte{})
-			if err != nil {
+			if err := h.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
 		}
@@ -136,6 +136,12 @@ func (h *Handler) dial() (*websocket.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	switch url.Scheme {
+	case "http":
+		url.Scheme = "ws"
+	case "https":
+		url.Scheme = "wss"
+	}
 	url.Path = path.Join(url.Path, h.smSettings.NotificationsAPIPath)
 	if h.lastNotificationRevision > 0 {
 		url.Query().Set("last_notification_revision", strconv.FormatInt(h.lastNotificationRevision, 10))
@@ -149,19 +155,29 @@ func (h *Handler) dial() (*websocket.Conn, error) {
 	}
 	conn, resp, err := dialer.DialContext(h.ctx, url.String(), headers)
 	if err != nil {
-		log.C(h.ctx).Errorf("notifications: could not connect: %v %s", err, resp.Status)
-		if resp != nil && resp.StatusCode == http.StatusGone {
-			h.lastNotificationRevision = 0
-			return nil, lastNotificationGone
+		if resp != nil {
+			log.C(h.ctx).Errorf("notifications: could not connect to %s: %v status: %d", url, err, resp.StatusCode)
+			if resp.StatusCode == http.StatusGone {
+				h.lastNotificationRevision = 0
+				return nil, lastNotificationGone
+			}
+			if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+				// TODO: break ws loop as this is unrecoverable and indicate on health endpoint
+			}
+		} else {
+			log.C(h.ctx).Errorf("notifications: could not connect to %s: %v", url, err)
 		}
 		return nil, err
 	}
 
-	revision, err := strconv.ParseInt(resp.Header.Get("last_notification_revision"), 10, 64)
-	if err != nil {
-		return nil, err
+	// TODO: define constants for these headers in service-manager
+	if h.lastNotificationRevision == 0 {
+		revision, err := strconv.ParseInt(resp.Header.Get("last_notification_revision"), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		h.lastNotificationRevision = revision
 	}
-	h.lastNotificationRevision = revision
 
 	maxPingPeriod, err := time.ParseDuration(resp.Header.Get("max_ping_period"))
 	if err != nil {
