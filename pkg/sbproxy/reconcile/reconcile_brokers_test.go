@@ -51,10 +51,11 @@ var _ = Describe("Reconcile brokers", func() {
 		smbroker2 sm.Broker
 		smbroker3 sm.Broker
 
-		platformbroker1        platform.ServiceBroker
-		platformbroker2        platform.ServiceBroker
-		platformbrokerNonProxy platform.ServiceBroker
-		platformBrokerProxy    platform.ServiceBroker
+		platformbroker1         platform.ServiceBroker
+		platformbroker2         platform.ServiceBroker
+		platformbrokerNonProxy  platform.ServiceBroker
+		platformbrokerNonProxy2 platform.ServiceBroker
+		platformBrokerProxy     platform.ServiceBroker
 	)
 
 	stubCreateBrokerToSucceed := func(ctx context.Context, r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
@@ -187,6 +188,12 @@ var _ = Describe("Reconcile brokers", func() {
 			GUID:      "platformBrokerID3",
 			Name:      "platformBroker3",
 			BrokerURL: "https://platformBroker3.com",
+		}
+
+		platformbrokerNonProxy2 = platform.ServiceBroker{
+			GUID:      "platformBrokerID4",
+			Name:      "platformBroker4",
+			BrokerURL: "https://platformBroker4.com",
 		}
 
 		smbroker3 = sm.Broker{
@@ -395,6 +402,7 @@ var _ = Describe("Reconcile brokers", func() {
 			platformBrokers: func() ([]platform.ServiceBroker, error) {
 				return []platform.ServiceBroker{
 					platformbrokerNonProxy,
+					platformbrokerNonProxy2,
 				}, nil
 			},
 			smBrokers: func() ([]sm.Broker, error) {
@@ -409,7 +417,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is registered in the platform, but not yet known to the proxy, it should be updated", testCase{
+		Entry("When broker that is registered in SM is also registered in the platform, but not as a proxy, it should be proxified/updated", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker()
@@ -417,6 +425,7 @@ var _ = Describe("Reconcile brokers", func() {
 			platformBrokers: func() ([]platform.ServiceBroker, error) {
 				return []platform.ServiceBroker{
 					platformbrokerNonProxy,
+					platformbrokerNonProxy2,
 				}, nil
 			},
 			smBrokers: func() ([]sm.Broker, error) {
