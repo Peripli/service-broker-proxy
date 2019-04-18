@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:7f1cab9aed7c779bb36c09401c2cdff31db93cd46426abbf0bbb4da51992a26b"
+  digest = "1:6eec080e3b8f4e2a2d88973bfeced0aea02d4c84befd1211f9591a0c97b56fe1"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -37,8 +37,8 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "d9dcfac9658b892715c9b85bbee6f1ed88bf6969"
-  version = "v0.2.2"
+  revision = "b00c515277cde8158eb7fe0b3ff3b706a1ac0940"
+  version = "v0.2.3"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -263,14 +263,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ea48d0267528b81d20f1c3e90b4a6b50ce5ece03f33b1afe18020ec96ac6d92f"
+  digest = "1:bc1c0be40c67b6b4aee09d7508d5a2a52c1c116b1fa43806dad2b0d6b4d4003b"
   name = "github.com/lib/pq"
   packages = [
     ".",
     "oid",
+    "scram",
   ]
   pruneopts = "UT"
-  revision = "d6156e141ac6c06345c7c73f450987a9ed4b751f"
+  revision = "51e2106eed1cea199c802d2a49e91e2491b02056"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -597,7 +598,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "88737f569e3a9c7ab309cdc09a07fe7fc87233c3"
+  revision = "f416ebab96af27ca70b6e5c23d6a0747530da626"
 
 [[projects]]
   branch = "master"
@@ -613,7 +614,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
+  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
 
 [[projects]]
   branch = "master"
@@ -628,14 +629,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ae913c44e70b411817f8d4d352dc10e595d6b970ba23f2f1e668c95901f8a46a"
+  digest = "1:32a91fdcb8f4ae0b2376129fe0091963fa1bbf42d4c1826ad41f7b6410f385c0"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "b44545bcd369ef9ff9bebcfebf5f3370ef9b1932"
+  revision = "12500544f89f9420afe9529ba8940bf72d294972"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
