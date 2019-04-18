@@ -205,6 +205,7 @@ func getBrokerKey(broker *platform.ServiceBroker) brokerKey {
 func indexBrokersByKey(brokerList []platform.ServiceBroker) map[brokerKey]*platform.ServiceBroker {
 	brokerMap := map[brokerKey]*platform.ServiceBroker{}
 	for _, broker := range brokerList {
+		broker := broker
 		brokerMap[getBrokerKey(&broker)] = &broker
 	}
 	return brokerMap
