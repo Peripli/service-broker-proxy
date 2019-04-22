@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/Peripli/service-manager/pkg/log"
+
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
@@ -40,7 +42,11 @@ type Consumer struct {
 
 // Consume consumes a notification and passes it to the correct handler for further processing
 func (c *Consumer) Consume(ctx context.Context, n *types.Notification) {
-	notificationHandler := c.Handlers[n.Resource]
+	notificationHandler, found := c.Handlers[n.Resource]
+
+	if !found {
+		log.C(ctx).Warnf("No notification handler found for notification for resource %s. Ignoring notification...", n.Resource)
+	}
 
 	t := OperationType(n.Type)
 	switch t {
