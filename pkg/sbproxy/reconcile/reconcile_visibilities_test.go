@@ -733,15 +733,15 @@ var _ = Describe("Reconcile visibilities", func() {
 		Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(len(expected.enablePlanVisibilityCalledFor)))
 
 		for index := range expected.enablePlanVisibilityCalledFor {
-			_, data, servicePlanGUID, platformBrokerName := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, platformBrokerName, expected.enablePlanVisibilityCalledFor)
+			_, request := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
+			checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, expected.enablePlanVisibilityCalledFor)
 		}
 
 		Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(len(expected.disablePlanVisibilityCalledFor)))
 
 		for index := range expected.disablePlanVisibilityCalledFor {
-			_, data, servicePlanGUID, platformBrokerName := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, platformBrokerName, expected.disablePlanVisibilityCalledFor)
+			_, request := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
+			checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, expected.enablePlanVisibilityCalledFor)
 		}
 
 	}, entries...)

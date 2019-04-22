@@ -21,11 +21,15 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
+	"github.com/Peripli/service-manager/pkg/types"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/gofrs/uuid"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
 
