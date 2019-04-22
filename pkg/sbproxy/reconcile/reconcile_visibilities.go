@@ -38,7 +38,7 @@ const (
 func (r *ReconciliationTask) processVisibilities() {
 	logger := log.C(r.runContext)
 	if r.platformClient.Visibility() == nil {
-		logger.Debug("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
+		logger.Warn("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
 		return
 	}
 

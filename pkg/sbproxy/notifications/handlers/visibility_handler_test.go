@@ -83,6 +83,16 @@ var _ = Describe("Visibility Handler", func() {
 			}`, labels, smBrokerID, catalogPlanID)
 		})
 
+		Context("when visibility client is nil", func() {
+			It("does not try to enable or disable access", func() {
+				h := &handlers.VisibilityResourceNotificationsHandler{}
+				h.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+
+				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+			})
+		})
+
 		Context("when unmarshaling notification payload fails", func() {
 			BeforeEach(func() {
 				visibilityNotificationPayload = `randomString`
@@ -257,6 +267,16 @@ var _ = Describe("Visibility Handler", func() {
 			}`, labels, smBrokerID, catalogPlanID, labels, smBrokerID, catalogPlanID, labelChanges)
 		})
 
+		Context("when visibility client is nil", func() {
+			It("does not try to enable or disable access", func() {
+				h := &handlers.VisibilityResourceNotificationsHandler{}
+				h.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+
+				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+			})
+		})
+
 		Context("when unmarshaling notification payload fails", func() {
 			BeforeEach(func() {
 				visibilityNotificationPayload = `randomString`
@@ -414,6 +434,16 @@ var _ = Describe("Visibility Handler", func() {
 							}
 						}
 					}`, labels, smBrokerID, catalogPlanID)
+		})
+
+		Context("when visibility client is nil", func() {
+			It("does not try to enable or disable access", func() {
+				h := &handlers.VisibilityResourceNotificationsHandler{}
+				h.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+
+				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+			})
 		})
 
 		Context("when unmarshaling notification payload fails", func() {

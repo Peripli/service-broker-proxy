@@ -82,6 +82,11 @@ type VisibilityResourceNotificationsHandler struct {
 
 // OnCreate creates visibilities from the specified notification payload by invoking the proper platform clients
 func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
+	if vnh.VisibilityClient == nil {
+		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped.")
+		return
+	}
+
 	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
@@ -108,6 +113,11 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 
 // OnUpdate modifies visibilities from the specified notification payload by invoking the proper platform clients
 func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
+	if vnh.VisibilityClient == nil {
+		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped.")
+		return
+	}
+
 	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
@@ -145,6 +155,11 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 
 // OnDelete deletes visibilities from the provided notification payload by invoking the proper platform clients
 func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
+	if vnh.VisibilityClient == nil {
+		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped.")
+		return
+	}
+
 	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility delete notification payload")
