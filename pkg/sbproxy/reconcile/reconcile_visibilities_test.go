@@ -115,12 +115,12 @@ var _ = Describe("Reconcile visibilities", func() {
 	}
 
 	flattenLabelsMap := func(labels types.Labels) []map[string]string {
-		m := make([]map[string]string, 0, len(labels))
-		for i := range m {
-			m[i] = make(map[string]string)
-		}
+		m := make([]map[string]string, len(labels), len(labels))
 		for k, values := range labels {
 			for i, value := range values {
+				if m[i] == nil {
+					m[i] = make(map[string]string)
+				}
 				m[i][k] = value
 			}
 		}
@@ -761,7 +761,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		for index := range expected.disablePlanVisibilityCalledFor {
 			_, request := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
-			checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, expected.enablePlanVisibilityCalledFor)
+			checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, expected.disablePlanVisibilityCalledFor)
 		}
 
 	}, entries...)

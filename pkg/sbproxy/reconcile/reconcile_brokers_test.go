@@ -339,7 +339,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is in SM and is also in platform it should be catalog refetched and access enabled", testCase{
+		Entry("When broker is in SM and is also in platform it should be catalog refetched", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 			},
@@ -408,7 +408,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is registered in the platform, but not yet known to the proxy and SM, it should be updated", testCase{
+		Entry("When broker is registered in the platform and SM, but not yet proxified, it should be updated", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker()
@@ -431,31 +431,6 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileUpdateCalledFor: []platform.ServiceBroker{
 						platformBrokerProxy,
 					},
-				}
-			},
-		}),
-
-		Entry("When broker is registered in the platform, already known to SM but not yet known to the proxy, its catalog should be refetched", testCase{
-			stubs: func() {
-				stubPlatformOpsToSucceed()
-				stubPlatformUpdateBroker()
-			},
-			platformBrokers: func() ([]platform.ServiceBroker, error) {
-				return []platform.ServiceBroker{
-					platformbrokerNonProxy,
-				}, nil
-			},
-			smBrokers: func() ([]sm.Broker, error) {
-				return []sm.Broker{}, nil
-			},
-			expectations: func() expectations {
-				return expectations{
-					reconcileCreateCalledFor: []platform.ServiceBroker{},
-					reconcileDeleteCalledFor: []platform.ServiceBroker{},
-					reconcileCatalogCalledFor: []platform.ServiceBroker{
-						platformBrokerProxy,
-					},
-					reconcileUpdateCalledFor: []platform.ServiceBroker{},
 				}
 			},
 		}),
