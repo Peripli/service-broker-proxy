@@ -26,7 +26,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/util"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 
 	"fmt"
 
@@ -144,11 +144,11 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 
 	go resyncTicker(ctx, cfg.Sm.ResyncPeriod, resyncChan)
 
-	notificationsHandler, err := notifications.NewHandler(ctx, cfg.Sm)
+	notificationsHandler, err := notifications.NewProducer(notifications.DefaultProducerSettings(cfg.Sm))
 	if err != nil {
 		panic(err)
 	}
-	notificationsHandler.Start(resyncChan, notificationsQueue)
+	notificationsHandler.Start(ctx, resyncChan, notificationsQueue)
 
 	return &SMProxyBuilder{
 		API:   api,
