@@ -33,6 +33,7 @@ type Broker struct {
 	Name      string `json:"name"`
 	BrokerURL string `json:"broker_url"`
 
+	//TODO remove
 	ServiceOfferings []types.ServiceOffering    `json:"services"`
 	Metadata         map[string]json.RawMessage `json:"metadata,omitempty"`
 }

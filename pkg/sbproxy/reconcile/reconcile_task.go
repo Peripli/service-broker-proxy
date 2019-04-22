@@ -78,6 +78,35 @@ func NewTask(ctx context.Context,
 	}
 }
 
+func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan chan *types.Notification) {
+	consumer := &notifications.Consumer{
+		Handlers: map[string]notifications.ResourceNotificationHandler{
+			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
+				BrokerClient: r.platformClient.Broker(),
+				ProxyPrefix:  r.options.BrokerPrefix,
+				ProxyPath:    r.proxyPath,
+			},
+			"/v1/visibilities": &handlers.VisibilityResourceNotificationsHandler{
+				VisibilityClient: r.platformClient.Visibility(),
+				ProxyPrefix:      r.options.BrokerPrefix,
+			},
+		},
+	}
+
+	for {
+		select {
+		case <-r.globalContext.Done():
+			return
+		case <-resyncChan:
+			r.run()
+			// resync + toggle queue switch
+		case n := <-notificationsChan:
+			// notifications should only appear here if the switch is toggled
+			consumer.Consume(r.globalContext, n)
+		}
+	}
+}
+
 // Run executes the registration task that is responsible for reconciling the state of the proxy
 // brokers and visibilities at the platform with the brokers provided by the Service Manager
 func (r *ReconciliationTask) Run() {
