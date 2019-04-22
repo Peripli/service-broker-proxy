@@ -62,6 +62,7 @@ func (bad brokerWithAdditionalDetails) Validate() error {
 	return nil
 }
 
+// BrokerResourceNotificationsHandler handles notifications for brokers
 type BrokerResourceNotificationsHandler struct {
 	BrokerClient   platform.BrokerClient
 	CatalogFetcher platform.CatalogFetcher
