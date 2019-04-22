@@ -36,7 +36,6 @@ func (bp brokerPayload) Validate(op notifications.OperationType) error {
 		if err := bp.New.Validate(); err != nil {
 			return err
 		}
-
 	case notifications.DELETED:
 		if err := bp.Old.Validate(); err != nil {
 			return err
