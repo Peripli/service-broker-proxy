@@ -19,7 +19,6 @@ package platform
 import (
 	"context"
 	"encoding/json"
-	"net/url"
 
 	"github.com/Peripli/service-manager/pkg/types"
 )
@@ -61,7 +60,7 @@ type ServiceBrokerList struct {
 //go:generate counterfeiter . BrokerClient
 type BrokerClient interface {
 	// GetBrokers obtains the registered brokers in the platform
-	GetBrokers(ctx context.Context, query ...url.Values) ([]ServiceBroker, error)
+	GetBrokers(ctx context.Context) ([]ServiceBroker, error)
 
 	// GetBrokerByName returns the broker from the platform with the specified name
 	GetBrokerByName(ctx context.Context, name string) (*ServiceBroker, error)

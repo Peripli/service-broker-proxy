@@ -5,6 +5,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
+// LabelChangesToLabels transforms the specified label changes into two groups of labels - one for creation and one for deletion
 func LabelChangesToLabels(changes query.LabelChanges) (types.Labels, types.Labels) {
 	labelsToAdd, labelsToRemove := types.Labels{}, types.Labels{}
 	for _, change := range changes {

@@ -319,11 +319,10 @@ var _ = Describe("Reconcile visibilities", func() {
 	type testCase struct {
 		stubs func()
 
-		platformVisibilities    func() ([]*platform.Visibility, error)
-		smVisibilities          func() ([]*types.Visibility, error)
-		smPlans                 func() ([]*types.ServicePlan, error)
-		smOfferings             func() ([]*types.ServiceOffering, error)
-		convertedSMVisibilities func() []*platform.Visibility
+		platformVisibilities func() ([]*platform.Visibility, error)
+		smVisibilities       func() ([]*types.Visibility, error)
+		smPlans              func() ([]*types.ServicePlan, error)
+		smOfferings          func() ([]*types.ServiceOffering, error)
 
 		expectations func() expectations
 	}

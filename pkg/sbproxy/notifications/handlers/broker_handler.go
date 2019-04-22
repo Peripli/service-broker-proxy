@@ -14,16 +14,16 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 )
 
-type BrokerPayload struct {
-	New BrokerWithAdditionalDetails `json:"new"`
-	Old BrokerWithAdditionalDetails `json:"old"`
+type brokerPayload struct {
+	New brokerWithAdditionalDetails `json:"new"`
+	Old brokerWithAdditionalDetails `json:"old"`
 }
 
-type BrokerWithAdditionalDetails struct {
+type brokerWithAdditionalDetails struct {
 	Resource *types.ServiceBroker `json:"resource"`
 }
 
-func (bp BrokerPayload) Validate(op notifications.OperationType) error {
+func (bp brokerPayload) Validate(op notifications.OperationType) error {
 	switch op {
 	case notifications.CREATED:
 		if err := bp.New.Validate(); err != nil {
@@ -46,7 +46,7 @@ func (bp BrokerPayload) Validate(op notifications.OperationType) error {
 	return nil
 }
 
-func (bad BrokerWithAdditionalDetails) Validate() error {
+func (bad brokerWithAdditionalDetails) Validate() error {
 	if bad.Resource == nil {
 		return fmt.Errorf("resource in notification payload cannot be nil")
 	}
@@ -71,8 +71,9 @@ type BrokerResourceNotificationsHandler struct {
 	ProxyPath   string
 }
 
+// OnCreate creates brokers from the specified notification payload by invoking the proper platform clients
 func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
-	brokerPayload := BrokerPayload{}
+	brokerPayload := brokerPayload{}
 	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
 		return
@@ -113,8 +114,9 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	}
 }
 
+// OnUpdate modifies brokers from the specified notification payload by invoking the proper platform clients
 func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
-	brokerPayload := BrokerPayload{}
+	brokerPayload := brokerPayload{}
 
 	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
@@ -151,8 +153,9 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	}
 }
 
+// OnDelete deletes brokers from the provided notification payload by invoking the proper platform clients
 func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
-	brokerPayload := BrokerPayload{}
+	brokerPayload := brokerPayload{}
 
 	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")

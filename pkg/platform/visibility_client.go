@@ -33,7 +33,7 @@ type Visibility struct {
 // ModifyPlanAccessRequest type used for requests by the platform client
 type ModifyPlanAccessRequest struct {
 	BrokerName    string       `json:"broker_name"`
-	CatalogPlanID string       `json:"catalog_plan_id`
+	CatalogPlanID string       `json:"catalog_plan_id"`
 	Labels        types.Labels `json:"labels"`
 }
 

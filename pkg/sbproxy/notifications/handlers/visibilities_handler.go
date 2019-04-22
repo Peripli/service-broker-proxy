@@ -16,23 +16,23 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 )
 
-type VisibilityPayload struct {
-	New          VisibilityWithAdditionalDetails `json:"new"`
-	Old          VisibilityWithAdditionalDetails `json:"old"`
+type visibilityPayload struct {
+	New          visibilityWithAdditionalDetails `json:"new"`
+	Old          visibilityWithAdditionalDetails `json:"old"`
 	LabelChanges query.LabelChanges              `json:"label_changes"`
 }
 
-type VisibilityWithAdditionalDetails struct {
+type visibilityWithAdditionalDetails struct {
 	Resource   *types.Visibility `json:"resource"`
-	Additional VisibilityDetails `json:"additional"`
+	Additional visibilityDetails `json:"additional"`
 }
 
-type VisibilityDetails struct {
+type visibilityDetails struct {
 	BrokerID      string `json:"broker_id"`
 	CatalogPlanID string `json:"catalog_plan_id"`
 }
 
-func (vp VisibilityPayload) Validate(op notifications.OperationType) error {
+func (vp visibilityPayload) Validate(op notifications.OperationType) error {
 	switch op {
 	case notifications.CREATED:
 		if err := vp.New.Validate(); err != nil {
@@ -54,7 +54,7 @@ func (vp VisibilityPayload) Validate(op notifications.OperationType) error {
 	return nil
 }
 
-func (vwad VisibilityWithAdditionalDetails) Validate() error {
+func (vwad visibilityWithAdditionalDetails) Validate() error {
 	if vwad.Resource == nil {
 		return fmt.Errorf("resource in notification payload cannot be nil")
 	}
@@ -62,7 +62,7 @@ func (vwad VisibilityWithAdditionalDetails) Validate() error {
 	return vwad.Additional.Validate()
 }
 
-func (vd VisibilityDetails) Validate() error {
+func (vd visibilityDetails) Validate() error {
 	if vd.BrokerID == "" {
 		return fmt.Errorf("broker id cannot be empty")
 	}
@@ -73,14 +73,16 @@ func (vd VisibilityDetails) Validate() error {
 	return nil
 }
 
+// VisibilityResourceNotificationsHandler handles notifications for visibilities
 type VisibilityResourceNotificationsHandler struct {
 	VisibilityClient platform.VisibilityClient
 
 	ProxyPrefix string
 }
 
+// OnCreate creates visibilities from the specified notification payload by invoking the proper platform clients
 func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
-	visibilityPayload := VisibilityPayload{}
+	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
 		return
@@ -104,8 +106,9 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 	}
 }
 
+// OnUpdate modifies visibilities from the specified notification payload by invoking the proper platform clients
 func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
-	visibilityPayload := VisibilityPayload{}
+	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
 		return
@@ -140,8 +143,9 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 	}
 }
 
+// OnDelete deletes visibilities from the provided notification payload by invoking the proper platform clients
 func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
-	visibilityPayload := VisibilityPayload{}
+	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility delete notification payload")
 		return

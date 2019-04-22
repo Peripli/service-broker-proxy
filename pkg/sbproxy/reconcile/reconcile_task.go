@@ -78,6 +78,7 @@ func NewTask(ctx context.Context,
 	}
 }
 
+// Process reconciles the desired state with the current state
 func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan chan *types.Notification) {
 	consumer := &notifications.Consumer{
 		Handlers: map[string]notifications.ResourceNotificationHandler{

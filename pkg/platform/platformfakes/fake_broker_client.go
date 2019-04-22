@@ -3,7 +3,6 @@ package platformfakes
 
 import (
 	"context"
-	"net/url"
 	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -50,11 +49,10 @@ type FakeBrokerClient struct {
 		result1 *platform.ServiceBroker
 		result2 error
 	}
-	GetBrokersStub        func(context.Context, ...url.Values) ([]platform.ServiceBroker, error)
+	GetBrokersStub        func(context.Context) ([]platform.ServiceBroker, error)
 	getBrokersMutex       sync.RWMutex
 	getBrokersArgsForCall []struct {
 		arg1 context.Context
-		arg2 []url.Values
 	}
 	getBrokersReturns struct {
 		result1 []platform.ServiceBroker
@@ -271,17 +269,16 @@ func (fake *FakeBrokerClient) GetBrokerByNameReturnsOnCall(i int, result1 *platf
 	}{result1, result2}
 }
 
-func (fake *FakeBrokerClient) GetBrokers(arg1 context.Context, arg2 ...url.Values) ([]platform.ServiceBroker, error) {
+func (fake *FakeBrokerClient) GetBrokers(arg1 context.Context) ([]platform.ServiceBroker, error) {
 	fake.getBrokersMutex.Lock()
 	ret, specificReturn := fake.getBrokersReturnsOnCall[len(fake.getBrokersArgsForCall)]
 	fake.getBrokersArgsForCall = append(fake.getBrokersArgsForCall, struct {
 		arg1 context.Context
-		arg2 []url.Values
-	}{arg1, arg2})
-	fake.recordInvocation("GetBrokers", []interface{}{arg1, arg2})
+	}{arg1})
+	fake.recordInvocation("GetBrokers", []interface{}{arg1})
 	fake.getBrokersMutex.Unlock()
 	if fake.GetBrokersStub != nil {
-		return fake.GetBrokersStub(arg1, arg2...)
+		return fake.GetBrokersStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -296,17 +293,17 @@ func (fake *FakeBrokerClient) GetBrokersCallCount() int {
 	return len(fake.getBrokersArgsForCall)
 }
 
-func (fake *FakeBrokerClient) GetBrokersCalls(stub func(context.Context, ...url.Values) ([]platform.ServiceBroker, error)) {
+func (fake *FakeBrokerClient) GetBrokersCalls(stub func(context.Context) ([]platform.ServiceBroker, error)) {
 	fake.getBrokersMutex.Lock()
 	defer fake.getBrokersMutex.Unlock()
 	fake.GetBrokersStub = stub
 }
 
-func (fake *FakeBrokerClient) GetBrokersArgsForCall(i int) (context.Context, []url.Values) {
+func (fake *FakeBrokerClient) GetBrokersArgsForCall(i int) context.Context {
 	fake.getBrokersMutex.RLock()
 	defer fake.getBrokersMutex.RUnlock()
 	argsForCall := fake.getBrokersArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1
 }
 
 func (fake *FakeBrokerClient) GetBrokersReturns(result1 []platform.ServiceBroker, result2 error) {
