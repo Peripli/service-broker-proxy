@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:6eec080e3b8f4e2a2d88973bfeced0aea02d4c84befd1211f9591a0c97b56fe1"
+  branch = "notifications"
+  digest = "1:48712ca3f52b6088a99a1c2cd1d1d4bc09c0dff68da81e7c40ad4ea3261c9e55"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -37,8 +38,7 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "b00c515277cde8158eb7fe0b3ff3b706a1ac0940"
-  version = "v0.2.3"
+  revision = "65023d4a8cf842f1339f918a5e5ded95d8bc54ca"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -95,11 +95,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fbc02c2b3b78e6bc30228f3bae582f1fcea74a050cbdbf42f24eff12bef8eab4"
+  digest = "1:b48ef4624ce31088e81b106c90fa290193d728fd2b4afbdc361c6c3e26ffcfaf"
   name = "github.com/gavv/monotime"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6f8212e8d10df7383609d3c377ca08884d8f3ec0"
+  revision = "30dba43534243e3484a34676a0f068d12b989f84"
 
 [[projects]]
   digest = "1:d57cb1af013b165b6907abb4f844f9e751e37aa55f3c0156c60dd5028cf0a7c1"
@@ -189,6 +189,14 @@
   version = "v1.6.1"
 
 [[projects]]
+  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
+
+[[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -254,12 +262,20 @@
   version = "v1.4.1"
 
 [[projects]]
-  digest = "1:2d643962fac133904694fffa959bc3c5dcfdcee38c6f5ffdd99a3c93eb9c835c"
+  digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
   name = "github.com/klauspost/cpuid"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e7e905edc00ea8827e58662220139109efea09db"
-  version = "v1.2.0"
+  revision = "05a8198c0f5a27739aec358908d7e12c64ce6eb7"
+  version = "v1.2.1"
+
+[[projects]]
+  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
 
 [[projects]]
   branch = "master"
@@ -423,12 +439,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:5622116f2c79239f2d25d47b881e14f96a8b8c17b63b8a8326a38ee1a332b007"
+  digest = "1:fd61cf4ae1953d55df708acb6b91492d538f49c305b364a014049914495db426"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "8bdbc7bcc01dcbb8ec23dc8a28e332258d25251f"
+  version = "v1.4.1"
 
 [[projects]]
   digest = "1:bb495ec276ab82d3dd08504bbc0594a65de8c3b22c6f2aaa92d05b73fbf3a82e"
@@ -589,16 +605,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bac77e18329fa88ea880b9a7cfcb8fd25d8b835397dd9143f4b162a43e35bb60"
+  digest = "1:b8fa1ff0fc20983395978b3f771bb10438accbfe19326b02e236c1d4bf1c91b2"
   name = "golang.org/x/crypto"
   packages = [
     "ed25519",
     "ed25519/internal/edwards25519",
     "pbkdf2",
-    "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "f416ebab96af27ca70b6e5c23d6a0747530da626"
+  revision = "d864b10871cd4370fe574816b489c819c675ccc7"
 
 [[projects]]
   branch = "master"
@@ -614,7 +629,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
+  revision = "afa5a82059c6356159f699d81beff22a81842231"
 
 [[projects]]
   branch = "master"
@@ -629,14 +644,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:32a91fdcb8f4ae0b2376129fe0091963fa1bbf42d4c1826ad41f7b6410f385c0"
+  digest = "1:55565b142e38b7d00c39ce9a86fc70bbfa37c4f2f00d8ff2343f433c351db8e3"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows",
-  ]
+  packages = ["unix"]
   pruneopts = "UT"
-  revision = "12500544f89f9420afe9529ba8940bf72d294972"
+  revision = "953cdadca894cdc07be76fc99f95b40c28f06623"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -747,6 +759,7 @@
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
     "github.com/gofrs/uuid",
+    "github.com/gorilla/websocket",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
