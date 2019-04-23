@@ -126,12 +126,12 @@ func (r *ReconciliationTask) Run() {
 		return
 	}
 	r.runContext = newRunContext
-	log.C(r.globalContext).Debugf("STARTING scheduled reconciliation task %s...", taskID)
+	log.C(r.globalContext).Infof("STARTING scheduled reconciliation task %s...", taskID)
 
 	r.group.Add(1)
 	defer r.group.Done()
 	r.run()
-	log.C(r.globalContext).Debugf("FINISHED scheduled reconciliation task %s...", taskID)
+	log.C(r.globalContext).Infof("FINISHED scheduled reconciliation task %s...", taskID)
 }
 
 func (r *ReconciliationTask) run() {
@@ -155,7 +155,11 @@ func (r *ReconciliationTask) generateRunContext() (context.Context, string, erro
 func (r *ReconciliationTask) stat(key string) interface{} {
 	result, found := r.stats[key]
 	if !found {
+		log.C(r.runContext).Infof("No %s found in cache", key)
 		return nil
 	}
+
+	log.C(r.runContext).Infof("Picked up %s from cache", key)
+
 	return result
 }
