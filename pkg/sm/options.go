@@ -19,10 +19,9 @@ package sm
 import (
 	"time"
 
-	"net/http"
-
 	"github.com/Peripli/service-manager/pkg/env"
 	"github.com/pkg/errors"
+	"net/http"
 )
 
 // DefaultSettings builds a default Service Manager Settings
