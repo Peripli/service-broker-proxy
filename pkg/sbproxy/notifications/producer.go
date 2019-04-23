@@ -51,12 +51,16 @@ type Producer struct {
 
 // ProducerSettings are the settings for the producer
 type ProducerSettings struct {
-	// MinPingPeriod is the minimum period
-	MinPingPeriod  time.Duration `mapstructure:"min_ping_period"`
+	// MinPingPeriod is the minimum allowed ping period
+	MinPingPeriod time.Duration `mapstructure:"min_ping_period"`
+	// Reconnect delay is the time between reconnects
 	ReconnectDelay time.Duration `mapstructure:"reconnect_delay"`
-	PongTimeout    time.Duration `mapstructure:"pong_timeout"`
+	// PongTimeout is the maximum time to wait between a ping and a pong
+	PongTimeout time.Duration `mapstructure:"pong_timeout"`
 	// PingPeriodPercentage is the percentage of actual ping period compared to the max_ping_period returned by SM
 	PingPeriodPercentage int64 `mapstructure:"ping_period_percentage"`
+	//NotificationsAPIPath is the notifications endpoint of SM
+	NotificationsAPIPath string `mapstructure:"notifications_api_path"`
 }
 
 // Validate validates the producer settings
@@ -73,6 +77,9 @@ func (p ProducerSettings) Validate() error {
 	if p.PingPeriodPercentage <= 0 || p.PingPeriodPercentage >= 100 {
 		return fmt.Errorf("ProducerSettings: ping period percentage must be between 0 and 100")
 	}
+	if p.NotificationsAPIPath == "" {
+		return fmt.Errorf("ProducerSettings: notifications API path must be non-empty string")
+	}
 	return nil
 }
 
@@ -83,6 +90,7 @@ func DefaultProducerSettings() *ProducerSettings {
 		ReconnectDelay:       3 * time.Second,
 		PongTimeout:          2 * time.Second,
 		PingPeriodPercentage: 60,
+		NotificationsAPIPath: "/v1/notifications",
 	}
 }
 
@@ -97,7 +105,7 @@ type Message struct {
 
 // NewProducer returns a configured producer for the given settings
 func NewProducer(producerSettings *ProducerSettings, smSettings *sm.Settings) (*Producer, error) {
-	notificationsURL, err := buildNotificationsURL(smSettings.URL, smSettings.NotificationsAPIPath)
+	notificationsURL, err := buildNotificationsURL(smSettings.URL, producerSettings.NotificationsAPIPath)
 	if err != nil {
 		return nil, err
 	}

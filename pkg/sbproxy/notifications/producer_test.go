@@ -3,8 +3,6 @@ package notifications_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/Peripli/service-manager/pkg/types"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -12,6 +10,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Peripli/service-manager/pkg/types"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -70,6 +71,14 @@ var _ = Describe("Notifications", func() {
 				Expect(err).To(HaveOccurred())
 			})
 		})
+
+		Context("When NotificationsAPIPath is empty", func() {
+			It("Validate returns error", func() {
+				settings.NotificationsAPIPath = ""
+				err := settings.Validate()
+				Expect(err).To(HaveOccurred())
+			})
+		})
 	})
 
 	Describe("Producer", func() {
@@ -98,17 +107,17 @@ var _ = Describe("Notifications", func() {
 			server = newWSServer()
 			server.Start()
 			smSettings = &sm.Settings{
-				URL:                  server.url,
-				User:                 "admin",
-				Password:             "admin",
-				NotificationsAPIPath: "/v1/notifications",
-				RequestTimeout:       2 * time.Second,
+				URL:            server.url,
+				User:           "admin",
+				Password:       "admin",
+				RequestTimeout: 2 * time.Second,
 			}
 			producerSettings = &notifications.ProducerSettings{
 				MinPingPeriod:        100 * time.Millisecond,
 				ReconnectDelay:       100 * time.Millisecond,
 				PongTimeout:          20 * time.Millisecond,
 				PingPeriodPercentage: 60,
+				NotificationsAPIPath: "/v1/notifications",
 			}
 
 			var err error
