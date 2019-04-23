@@ -85,8 +85,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	}
 
 	brokerToCreate := brokerPayload.New
+	brokerProxyPath := bnh.brokerProxyPath(brokerToCreate.Resource)
+	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
 
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, bnh.ProxyPrefix+brokerToCreate.Resource.GetID())
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyPath)
 	if err != nil {
 		log.C(ctx).WithError(err).Errorf("error finding broker with name %s in the platform", brokerToCreate.Resource.GetID())
 		return
@@ -95,8 +97,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	if existingBroker != nil && shouldBeProxified(existingBroker, brokerToCreate.Resource) {
 		updateRequest := &platform.UpdateServiceBrokerRequest{
 			GUID:      existingBroker.GUID,
-			Name:      bnh.ProxyPrefix + brokerToCreate.Resource.GetID(),
-			BrokerURL: bnh.ProxyPath + "/" + brokerToCreate.Resource.GetID(),
+			Name:      brokerProxyName,
+			BrokerURL: brokerProxyPath,
 		}
 		if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("error proxifying platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
@@ -104,8 +106,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 		}
 	} else {
 		createRequest := &platform.CreateServiceBrokerRequest{
-			Name:      bnh.ProxyPrefix + brokerToCreate.Resource.GetID(),
-			BrokerURL: bnh.ProxyPath + "/" + brokerToCreate.Resource.GetID(),
+			Name:      brokerProxyName,
+			BrokerURL: brokerProxyPath,
 		}
 		if _, err := bnh.BrokerClient.CreateBroker(ctx, createRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("error creating broker with name %s url %s", createRequest.Name, createRequest.BrokerURL)
@@ -129,21 +131,23 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	}
 
 	brokerAfterUpdate := brokerPayload.New
+	brokerProxyName := bnh.brokerProxyName(brokerAfterUpdate.Resource)
+	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, bnh.ProxyPrefix+brokerAfterUpdate.Resource.GetID())
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
 		log.C(ctx).WithError(err).Errorf("error finding broker with name %s in the platform", brokerAfterUpdate.Resource.GetID())
 		return
 	}
-	if existingBroker.BrokerURL != bnh.ProxyPath+"/"+brokerAfterUpdate.Resource.GetID() {
+	if existingBroker.BrokerURL != brokerProxyPath {
 		log.C(ctx).Infof("No broker in platform found for sm broker ID %s. Nothing to update", brokerAfterUpdate.Resource.ID)
 		return
 	}
 
 	fetchCatalogRequest := &platform.ServiceBroker{
 		GUID:      existingBroker.GUID,
-		Name:      bnh.ProxyPrefix + brokerAfterUpdate.Resource.GetID(),
-		BrokerURL: bnh.ProxyPath + "/" + brokerAfterUpdate.Resource.GetID(),
+		Name:      brokerProxyName,
+		BrokerURL: brokerProxyPath,
 	}
 	if bnh.CatalogFetcher != nil {
 		if err := bnh.CatalogFetcher.Fetch(ctx, fetchCatalogRequest); err != nil {
@@ -168,26 +172,36 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 	}
 
 	brokerToDelete := brokerPayload.Old
+	brokerProxyName := bnh.brokerProxyName(brokerToDelete.Resource)
+	brokerProxyPath := bnh.brokerProxyPath(brokerToDelete.Resource)
 
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, bnh.ProxyPrefix+brokerToDelete.Resource.GetID())
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
 		log.C(ctx).WithError(err).Errorf("error finding broker with name %s in the platform", brokerToDelete.Resource.GetID())
 		return
 	}
-	if existingBroker.BrokerURL != bnh.ProxyPath+"/"+brokerToDelete.Resource.GetID() {
+	if existingBroker.BrokerURL != brokerProxyPath {
 		log.C(ctx).Infof("No broker in platform found for sm broker ID %s. Nothing to delete", brokerToDelete.Resource.ID)
 		return
 	}
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		GUID: existingBroker.GUID,
-		Name: bnh.ProxyPath + "/" + brokerToDelete.Resource.GetID(),
+		Name: brokerProxyName,
 	}
 
 	if err := bnh.BrokerClient.DeleteBroker(ctx, deleteRequest); err != nil {
 		log.C(ctx).WithError(err).Errorf("error deleting broker with id %s name %s", deleteRequest.GUID, deleteRequest.Name)
 		return
 	}
+}
+
+func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.ServiceBroker) string {
+	return bnh.ProxyPath + "/" + broker.GetID()
+}
+
+func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
+	return bnh.ProxyPrefix + broker.GetID()
 }
 
 func shouldBeProxified(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {

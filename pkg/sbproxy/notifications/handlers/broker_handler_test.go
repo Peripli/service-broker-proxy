@@ -617,7 +617,7 @@ var _ = Describe("Broker Handler", func() {
 				BeforeEach(func() {
 					expectedDeleteBrokerRequest = &platform.DeleteServiceBrokerRequest{
 						GUID: smBrokerID,
-						Name: brokerHandler.ProxyPath + "/" + smBrokerID,
+						Name: brokerHandler.ProxyPrefix + smBrokerID,
 					}
 
 					fakeBrokerClient.DeleteBrokerReturns(nil)
