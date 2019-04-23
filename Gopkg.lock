@@ -2,8 +2,7 @@
 
 
 [[projects]]
-  branch = "notifications"
-  digest = "1:3dc16d9740a9eb1f78f24f4fca6f949f711e83ece828b21bb2357883f5b9aa96"
+  digest = "1:6eec080e3b8f4e2a2d88973bfeced0aea02d4c84befd1211f9591a0c97b56fe1"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -38,7 +37,8 @@
     "test/common",
   ]
   pruneopts = "NT"
-  revision = "cc71d9c6c2a3b6c4777a69fc206addbf893b99c2"
+  revision = "b00c515277cde8158eb7fe0b3ff3b706a1ac0940"
+  version = "v0.2.3"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -189,14 +189,6 @@
   version = "v1.6.1"
 
 [[projects]]
-  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
-  name = "github.com/gorilla/websocket"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
-  version = "v1.4.0"
-
-[[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -268,14 +260,6 @@
   pruneopts = "UT"
   revision = "e7e905edc00ea8827e58662220139109efea09db"
   version = "v1.2.0"
-
-[[projects]]
-  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
-  name = "github.com/konsorten/go-windows-terminal-sequences"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
-  version = "v1.0.2"
 
 [[projects]]
   branch = "master"
@@ -439,12 +423,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:fd61cf4ae1953d55df708acb6b91492d538f49c305b364a014049914495db426"
+  digest = "1:5622116f2c79239f2d25d47b881e14f96a8b8c17b63b8a8326a38ee1a332b007"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "8bdbc7bcc01dcbb8ec23dc8a28e332258d25251f"
-  version = "v1.4.1"
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   digest = "1:bb495ec276ab82d3dd08504bbc0594a65de8c3b22c6f2aaa92d05b73fbf3a82e"
@@ -605,15 +589,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b8fa1ff0fc20983395978b3f771bb10438accbfe19326b02e236c1d4bf1c91b2"
+  digest = "1:bac77e18329fa88ea880b9a7cfcb8fd25d8b835397dd9143f4b162a43e35bb60"
   name = "golang.org/x/crypto"
   packages = [
     "ed25519",
     "ed25519/internal/edwards25519",
     "pbkdf2",
+    "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "88737f569e3a9c7ab309cdc09a07fe7fc87233c3"
+  revision = "f416ebab96af27ca70b6e5c23d6a0747530da626"
 
 [[projects]]
   branch = "master"
@@ -644,11 +629,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3e01c69b34e7c3fa4b7a118ca95a6beaecea00f7f4fb701545d83eacd3badb3c"
+  digest = "1:32a91fdcb8f4ae0b2376129fe0091963fa1bbf42d4c1826ad41f7b6410f385c0"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "UT"
-  revision = "3fd5a3612ccd7907f26270fa92579a0f2f76f734"
+  revision = "12500544f89f9420afe9529ba8940bf72d294972"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -759,8 +747,6 @@
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
     "github.com/gofrs/uuid",
-    "github.com/gorilla/websocket",
-    "github.com/onrik/logrus/filename",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
     "github.com/onsi/gomega",
