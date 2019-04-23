@@ -27,298 +27,347 @@ func TestNotifications(t *testing.T) {
 }
 
 var _ = Describe("Notifications", func() {
-	var ctx context.Context
-	var cancelFunc func()
-	var resyncChan chan struct{}
-	var notificationsQueue notifications.Queue
-	var logInterceptor *logWriter
-
-	var settings *notifications.ProducerSettings
-	var producer *notifications.Producer
-	var producerCtx context.Context
-
-	var wsServer *wsServer
-
-	BeforeEach(func() {
-		ctx, cancelFunc = context.WithCancel(context.Background())
-		logInterceptor = &logWriter{}
-		logInterceptor.Reset()
-		log.AddHook(logInterceptor)
-		producerCtx = log.Configure(ctx, &log.Settings{
-			Level:  "debug",
-			Format: "text",
-			Output: GinkgoWriter,
-		})
-		wsServer = newWSServer()
-		wsServer.Start()
-		settings = notifications.DefaultProducerSettings(&sm.Settings{
-			URL:                  wsServer.url,
-			User:                 "admin",
-			Password:             "admin",
-			NotificationsAPIPath: "/v1/notifications",
-			RequestTimeout:       2 * time.Second,
-		})
-
-		settings.MinPingPeriod = 100 * time.Millisecond
-		settings.ReconnectDelay = 100 * time.Millisecond
-
-		var err error
-		producer, err = notifications.NewProducer(settings)
-		Expect(err).ToNot(HaveOccurred())
-	})
-
-	startProducer := func(resyncChanSize, notificationsQueueSize int) {
-		resyncChan = make(chan struct{}, resyncChanSize)
-		notificationsQueue = make(notifications.ChannelQueue, notificationsQueueSize)
-		producer.Start(producerCtx, resyncChan, notificationsQueue)
-	}
-
-	notification := &types.Notification{
-		Revision: 123,
-		Payload:  json.RawMessage("{}"),
-	}
-
-	AfterEach(func() {
-		cancelFunc()
-		wsServer.Close()
-	})
-
-	Context("When last notification revision is not found", func() {
+	Describe("Producer Settings", func() {
+		var settings *notifications.ProducerSettings
 		BeforeEach(func() {
-			requestCnt := 0
-			wsServer.onRequest = func(r *http.Request) {
-				requestCnt++
-				if requestCnt == 1 {
-					wsServer.statusCode = http.StatusGone
-				} else {
-					wsServer.statusCode = 0
-				}
-			}
-			startProducer(10, 10)
+			settings = notifications.DefaultProducerSettings()
+		})
+		It("Default settings are valid", func() {
+			err := settings.Validate()
+			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("Sends on resync channel", func() {
-			Eventually(resyncChan).Should(Receive())
+		Context("When MinPingPeriod is invalid", func() {
+			It("Validate returns error", func() {
+				settings.MinPingPeriod = 0
+				err := settings.Validate()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("When ReconnectDelay is invalid", func() {
+			It("Validate returns error", func() {
+				settings.ReconnectDelay = -1 * time.Second
+				err := settings.Validate()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+		Context("When PongTimeout is invalid", func() {
+			It("Validate returns error", func() {
+				settings.PongTimeout = 0
+				err := settings.Validate()
+				Expect(err).To(HaveOccurred())
+			})
+		})
+		Context("When PingPeriodPercentage is invalid", func() {
+			It("Validate returns error", func() {
+				settings.PingPeriodPercentage = 0
+				err := settings.Validate()
+				Expect(err).To(HaveOccurred())
+
+				settings.PingPeriodPercentage = 100
+				err = settings.Validate()
+				Expect(err).To(HaveOccurred())
+			})
 		})
 	})
 
-	Context("When notifications is sent by the server", func() {
+	Describe("Producer", func() {
+		var ctx context.Context
+		var cancelFunc func()
+		var messages chan *notifications.Message
+		var logInterceptor *logWriter
+
+		var producerSettings *notifications.ProducerSettings
+		var smSettings *sm.Settings
+		var producer *notifications.Producer
+		var producerCtx context.Context
+
+		var server *wsServer
+
 		BeforeEach(func() {
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				defer GinkgoRecover()
-				err := conn.WriteJSON(notification)
-				Expect(err).ToNot(HaveOccurred())
+			ctx, cancelFunc = context.WithCancel(context.Background())
+			logInterceptor = &logWriter{}
+			logInterceptor.Reset()
+			log.AddHook(logInterceptor)
+			producerCtx = log.Configure(ctx, &log.Settings{
+				Level:  "debug",
+				Format: "text",
+				Output: GinkgoWriter,
+			})
+			server = newWSServer()
+			server.Start()
+			smSettings = &sm.Settings{
+				URL:                  server.url,
+				User:                 "admin",
+				Password:             "admin",
+				NotificationsAPIPath: "/v1/notifications",
+				RequestTimeout:       2 * time.Second,
 			}
-			startProducer(10, 10)
+			producerSettings = &notifications.ProducerSettings{
+				MinPingPeriod:        100 * time.Millisecond,
+				ReconnectDelay:       100 * time.Millisecond,
+				PongTimeout:          20 * time.Millisecond,
+				PingPeriodPercentage: 60,
+			}
+
+			var err error
+			producer, err = notifications.NewProducer(producerSettings, smSettings)
+			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("forwards the notification on the channel", func() {
-			Eventually(notificationsQueue.Listen()).Should(Receive(Equal(notification)))
-		})
-	})
+		startProducer := func() {
+			messages = make(chan *notifications.Message, 10)
+			producer.Start(producerCtx, messages)
+		}
 
-	Context("When connection is closed", func() {
-		It("reconnects with last known notification revision", func(done Done) {
-			requestCount := 0
-			wsServer.onRequest = func(r *http.Request) {
-				defer GinkgoRecover()
-				requestCount++
-				if requestCount > 1 {
-					rev := r.URL.Query().Get("last_notification_revision")
-					Expect(rev).To(Equal(strconv.FormatInt(notification.Revision, 10)))
-					close(done)
+		notification := &types.Notification{
+			Revision: 123,
+			Payload:  json.RawMessage("{}"),
+		}
+		message := &notifications.Message{Notification: notification}
+
+		AfterEach(func() {
+			cancelFunc()
+			server.Close()
+		})
+
+		Context("During websocket connect", func() {
+			It("Sends correct basic credentials", func() {
+				server.onRequest = func(r *http.Request) {
+					username, password, ok := r.BasicAuth()
+					Expect(ok).To(BeTrue())
+					Expect(username).To(Equal(smSettings.User))
+					Expect(password).To(Equal(smSettings.Password))
 				}
-			}
-			once := &sync.Once{}
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				once.Do(func() {
+				startProducer()
+			})
+		})
+
+		Context("When last notification revision is not found", func() {
+			BeforeEach(func() {
+				requestCnt := 0
+				server.onRequest = func(r *http.Request) {
+					requestCnt++
+					if requestCnt == 1 {
+						server.statusCode = http.StatusGone
+					} else {
+						server.statusCode = 0
+					}
+				}
+				startProducer()
+			})
+
+			It("Sends restart message", func() {
+				Eventually(messages).Should(Receive(Equal(&notifications.Message{Resync: true})))
+			})
+		})
+
+		Context("When notifications is sent by the server", func() {
+			BeforeEach(func() {
+				server.onClientConnected = func(conn *websocket.Conn) {
 					defer GinkgoRecover()
 					err := conn.WriteJSON(notification)
 					Expect(err).ToNot(HaveOccurred())
-					Eventually(notificationsQueue.Listen()).Should(Receive(Equal(notification)))
-					conn.Close()
-				})
-			}
-			startProducer(10, 10)
-		})
-	})
-
-	Context("When websocket is connected", func() {
-		It("Pings the servers within max_ping_period", func(done Done) {
-			times := make(chan time.Time, 10)
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				times <- time.Now()
-			}
-			wsServer.pingHandler = func(string) error {
-				defer GinkgoRecover()
-				now := time.Now()
-				times <- now
-				if len(times) == 3 {
-					start := <-times
-					for i := 0; i < 2; i++ {
-						t := <-times
-						pingPeriod, err := time.ParseDuration(wsServer.maxPingPeriod)
-						Expect(err).ToNot(HaveOccurred())
-						Expect(t.Sub(start)).To(BeNumerically("<", pingPeriod))
-						start = t
-					}
-					close(done)
 				}
-				wsServer.conn.WriteControl(websocket.PongMessage, []byte{}, now.Add(1*time.Second))
-				return nil
-			}
-			startProducer(10, 10)
-		})
-	})
+				startProducer()
+			})
 
-	Context("When invalid last notification revision is sent", func() {
-		BeforeEach(func() {
-			wsServer.lastNotificationRevision = "-1"
-
+			It("forwards the notification on the channel", func() {
+				Eventually(messages).Should(Receive(Equal(message)))
+			})
 		})
-		It("returns error", func() {
-			startProducer(10, 10)
-			Eventually(logInterceptor.String).Should(ContainSubstring("invalid last notification revision"))
-		})
-	})
 
-	Context("When server does not return pong within the timeout", func() {
-		It("Reconnects", func(done Done) {
-			var initialPingTime time.Time
-			var timeBetweenReconnection time.Duration
-			wsServer.pingHandler = func(s string) error {
-				if initialPingTime.IsZero() {
-					initialPingTime = time.Now()
-				}
-				return nil
-			}
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				if !initialPingTime.IsZero() {
+		Context("When connection is closed", func() {
+			It("reconnects with last known notification revision", func(done Done) {
+				requestCount := 0
+				server.onRequest = func(r *http.Request) {
 					defer GinkgoRecover()
-					timeBetweenReconnection = time.Now().Sub(initialPingTime)
-					pingPeriod, err := time.ParseDuration(wsServer.maxPingPeriod)
+					requestCount++
+					if requestCount > 1 {
+						rev := r.URL.Query().Get("last_notification_revision")
+						Expect(rev).To(Equal(strconv.FormatInt(notification.Revision, 10)))
+						close(done)
+					}
+				}
+				once := &sync.Once{}
+				server.onClientConnected = func(conn *websocket.Conn) {
+					once.Do(func() {
+						defer GinkgoRecover()
+						err := conn.WriteJSON(notification)
+						Expect(err).ToNot(HaveOccurred())
+						Eventually(messages).Should(Receive(Equal(message)))
+						conn.Close()
+					})
+				}
+				startProducer()
+			})
+		})
+
+		Context("When websocket is connected", func() {
+			It("Pings the servers within max_ping_period", func(done Done) {
+				times := make(chan time.Time, 10)
+				server.onClientConnected = func(conn *websocket.Conn) {
+					times <- time.Now()
+				}
+				server.pingHandler = func(string) error {
+					defer GinkgoRecover()
+					now := time.Now()
+					times <- now
+					if len(times) == 3 {
+						start := <-times
+						for i := 0; i < 2; i++ {
+							t := <-times
+							pingPeriod, err := time.ParseDuration(server.maxPingPeriod)
+							Expect(err).ToNot(HaveOccurred())
+							Expect(t.Sub(start)).To(BeNumerically("<", pingPeriod))
+							start = t
+						}
+						close(done)
+					}
+					server.conn.WriteControl(websocket.PongMessage, []byte{}, now.Add(1*time.Second))
+					return nil
+				}
+				startProducer()
+			})
+		})
+
+		Context("When invalid last notification revision is sent", func() {
+			BeforeEach(func() {
+				server.lastNotificationRevision = "-1"
+
+			})
+			It("returns error", func() {
+				startProducer()
+				Eventually(logInterceptor.String).Should(ContainSubstring("invalid last notification revision"))
+			})
+		})
+
+		Context("When server does not return pong within the timeout", func() {
+			It("Reconnects", func(done Done) {
+				var initialPingTime time.Time
+				var timeBetweenReconnection time.Duration
+				server.pingHandler = func(s string) error {
+					if initialPingTime.IsZero() {
+						initialPingTime = time.Now()
+					}
+					return nil
+				}
+				server.onClientConnected = func(conn *websocket.Conn) {
+					if !initialPingTime.IsZero() {
+						defer GinkgoRecover()
+						timeBetweenReconnection = time.Now().Sub(initialPingTime)
+						pingPeriod, err := time.ParseDuration(server.maxPingPeriod)
+						Expect(err).ToNot(HaveOccurred())
+						Expect(timeBetweenReconnection).To(BeNumerically("<", producerSettings.ReconnectDelay+pingPeriod))
+						close(done)
+					}
+				}
+				startProducer()
+
+			})
+		})
+
+		Context("When notification is not a valid JSON", func() {
+			It("Logs error and reconnects", func(done Done) {
+				connectionAttempts := 0
+				server.onClientConnected = func(conn *websocket.Conn) {
+					defer GinkgoRecover()
+					err := conn.WriteMessage(websocket.TextMessage, []byte("not-json"))
 					Expect(err).ToNot(HaveOccurred())
-					Expect(timeBetweenReconnection).To(BeNumerically("<", settings.ReconnectDelay+pingPeriod))
+					connectionAttempts++
+					if connectionAttempts == 2 {
+						Eventually(logInterceptor.String).Should(ContainSubstring("unmarshal"))
+						close(done)
+					}
+				}
+				startProducer()
+			})
+		})
+
+		assertLogContainsMessageOnReconnect := func(message string, done Done) {
+			connectionAttempts := 0
+			server.onClientConnected = func(conn *websocket.Conn) {
+				defer GinkgoRecover()
+				connectionAttempts++
+				if connectionAttempts == 2 {
+					Eventually(logInterceptor.String).Should(ContainSubstring(message))
 					close(done)
 				}
 			}
-			startProducer(10, 10)
+			startProducer()
+		}
 
+		Context("When last_notification_revision is not a number", func() {
+			BeforeEach(func() {
+				server.lastNotificationRevision = "not a number"
+			})
+			It("Logs error and reconnects", func(done Done) {
+				assertLogContainsMessageOnReconnect(server.lastNotificationRevision, done)
+			})
 		})
-	})
 
-	Context("When notification is not a valid JSON", func() {
-		It("Logs error and reconnects", func(done Done) {
-			connectionAttempts := 0
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				defer GinkgoRecover()
-				err := conn.WriteMessage(websocket.TextMessage, []byte("not-json"))
+		Context("When max_ping_period is not a number", func() {
+			BeforeEach(func() {
+				server.maxPingPeriod = "not a number"
+			})
+			It("Logs error and reconnects", func(done Done) {
+				assertLogContainsMessageOnReconnect(server.maxPingPeriod, done)
+			})
+		})
+
+		Context("When max_ping_period is less than the configured min ping period", func() {
+			BeforeEach(func() {
+				server.maxPingPeriod = (producerSettings.MinPingPeriod - 20*time.Millisecond).String()
+			})
+			It("Logs error and reconnects", func(done Done) {
+				assertLogContainsMessageOnReconnect(server.maxPingPeriod, done)
+			})
+		})
+
+		Context("When SM URL is not valid", func() {
+			It("Returns error", func() {
+				smSettings.URL = "::invalid-url"
+				newProducer, err := notifications.NewProducer(producerSettings, smSettings)
+				Expect(newProducer).To(BeNil())
+				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		Context("When SM returns error status", func() {
+			BeforeEach(func() {
+				server.statusCode = http.StatusInternalServerError
+			})
+			It("Logs and reconnects", func(done Done) {
+				connectionAttempts := 0
+				server.onRequest = func(r *http.Request) {
+					connectionAttempts++
+					if connectionAttempts == 2 {
+						server.statusCode = 0
+					}
+				}
+				server.onClientConnected = func(conn *websocket.Conn) {
+					Eventually(logInterceptor.String).Should(ContainSubstring("bad handshake"))
+					close(done)
+				}
+				startProducer()
+			})
+		})
+
+		Context("When cannot connect to given address", func() {
+			BeforeEach(func() {
+				smSettings.URL = "http://bad-host"
+				var err error
+				producer, err = notifications.NewProducer(producerSettings, smSettings)
 				Expect(err).ToNot(HaveOccurred())
-				connectionAttempts++
-				if connectionAttempts == 2 {
-					Eventually(logInterceptor.String).Should(ContainSubstring("unmarshal"))
-					close(done)
-				}
-			}
-			startProducer(10, 10)
+			})
+			It("Logs the error and tries to reconnect", func() {
+				startProducer()
+				Eventually(logInterceptor.String).Should(ContainSubstring("no such host"))
+				Eventually(logInterceptor.String).Should(ContainSubstring("Attempting to reestablish websocket connection"))
+			})
 		})
-	})
 
-	Context("When last_notification_revision is not a number", func() {
-		BeforeEach(func() {
-			wsServer.lastNotificationRevision = "not a number"
-		})
-		It("Logs error and reconnects", func(done Done) {
-			connectionAttempts := 0
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				defer GinkgoRecover()
-				connectionAttempts++
-				if connectionAttempts == 2 {
-					Eventually(logInterceptor.String).Should(ContainSubstring(wsServer.lastNotificationRevision))
-					close(done)
-				}
-			}
-			startProducer(10, 10)
-		})
-	})
-
-	Context("When max_ping_period is not a number", func() {
-		BeforeEach(func() {
-			wsServer.maxPingPeriod = "not a number"
-		})
-		It("Logs error and reconnects", func(done Done) {
-			connectionAttempts := 0
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				defer GinkgoRecover()
-				connectionAttempts++
-				if connectionAttempts == 2 {
-					Eventually(logInterceptor.String).Should(ContainSubstring(wsServer.maxPingPeriod))
-					close(done)
-				}
-			}
-			startProducer(10, 10)
-		})
-	})
-
-	Context("When max_ping_period is less than the configured min ping period", func() {
-		BeforeEach(func() {
-			wsServer.maxPingPeriod = (settings.MinPingPeriod - 20*time.Millisecond).String()
-		})
-		It("Logs error and reconnects", func(done Done) {
-			connectionAttempts := 0
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				defer GinkgoRecover()
-				connectionAttempts++
-				if connectionAttempts == 2 {
-					Eventually(logInterceptor.String).Should(ContainSubstring(wsServer.maxPingPeriod))
-					close(done)
-				}
-			}
-			startProducer(10, 10)
-		})
-	})
-
-	Context("When SM URL is not valid", func() {
-		It("Returns error", func() {
-			settings.URL = "::invalid-url"
-			newProducer, err := notifications.NewProducer(settings)
-			Expect(newProducer).To(BeNil())
-			Expect(err).To(HaveOccurred())
-		})
-	})
-
-	Context("When SM returns error status", func() {
-		BeforeEach(func() {
-			wsServer.statusCode = http.StatusInternalServerError
-		})
-		It("Logs and reconnects", func(done Done) {
-			connectionAttempts := 0
-			wsServer.onRequest = func(r *http.Request) {
-				connectionAttempts++
-				if connectionAttempts == 2 {
-					wsServer.statusCode = 0
-				}
-			}
-			wsServer.onClientConnected = func(conn *websocket.Conn) {
-				Eventually(logInterceptor.String).Should(ContainSubstring("bad handshake"))
-				close(done)
-			}
-			startProducer(10, 10)
-		})
-	})
-
-	Context("When cannot connect to given address", func() {
-		BeforeEach(func() {
-			settings.URL = "http://bad-host"
-			var err error
-			producer, err = notifications.NewProducer(settings)
-			Expect(err).ToNot(HaveOccurred())
-		})
-		It("Logs the error and tries to reconnect", func() {
-			startProducer(10, 10)
-			Eventually(logInterceptor.String).Should(ContainSubstring("no such host"))
-			Eventually(logInterceptor.String).Should(ContainSubstring("Attempting to reestablish websocket connection"))
-		})
 	})
 })
 

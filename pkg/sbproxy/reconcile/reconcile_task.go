@@ -22,7 +22,6 @@ import (
 	"sync/atomic"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/gofrs/uuid"
@@ -75,21 +74,6 @@ func NewTask(ctx context.Context,
 	}
 }
 
-func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsQueue notifications.Queue) {
-	for {
-		select {
-		case <-r.globalContext.Done():
-			return
-		case <-resyncChan:
-			notificationsQueue.Clean()
-			r.run()
-			// resync + toggle queue switch
-		case <-notificationsQueue.Listen():
-			// apply notifications or queue depending on the switch
-		}
-	}
-}
-
 // Run executes the registration task that is responsible for reconciling the state of the proxy
 // brokers and visibilities at the platform with the brokers provided by the Service Manager
 func (r *ReconciliationTask) Run() {
@@ -108,12 +92,12 @@ func (r *ReconciliationTask) Run() {
 		return
 	}
 	r.runContext = newRunContext
-	log.C(r.globalContext).Debugf("STARTING scheduled reconciliation task %s...", taskID)
+	log.C(r.globalContext).Infof("STARTING scheduled reconciliation task %s...", taskID)
 
 	r.group.Add(1)
 	defer r.group.Done()
 	r.run()
-	log.C(r.globalContext).Debugf("FINISHED scheduled reconciliation task %s...", taskID)
+	log.C(r.globalContext).Infof("FINISHED scheduled reconciliation task %s...", taskID)
 }
 
 func (r *ReconciliationTask) run() {
@@ -137,7 +121,11 @@ func (r *ReconciliationTask) generateRunContext() (context.Context, string, erro
 func (r *ReconciliationTask) stat(key string) interface{} {
 	result, found := r.stats[key]
 	if !found {
+		log.C(r.runContext).Infof("No %s found in cache", key)
 		return nil
 	}
+
+	log.C(r.runContext).Infof("Picked up %s from cache", key)
+
 	return result
 }

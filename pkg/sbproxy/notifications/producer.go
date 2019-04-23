@@ -39,49 +39,70 @@ var errLastNotificationGone = errors.New("last notification revision no longer p
 
 // Producer produces messages on the notifications queue
 type Producer struct {
+	producerSettings ProducerSettings
+	smSettings       sm.Settings
+
 	lastNotificationRevision int64
 	conn                     *websocket.Conn
 	pingPeriod               time.Duration
-	pongTimeout              time.Duration
+	readTimeout              time.Duration
 	url                      *url.URL
-	user                     string
-	password                 string
-	skipSSLValidation        bool
-	requestTimeout           time.Duration
-	minPingPeriod            time.Duration
-	reconnectDelay           time.Duration
 }
 
 // ProducerSettings are the settings for the producer
 type ProducerSettings struct {
-	*sm.Settings
-	MinPingPeriod  time.Duration
-	ReconnectDelay time.Duration
+	MinPingPeriod        time.Duration `mapstructure:"min_ping_period"`
+	ReconnectDelay       time.Duration `mapstructure:"reconnect_delay"`
+	PongTimeout          time.Duration `mapstructure:"pong_timeout"`
+	PingPeriodPercentage int64         `mapstructure:"ping_period_percentage"`
+}
+
+// Validate validates the producer settings
+func (p ProducerSettings) Validate() error {
+	if p.MinPingPeriod <= 0 {
+		return fmt.Errorf("ProducerSettings: min ping period must be positive duration")
+	}
+	if p.ReconnectDelay < 0 {
+		return fmt.Errorf("ProducerSettings: reconnect delay must be non-negative duration")
+	}
+	if p.PongTimeout <= 0 {
+		return fmt.Errorf("ProducerSettings: pong time must be positive duration")
+	}
+	if p.PingPeriodPercentage <= 0 || p.PingPeriodPercentage >= 100 {
+		return fmt.Errorf("ProducerSettings: ping period percentage must be between 0 and 100")
+	}
+	return nil
 }
 
 // DefaultProducerSettings are the default settings for the producer
-func DefaultProducerSettings(settings *sm.Settings) *ProducerSettings {
+func DefaultProducerSettings() *ProducerSettings {
 	return &ProducerSettings{
-		Settings:       settings,
-		MinPingPeriod:  time.Second,
-		ReconnectDelay: 3 * time.Second,
+		MinPingPeriod:        time.Second,
+		ReconnectDelay:       3 * time.Second,
+		PongTimeout:          2 * time.Second,
+		PingPeriodPercentage: 60,
 	}
 }
 
+// Message is the payload sent by the producer
+type Message struct {
+	// Notification is the notification that needs to be applied on the platform
+	Notification *types.Notification
+
+	// Resync indicates if the notifications stream was interrupted, so a full resync is needed
+	Resync bool
+}
+
 // NewProducer returns a configured producer for the given settings
-func NewProducer(settings *ProducerSettings) (*Producer, error) {
-	notificationsURL, err := buildNotificationsURL(settings.URL, settings.NotificationsAPIPath)
+func NewProducer(producerSettings *ProducerSettings, smSettings *sm.Settings) (*Producer, error) {
+	notificationsURL, err := buildNotificationsURL(smSettings.URL, smSettings.NotificationsAPIPath)
 	if err != nil {
 		return nil, err
 	}
 	return &Producer{
-		url:               notificationsURL,
-		user:              settings.User,
-		password:          settings.Password,
-		skipSSLValidation: settings.SkipSSLValidation,
-		requestTimeout:    settings.RequestTimeout,
-		minPingPeriod:     settings.MinPingPeriod,
-		reconnectDelay:    settings.ReconnectDelay,
+		url:              notificationsURL,
+		producerSettings: *producerSettings,
+		smSettings:       *smSettings,
 	}, nil
 }
 
@@ -101,54 +122,56 @@ func buildNotificationsURL(baseURL, notificationsPath string) (*url.URL, error) 
 }
 
 // Start starts the producer in a new go-routine
-func (h *Producer) Start(ctx context.Context, resyncChan chan struct{}, notificationsQueue Queue) {
-	go h.run(ctx, resyncChan, notificationsQueue)
+func (h *Producer) Start(ctx context.Context, messages chan *Message) {
+	go h.run(ctx, messages)
 }
 
-func (h *Producer) run(ctx context.Context, resyncChan chan struct{}, notificationsQueue Queue) {
+func (h *Producer) run(ctx context.Context, messages chan *Message) {
 	for {
 		needResync := h.lastNotificationRevision == 0
 		var err error
 		h.conn, err = h.dial(ctx)
-		if err == nil {
-			done := make(chan struct{}, 1)
-			h.conn.SetReadDeadline(time.Now().Add(h.pingPeriod + h.pongTimeout))
-			h.conn.SetPongHandler(func(string) error {
-				log.C(ctx).Debug("Received pong")
-				h.conn.SetReadDeadline(time.Now().Add(h.pongTimeout))
-				return nil
-			})
-			childContext, stopChildren := context.WithCancel(ctx)
-			go h.readNotifications(childContext, notificationsQueue, done)
-			go h.ping(childContext, done)
-
-			if needResync {
-				resyncChan <- struct{}{}
-			}
-
-			<-done // wait for at least one child goroutine (reader/writer) to exit
-			stopChildren()
-			log.C(ctx).Debug("Closing websocket")
-			h.conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(h.requestTimeout))
-			h.conn.Close()
-		} else {
+		if err != nil {
 			log.C(ctx).WithError(err).Error("could not connect websocket")
 			if err == errLastNotificationGone { // skip reconnect delay
 				h.lastNotificationRevision = 0
 				continue
+			}
+		} else {
+			if needResync {
+				messages <- &Message{Resync: true}
+			}
+			h.conn.SetPongHandler(func(string) error {
+				log.C(ctx).Debug("Received pong")
+				return h.conn.SetReadDeadline(time.Now().Add(h.readTimeout))
+			})
+
+			done := make(chan struct{}, 1)
+			childContext, stopChildren := context.WithCancel(ctx)
+			go h.readNotifications(childContext, messages, done)
+			go h.ping(childContext, done)
+
+			<-done // wait for at least one child goroutine (reader/writer) to exit
+			stopChildren()
+			log.C(ctx).Debug("Closing websocket connection")
+			if err = h.conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(h.smSettings.RequestTimeout)); err != nil {
+				log.C(ctx).WithError(err).Warn("Could not send close message on websocket")
+			}
+			if err = h.conn.Close(); err != nil {
+				log.C(ctx).WithError(err).Warn("Could not close websocket connection")
 			}
 		}
 		select {
 		case <-ctx.Done():
 			log.C(ctx).Info("Context cancelled. Terminating notifications handler")
 			return
-		case <-time.After(h.reconnectDelay):
+		case <-time.After(h.producerSettings.ReconnectDelay):
 			log.C(ctx).Debug("Attempting to reestablish websocket connection")
 		}
 	}
 }
 
-func (h *Producer) readNotifications(ctx context.Context, notificationsQueue Queue, done chan<- struct{}) {
+func (h *Producer) readNotifications(ctx context.Context, messages chan *Message, done chan<- struct{}) {
 	defer func() {
 		log.C(ctx).Debug("Exiting notification reader")
 		done <- struct{}{}
@@ -157,19 +180,22 @@ func (h *Producer) readNotifications(ctx context.Context, notificationsQueue Que
 		if ctx.Err() != nil {
 			return
 		}
-		_, bytes, err := h.conn.ReadMessage()
-		if err != nil {
-			log.C(ctx).WithError(err).Error("Error reading from web socket")
+		if err := h.conn.SetReadDeadline(time.Now().Add(h.readTimeout)); err != nil {
+			log.C(ctx).WithError(err).Error("Error setting read timeout on websocket")
 			return
 		}
-		h.conn.SetReadDeadline(time.Now().Add(h.pongTimeout))
+		_, bytes, err := h.conn.ReadMessage()
+		if err != nil {
+			log.C(ctx).WithError(err).Error("Error reading from websocket")
+			return
+		}
 		var notification types.Notification
-		if err := json.Unmarshal(bytes, &notification); err != nil {
+		if err = json.Unmarshal(bytes, &notification); err != nil {
 			log.C(ctx).WithError(err).Error("Could not unmarshal WS message into a notification")
 			return
 		}
 		log.C(ctx).Debugf("Received notification with revision %d", notification.Revision)
-		notificationsQueue.Push(&notification)
+		messages <- &Message{Notification: &notification, Resync: false}
 		h.lastNotificationRevision = notification.Revision
 	}
 }
@@ -197,7 +223,7 @@ func (h *Producer) ping(ctx context.Context, done chan<- struct{}) {
 
 func (h *Producer) dial(ctx context.Context) (*websocket.Conn, error) {
 	headers := http.Header{}
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(h.user+":"+h.password))
+	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(h.smSettings.User+":"+h.smSettings.Password))
 	headers.Add("Authorization", auth)
 
 	connectURL := *h.url
@@ -208,9 +234,9 @@ func (h *Producer) dial(ctx context.Context) (*websocket.Conn, error) {
 	}
 	dialer := &websocket.Dialer{
 		Proxy:            http.ProxyFromEnvironment,
-		HandshakeTimeout: h.requestTimeout,
+		HandshakeTimeout: h.smSettings.RequestTimeout,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: h.skipSSLValidation,
+			InsecureSkipVerify: h.smSettings.SkipSSLValidation,
 		},
 	}
 	log.C(ctx).Debugf("Connecting to %s ...", &connectURL)
@@ -243,11 +269,11 @@ func (h *Producer) dial(ctx context.Context) (*websocket.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	if maxPingPeriod < h.minPingPeriod {
-		return nil, fmt.Errorf("invalid max ping period (%s) must be greater than the minimum ping period (%s)", maxPingPeriod, h.minPingPeriod)
+	if maxPingPeriod < h.producerSettings.MinPingPeriod {
+		return nil, fmt.Errorf("invalid max ping period (%s) must be greater than the minimum ping period (%s)", maxPingPeriod, h.producerSettings.MinPingPeriod)
 	}
-	h.pingPeriod = (maxPingPeriod * 2) / 3
-	h.pongTimeout = (h.pingPeriod * 13) / 10 // should be longer than pingPeriod
-	log.C(ctx).Debugf("Ping period: %s pong timeout: %s", h.pingPeriod, h.pongTimeout)
+	h.pingPeriod = time.Duration(int64(maxPingPeriod) * h.producerSettings.PingPeriodPercentage / 100)
+	h.readTimeout = h.pingPeriod + h.producerSettings.PongTimeout // should be longer than pingPeriod
+	log.C(ctx).Debugf("Ping period: %s pong timeout: %s", h.pingPeriod, h.readTimeout)
 	return conn, nil
 }

@@ -142,7 +142,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	resyncJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
 	go resyncJob.Run() //TODO: this should be removed and should be triggered in the processor
 
-	notificationsProducer, err := notifications.NewProducer(notifications.DefaultProducerSettings(cfg.Sm))
+	notificationsProducer, err := notifications.NewProducer(cfg.Producer, cfg.Sm)
 	if err != nil {
 		panic(err)
 	}
@@ -184,9 +184,8 @@ func (p *SMProxy) Run() {
 	p.scheduler.Start()
 	defer p.scheduler.Stop()
 
-	resyncChan := make(chan struct{}, 10) // TODO: make configurable for both
-	notificationsQueue := make(notifications.ChannelQueue, 1024)
-	p.notificationsProducer.Start(p.ctx, resyncChan, notificationsQueue)
+	messages := make(chan *notifications.Message, 1024)
+	p.notificationsProducer.Start(p.ctx, messages)
 
 	log.C(p.ctx).Info("Running SBProxy...")
 
