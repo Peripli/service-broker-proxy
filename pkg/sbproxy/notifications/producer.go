@@ -37,6 +37,7 @@ import (
 
 var errLastNotificationGone = errors.New("last notification revision no longer present in SM")
 
+// Producer produces messages on the notifications queue
 type Producer struct {
 	lastNotificationRevision int64
 	conn                     *websocket.Conn
@@ -51,12 +52,14 @@ type Producer struct {
 	reconnectDelay           time.Duration
 }
 
+// ProducerSettings are the settings for the producer
 type ProducerSettings struct {
 	*sm.Settings
 	MinPingPeriod  time.Duration
 	ReconnectDelay time.Duration
 }
 
+// DefaultProducerSettings are the default settings for the producer
 func DefaultProducerSettings(settings *sm.Settings) *ProducerSettings {
 	return &ProducerSettings{
 		Settings:       settings,
@@ -65,6 +68,7 @@ func DefaultProducerSettings(settings *sm.Settings) *ProducerSettings {
 	}
 }
 
+// NewProducer returns a configured producer for the given settings
 func NewProducer(settings *ProducerSettings) (*Producer, error) {
 	notificationsURL, err := buildNotificationsURL(settings.URL, settings.NotificationsAPIPath)
 	if err != nil {
@@ -96,6 +100,7 @@ func buildNotificationsURL(baseURL, notificationsPath string) (*url.URL, error) 
 	return smURL, nil
 }
 
+// Start starts the producer in a new go-routine
 func (h *Producer) Start(ctx context.Context, resyncChan chan struct{}, notificationsQueue Queue) {
 	go h.run(ctx, resyncChan, notificationsQueue)
 }
@@ -125,11 +130,7 @@ func (h *Producer) run(ctx context.Context, resyncChan chan struct{}, notificati
 			stopChildren()
 			log.C(ctx).Debug("Closing websocket")
 			h.conn.WriteControl(websocket.CloseMessage, []byte{}, time.Now().Add(h.requestTimeout))
-			h.conn.Close() //TODO: check if this is closed
-			if ctx.Err() != nil {
-				log.C(ctx).WithError(ctx.Err()).Info("Context cancelled. Terminating notifications handler")
-				return
-			}
+			h.conn.Close()
 		} else {
 			log.C(ctx).WithError(err).Error("could not connect websocket")
 			if err == errLastNotificationGone { // skip reconnect delay
@@ -139,7 +140,7 @@ func (h *Producer) run(ctx context.Context, resyncChan chan struct{}, notificati
 		}
 		select {
 		case <-ctx.Done():
-			log.C(ctx).Info("Stopping connect websocket attempts")
+			log.C(ctx).Info("Context cancelled. Terminating notifications handler")
 			return
 		case <-time.After(h.reconnectDelay):
 			log.C(ctx).Debug("Attempting to reestablish websocket connection")

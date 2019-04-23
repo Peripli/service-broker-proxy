@@ -66,18 +66,20 @@ type SMProxyBuilder struct {
 	*web.API
 	*cron.Cron
 
-	ctx   context.Context
-	cfg   *Settings
-	group *sync.WaitGroup
+	ctx                   context.Context
+	cfg                   *Settings
+	group                 *sync.WaitGroup
+	notificationsProducer *notifications.Producer
 }
 
 // SMProxy  struct
 type SMProxy struct {
 	*server.Server
 
-	scheduler *cron.Cron
-	ctx       context.Context
-	group     *sync.WaitGroup
+	scheduler             *cron.Cron
+	ctx                   context.Context
+	group                 *sync.WaitGroup
+	notificationsProducer *notifications.Producer
 }
 
 // DefaultEnv creates a default environment that can be used to boot up a Service Broker proxy
@@ -135,39 +137,22 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	}
 
 	var group sync.WaitGroup
-	resyncChan := make(chan struct{}, 10) // TODO: make configurable for both
-	notificationsQueue := make(notifications.ChannelQueue, 1024)
 
 	c := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
 	resyncJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
-	go resyncJob.Process(resyncChan, notificationsQueue)
+	go resyncJob.Run() //TODO: this should be removed and should be triggered in the processor
 
-	go resyncTicker(ctx, cfg.Sm.ResyncPeriod, resyncChan)
-
-	notificationsHandler, err := notifications.NewProducer(notifications.DefaultProducerSettings(cfg.Sm))
+	notificationsProducer, err := notifications.NewProducer(notifications.DefaultProducerSettings(cfg.Sm))
 	if err != nil {
 		panic(err)
 	}
-	notificationsHandler.Start(ctx, resyncChan, notificationsQueue)
 
 	return &SMProxyBuilder{
-		API:   api,
-		ctx:   ctx,
-		cfg:   cfg,
-		group: &group,
-	}
-}
-
-func resyncTicker(ctx context.Context, resyncPeriod time.Duration, resyncChan chan struct{}) {
-	ticker := time.NewTicker(resyncPeriod)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			resyncChan <- struct{}{}
-		}
+		API:                   api,
+		ctx:                   ctx,
+		cfg:                   cfg,
+		group:                 &group,
+		notificationsProducer: notificationsProducer,
 	}
 }
 
@@ -179,10 +164,11 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 	srv.Use(filters.NewRecoveryMiddleware())
 
 	return &SMProxy{
-		Server:    srv,
-		scheduler: smb.Cron,
-		ctx:       smb.ctx,
-		group:     smb.group,
+		Server:                srv,
+		scheduler:             smb.Cron,
+		ctx:                   smb.ctx,
+		group:                 smb.group,
+		notificationsProducer: smb.notificationsProducer,
 	}
 }
 
@@ -197,6 +183,10 @@ func (p *SMProxy) Run() {
 	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
 	p.scheduler.Start()
 	defer p.scheduler.Stop()
+
+	resyncChan := make(chan struct{}, 10) // TODO: make configurable for both
+	notificationsQueue := make(notifications.ChannelQueue, 1024)
+	p.notificationsProducer.Start(p.ctx, resyncChan, notificationsQueue)
 
 	log.C(p.ctx).Info("Running SBProxy...")
 

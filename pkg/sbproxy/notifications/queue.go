@@ -18,22 +18,27 @@ package notifications
 
 import "github.com/Peripli/service-manager/pkg/types"
 
+// Queue provides methods for notifications queuing
 type Queue interface {
 	Push(*types.Notification)
 	Listen() chan *types.Notification
 	Clean()
 }
 
+// ChannelQueue is an implementation of Queue directly working with a channel
 type ChannelQueue chan *types.Notification
 
+// Push is a blocking operation writing to a channel
 func (c ChannelQueue) Push(n *types.Notification) {
 	c <- n
 }
 
+// Listen returns the notifications channel
 func (c ChannelQueue) Listen() chan *types.Notification {
 	return c
 }
 
+// Clean clears the notifications channel
 func (c ChannelQueue) Clean() {
 	for {
 		select {

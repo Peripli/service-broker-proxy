@@ -413,6 +413,7 @@ func reader(conn *websocket.Conn) {
 
 type logWriter struct {
 	strings.Builder
+	bufferMutex sync.Mutex
 }
 
 func (w *logWriter) Levels() []logrus.Level {
@@ -420,7 +421,18 @@ func (w *logWriter) Levels() []logrus.Level {
 }
 
 func (w *logWriter) Fire(entry *logrus.Entry) error {
-	str, _ := entry.String()
-	_, err := w.WriteString(str)
+	str, err := entry.String()
+	if err != nil {
+		return err
+	}
+	w.bufferMutex.Lock()
+	defer w.bufferMutex.Unlock()
+	_, err = w.WriteString(str)
 	return err
+}
+
+func (w *logWriter) String() string {
+	w.bufferMutex.Lock()
+	defer w.bufferMutex.Unlock()
+	return w.Builder.String()
 }
