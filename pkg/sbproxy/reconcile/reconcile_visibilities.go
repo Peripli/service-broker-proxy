@@ -38,7 +38,7 @@ const (
 func (r *ReconciliationTask) processVisibilities() {
 	logger := log.C(r.runContext)
 	if r.platformClient.Visibility() == nil {
-		logger.Warn("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
+		logger.Debug("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
 		return
 	}
 
@@ -67,11 +67,6 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
-	var platformVisibilities []*platform.Visibility
-	if r.options.VisibilityCache && r.areSMPlansSame(smPlans) {
-		platformVisibilities = r.getPlatformVisibilitiesFromCache()
-	}
-
 	plansMap := smPlansToMap(smPlans)
 	smVisibilities, err := r.getSMVisibilities(plansMap, smBrokers)
 	if err != nil {
@@ -79,7 +74,7 @@ func (r *ReconciliationTask) processVisibilities() {
 		return
 	}
 
-	var platformVisibilities []*platform.ServiceVisibilityEntity
+	var platformVisibilities []*platform.Visibility
 	visibilityCacheUsed := false
 	if r.options.VisibilityCache && r.areSMPlansSame(smPlans) {
 		logger.Infof("Actual SM plans and cached SM plans are same. Attempting to pick up cached platform visibilities...")
@@ -401,7 +396,6 @@ func (r *ReconciliationTask) createVisibility(ctx context.Context, visibility *p
 		CatalogPlanID: visibility.CatalogPlanID,
 		Labels:        mapToLabels(visibility.Labels),
 	}); err != nil {
-		logger.WithError(err).Errorf("Could not enable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
 	logger.Infof("Reconciliation task SUCCESSFULLY created visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
@@ -418,7 +412,6 @@ func (r *ReconciliationTask) deleteVisibility(ctx context.Context, visibility *p
 		CatalogPlanID: visibility.CatalogPlanID,
 		Labels:        mapToLabels(visibility.Labels),
 	}); err != nil {
-		logger.WithError(err).Errorf("Could not disable access for plan %s", visibility.CatalogPlanID)
 		return err
 	}
 	logger.Infof("Reconciliation task SUCCESSFULLY deleted visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
