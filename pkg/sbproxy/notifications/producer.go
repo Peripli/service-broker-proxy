@@ -49,9 +49,6 @@ type Producer struct {
 	pingPeriod               time.Duration
 	readTimeout              time.Duration
 	url                      *url.URL
-	lastTimeMutex            sync.Mutex
-	nextResyncTime           time.Time
-	timer                    *time.Timer
 }
 
 // ProducerSettings are the settings for the producer
