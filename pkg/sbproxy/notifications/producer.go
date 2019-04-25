@@ -37,7 +37,8 @@ import (
 
 var errLastNotificationGone = errors.New("last notification revision no longer present in SM")
 
-// Producer produces messages on the notifications queue
+// Producer reads notifications comming from the websoclet connection and regularly
+// triggers full resync
 type Producer struct {
 	producerSettings ProducerSettings
 	smSettings       sm.Settings
@@ -99,7 +100,12 @@ type Message struct {
 	// Notification is the notification that needs to be applied on the platform
 	Notification *types.Notification
 
-	// Resync indicates if the notifications stream was interrupted, so a full resync is needed
+	// Resync indicates that full resync is needed
+	// In this case Notification is nil
+	// Resync messages are written in the channel:
+	// - The first message in the channel, so we always start with a resync
+	// - When notifications are lost (indicated by status 410 returned by SM)
+	// - On regular interval based on configuration
 	Resync bool
 }
 
@@ -173,6 +179,18 @@ func (p *Producer) run(ctx context.Context, messages chan *Message) {
 	}
 }
 
+func resyncTimer(ctx context.Context, period time.Duration, messages chan *Message) {
+	for {
+		select {
+		case <-ctx.Done():
+			log.C(ctx).Info("Context cancelled. Terminating resync timer")
+			return
+		case <-time.After(period):
+			messages <- &Message{Resync: true}
+		}
+	}
+}
+
 func (p *Producer) readNotifications(ctx context.Context, messages chan *Message, done chan<- struct{}) {
 	defer func() {
 		log.C(ctx).Debug("Exiting notification reader")
@@ -197,7 +215,7 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 			return
 		}
 		log.C(ctx).Debugf("Received notification with revision %d", notification.Revision)
-		messages <- &Message{Notification: &notification, Resync: false}
+		messages <- &Message{Notification: &notification}
 		p.lastNotificationRevision = notification.Revision
 	}
 }
