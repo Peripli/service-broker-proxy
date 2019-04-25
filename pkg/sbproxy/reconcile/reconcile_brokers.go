@@ -67,12 +67,12 @@ func (r *ReconciliationTask) reconcileBrokers(existingBrokers []platform.Service
 	for _, payloadBroker := range payloadBrokers {
 		existingBroker := proxyBrokerIDMap[payloadBroker.GUID]
 		delete(proxyBrokerIDMap, payloadBroker.GUID)
-
 		platformBroker, knownToPlatform := brokerKeyMap[getBrokerKey(&payloadBroker)]
-		// Broker is registered in platform, but not already known to this broker proxy
-		if knownToPlatform {
+		knownToSM := existingBroker != nil
+		// Broker is registered in platform, this is its first registration in SM but not already known to this broker proxy
+		if knownToPlatform && !knownToSM {
 			r.updateBrokerRegistration(platformBroker.GUID, &payloadBroker)
-		} else if existingBroker == nil {
+		} else if !knownToSM {
 			r.createBrokerRegistration(&payloadBroker)
 		} else {
 			r.fetchBrokerCatalog(existingBroker)
@@ -91,14 +91,9 @@ func (r *ReconciliationTask) getBrokersFromPlatform() ([]platform.ServiceBroker,
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
 	}
+	logger.Debugf("ReconciliationTask task SUCCESSFULLY retrieved %d brokers from platform", len(registeredBrokers))
 
-	brokersFromPlatform := make([]platform.ServiceBroker, 0, len(registeredBrokers))
-	for _, broker := range registeredBrokers {
-		logger.WithFields(logBroker(&broker)).Debug("ReconciliationTask task FOUND registered broker... ")
-		brokersFromPlatform = append(brokersFromPlatform, broker)
-	}
-	logger.Infof("ReconciliationTask task SUCCESSFULLY retrieved %d brokers from platform", len(brokersFromPlatform))
-	return brokersFromPlatform, nil
+	return registeredBrokers, nil
 }
 
 func (r *ReconciliationTask) getBrokersFromSM() ([]platform.ServiceBroker, error) {

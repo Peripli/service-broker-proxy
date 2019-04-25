@@ -36,6 +36,7 @@
     "storage/interceptors",
     "storage/postgres",
     "test/common",
+    "test/testutil",
   ]
   pruneopts = "NT"
   revision = "65023d4a8cf842f1339f918a5e5ded95d8bc54ca"
@@ -258,8 +259,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "30be6041bed523c18e269a700ebd9c2ea9328574"
-  version = "v1.4.1"
+  revision = "b4b6d9e7f099f14b3a4a08f0664986cd4c85ebd6"
+  version = "v1.5.0"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -613,11 +614,11 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "d864b10871cd4370fe574816b489c819c675ccc7"
+  revision = "c05e17bb3b2dca130fc919668a96b4bec9eb9442"
 
 [[projects]]
   branch = "master"
-  digest = "1:e6b963cfd255c232a9613b0d12438d2972b055915ede2f6d905f8da113a86dc7"
+  digest = "1:88316b8c6e9e0535ad3c06d5c326eeaeca6ab0d26828622bde7a6d81167eac99"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -629,7 +630,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "afa5a82059c6356159f699d81beff22a81842231"
+  revision = "4829fb13d2c62012c17688fa7f629f371014946d"
 
 [[projects]]
   branch = "master"
@@ -644,14 +645,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:55565b142e38b7d00c39ce9a86fc70bbfa37c4f2f00d8ff2343f433c351db8e3"
+  digest = "1:157e5158a7f29d6633eed502880463aa43de3c36d451c7051591efd12f455ac8"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "953cdadca894cdc07be76fc99f95b40c28f06623"
+  revision = "9f0b1ff7b46a4014ddb5d4bdb6602a43b882cb27"
 
 [[projects]]
-  digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
+  digest = "1:e95bdd2b63d703fe523e3ab8c38ecb24f75785f80a8ce2690029afb1be7aafaa"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -668,6 +669,8 @@
     "encoding/unicode",
     "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
     "internal/tag",
     "internal/triegen",
     "internal/ucd",
@@ -682,8 +685,8 @@
     "unicode/rangetable",
   ]
   pruneopts = "UT"
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
+  revision = "c942b20a5d85b458c4dce1589326051d85e25d6d"
+  version = "v0.3.1"
 
 [[projects]]
   digest = "1:6eb6e3b6d9fffb62958cf7f7d88dbbe1dd6839436b0802e194c590667a40412a"
@@ -750,12 +753,14 @@
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
+    "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/filters",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
     "github.com/Peripli/service-manager/test/common",
+    "github.com/Peripli/service-manager/test/testutil",
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
     "github.com/gofrs/uuid",

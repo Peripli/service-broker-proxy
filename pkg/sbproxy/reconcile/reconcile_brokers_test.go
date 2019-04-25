@@ -200,7 +200,6 @@ var _ = Describe("Reconcile brokers", func() {
 			ID:        "smBrokerID3",
 			Name:      platformbrokerNonProxy.Name,
 			BrokerURL: platformbrokerNonProxy.BrokerURL,
-			// ServiceOfferings: []types.ServiceOffering{},
 		}
 
 		platformBrokerProxy = platform.ServiceBroker{
@@ -347,7 +346,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is in SM and is also in platform it should be catalog refetched and access enabled", testCase{
+		Entry("When broker is in SM and is also in platform it should be catalog refetched", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 			},
@@ -417,7 +416,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker that is registered in SM is also registered in the platform, but not as a proxy, it should be proxified/updated", testCase{
+		Entry("When broker is registered in the platform and SM, but not yet proxified, it should be updated", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker()
