@@ -21,11 +21,15 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
+	"github.com/Peripli/service-manager/pkg/types"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/gofrs/uuid"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
 
@@ -71,6 +75,36 @@ func NewTask(ctx context.Context,
 		cache:          c,
 		runContext:     nil,
 		state:          new(int32),
+	}
+}
+
+// Process reconciles the desired state with the current state
+func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan chan *types.Notification) {
+	consumer := &notifications.Consumer{
+		Handlers: map[string]notifications.ResourceNotificationHandler{
+			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
+				BrokerClient: r.platformClient.Broker(),
+				ProxyPrefix:  r.options.BrokerPrefix,
+				ProxyPath:    r.proxyPath,
+			},
+			"/v1/visibilities": &handlers.VisibilityResourceNotificationsHandler{
+				VisibilityClient: r.platformClient.Visibility(),
+				ProxyPrefix:      r.options.BrokerPrefix,
+			},
+		},
+	}
+
+	for {
+		select {
+		case <-r.globalContext.Done():
+			return
+		case <-resyncChan:
+			r.run()
+			// resync + toggle queue switch
+		case n := <-notificationsChan:
+			// notifications should only appear here if the switch is toggled
+			consumer.Consume(r.globalContext, n)
+		}
 	}
 }
 

@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:6eec080e3b8f4e2a2d88973bfeced0aea02d4c84befd1211f9591a0c97b56fe1"
+  branch = "notifications"
+  digest = "1:f6856d4e029b1f688caf9ca65f916b6bed2efa2a11802f1b37f1eaa1647beca2"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -35,10 +36,10 @@
     "storage/interceptors",
     "storage/postgres",
     "test/common",
+    "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "b00c515277cde8158eb7fe0b3ff3b706a1ac0940"
-  version = "v0.2.3"
+  revision = "d3ad698359304875688641af357eb6a11b0eef61"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -95,11 +96,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fbc02c2b3b78e6bc30228f3bae582f1fcea74a050cbdbf42f24eff12bef8eab4"
+  digest = "1:b48ef4624ce31088e81b106c90fa290193d728fd2b4afbdc361c6c3e26ffcfaf"
   name = "github.com/gavv/monotime"
   packages = ["."]
   pruneopts = "UT"
-  revision = "6f8212e8d10df7383609d3c377ca08884d8f3ec0"
+  revision = "30dba43534243e3484a34676a0f068d12b989f84"
 
 [[projects]]
   digest = "1:d57cb1af013b165b6907abb4f844f9e751e37aa55f3c0156c60dd5028cf0a7c1"
@@ -598,7 +599,7 @@
     "ssh/terminal",
   ]
   pruneopts = "UT"
-  revision = "f416ebab96af27ca70b6e5c23d6a0747530da626"
+  revision = "df01cb2cc480549d72034218dd98bf97671450ac"
 
 [[projects]]
   branch = "master"
@@ -614,7 +615,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
+  revision = "afa5a82059c6356159f699d81beff22a81842231"
 
 [[projects]]
   branch = "master"
@@ -629,14 +630,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:32a91fdcb8f4ae0b2376129fe0091963fa1bbf42d4c1826ad41f7b6410f385c0"
+  digest = "1:a29b488ff122fd8033d43c7cfcc5a0f5b2b1faf5256e8b3bd1568c451f8c6b64"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "UT"
-  revision = "12500544f89f9420afe9529ba8940bf72d294972"
+  revision = "e8e3143a4f4a00f1fafef0dd82ba78223281b01b"
 
 [[projects]]
   digest = "1:436b24586f8fee329e0dd65fd67c817681420cda1d7f934345c13fe78c212a73"
@@ -738,12 +739,14 @@
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
+    "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/filters",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
     "github.com/Peripli/service-manager/test/common",
+    "github.com/Peripli/service-manager/test/testutil",
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
     "github.com/gofrs/uuid",
