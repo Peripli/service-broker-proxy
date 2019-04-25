@@ -38,7 +38,7 @@ import (
 
 var errLastNotificationGone = errors.New("last notification revision no longer present in SM")
 
-// Producer reads notifications comming from the websoclet connection and regularly
+// Producer reads notifications coming from the websocket connection and regularly
 // triggers full resync
 type Producer struct {
 	producerSettings ProducerSettings
@@ -64,10 +64,10 @@ type ProducerSettings struct {
 	PongTimeout time.Duration `mapstructure:"pong_timeout"`
 	// PingPeriodPercentage is the percentage of actual ping period compared to the max_ping_period returned by SM
 	PingPeriodPercentage int64 `mapstructure:"ping_period_percentage"`
-	//NotificationsAPIPath is the notifications endpoint of SM
-	NotificationsAPIPath string `mapstructure:"notifications_api_path"`
 	// MessagesQueueSize is the size of the messages queue
 	MessagesQueueSize int `mapstructure:"messages_queue_size"`
+	// ResyncPeriod is the time between two resyncs
+	ResyncPeriod time.Duration `mapstructure:"resync_period"`
 }
 
 // Validate validates the producer settings
@@ -84,8 +84,8 @@ func (p ProducerSettings) Validate() error {
 	if p.PingPeriodPercentage <= 0 || p.PingPeriodPercentage >= 100 {
 		return fmt.Errorf("ProducerSettings: ping period percentage must be between 0 and 100")
 	}
-	if p.NotificationsAPIPath == "" {
-		return fmt.Errorf("ProducerSettings: notifications API path must be non-empty string")
+	if p.ResyncPeriod <= 0 {
+		return fmt.Errorf("ProducerSettings: Resync Period must be positive duration")
 	}
 	return nil
 }
@@ -97,8 +97,8 @@ func DefaultProducerSettings() *ProducerSettings {
 		ReconnectDelay:       3 * time.Second,
 		PongTimeout:          2 * time.Second,
 		PingPeriodPercentage: 60,
-		NotificationsAPIPath: "/v1/notifications",
 		MessagesQueueSize:    1024,
+		ResyncPeriod:         12 * time.Hour,
 	}
 }
 
@@ -118,7 +118,7 @@ type Message struct {
 
 // NewProducer returns a configured producer for the given settings
 func NewProducer(producerSettings *ProducerSettings, smSettings *sm.Settings) (*Producer, error) {
-	notificationsURL, err := buildNotificationsURL(smSettings.URL, producerSettings.NotificationsAPIPath)
+	notificationsURL, err := buildNotificationsURL(smSettings.URL, smSettings.NotificationsAPIPath)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +154,8 @@ func (p *Producer) Start(ctx context.Context, group *sync.WaitGroup) <-chan *Mes
 
 func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.WaitGroup) {
 	defer group.Done()
+	resyncChan := make(chan struct{})
+	go p.scheduleResync(ctx, resyncChan, messages)
 	for {
 		needResync := p.lastNotificationRevision == 0
 		if err := p.connect(ctx); err != nil {
@@ -165,7 +167,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 		} else {
 			if needResync {
 				log.C(ctx).Debug("Last notification revision is gone. Triggering resync")
-				messages <- &Message{Resync: true}
+				resyncChan <- struct{}{}
 			}
 			p.conn.SetPongHandler(func(string) error {
 				log.C(ctx).Debug("Received pong")
@@ -191,15 +193,28 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 	}
 }
 
-func resyncTimer(ctx context.Context, period time.Duration, messages chan *Message) {
+func (p *Producer) scheduleResync(ctx context.Context, resyncChan chan struct{}, messages chan *Message) {
+	timer := time.NewTimer(p.producerSettings.ResyncPeriod)
+	defer timer.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.C(ctx).Info("Context cancelled. Terminating resync timer")
+			log.C(ctx).Info("Context cancelled while waiting. Terminating resync timer.")
 			return
-		case <-time.After(period):
-			messages <- &Message{Resync: true}
+		case <-resyncChan:
+		case <-timer.C:
+			log.C(ctx).Debug("Resync period has elapsed. Triggering resync.")
 		}
+		select {
+		case <-ctx.Done():
+			log.C(ctx).Info("Context cancelled while sending message. Terminating resync timer.")
+			return
+		case messages <- &Message{Resync: true}:
+			log.C(ctx).Debugf("Sending resync message. Channel len/cap: %d/%d", len(messages), cap(messages))
+		}
+		timer.Stop()
+		timer = time.NewTimer(p.producerSettings.ResyncPeriod)
 	}
 }
 
@@ -210,9 +225,6 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 	}()
 	log.C(ctx).Debug("Starting notification reader")
 	for {
-		if ctx.Err() != nil {
-			return
-		}
 		if err := p.conn.SetReadDeadline(time.Now().Add(p.readTimeout)); err != nil {
 			log.C(ctx).WithError(err).Error("Error setting read timeout on websocket")
 			return
@@ -228,7 +240,14 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 			return
 		}
 		log.C(ctx).Debugf("Received notification with revision %d", notification.Revision)
-		messages <- &Message{Notification: &notification}
+		select {
+		case <-ctx.Done():
+			log.C(ctx).Info("Context cancelled while sending message. Terminating notification reader.")
+			return
+		case messages <- &Message{Notification: &notification}:
+			log.C(ctx).Debugf("Notification written in channel. Channel len/cap: %d/%d", len(messages), cap(messages))
+		}
+
 		p.lastNotificationRevision = notification.Revision
 	}
 }

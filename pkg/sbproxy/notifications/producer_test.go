@@ -72,9 +72,9 @@ var _ = Describe("Notifications", func() {
 			})
 		})
 
-		Context("When NotificationsAPIPath is empty", func() {
-			It("Validate returns error", func() {
-				settings.NotificationsAPIPath = ""
+		Context("when resync period is missing", func() {
+			It("returns an error", func() {
+				settings.ResyncPeriod = 0
 				err := settings.Validate()
 				Expect(err).To(HaveOccurred())
 			})
@@ -108,20 +108,23 @@ var _ = Describe("Notifications", func() {
 			server = newWSServer()
 			server.Start()
 			smSettings = &sm.Settings{
-				URL:            server.url,
-				User:           "admin",
-				Password:       "admin",
-				RequestTimeout: 2 * time.Second,
+				URL:                  server.url,
+				User:                 "admin",
+				Password:             "admin",
+				RequestTimeout:       2 * time.Second,
+				NotificationsAPIPath: "/v1/notifications",
 			}
 			producerSettings = &notifications.ProducerSettings{
 				MinPingPeriod:        100 * time.Millisecond,
 				ReconnectDelay:       100 * time.Millisecond,
 				PongTimeout:          20 * time.Millisecond,
+				ResyncPeriod:         300 * time.Millisecond,
 				PingPeriodPercentage: 60,
-				NotificationsAPIPath: "/v1/notifications",
 				MessagesQueueSize:    10,
 			}
+		})
 
+		JustBeforeEach(func() {
 			var err error
 			producer, err = notifications.NewProducer(producerSettings, smSettings)
 			Expect(err).ToNot(HaveOccurred())
@@ -379,6 +382,68 @@ var _ = Describe("Notifications", func() {
 				producer.Start(testCtx, waitGroup)
 				cancel()
 				waitGroup.Wait()
+			})
+		})
+
+		Context("When messages queue is full", func() {
+			BeforeEach(func() {
+				producerSettings.MessagesQueueSize = 2
+				server.onClientConnected = func(conn *websocket.Conn) {
+					defer GinkgoRecover()
+					err := conn.WriteJSON(notification)
+					Expect(err).ToNot(HaveOccurred())
+					err = conn.WriteJSON(notification)
+					Expect(err).ToNot(HaveOccurred())
+				}
+			})
+			It("Canceling context stops the goroutines", func() {
+				producer.Start(producerCtx, group)
+				Eventually(logInterceptor.String).Should(ContainSubstring("Received notification "))
+				cancelFunc()
+				Eventually(logInterceptor.String).Should(ContainSubstring("Exiting notification reader"))
+			})
+		})
+
+		Context("When resync time elapses", func() {
+			BeforeEach(func() {
+				producerSettings.ResyncPeriod = 10 * time.Millisecond
+			})
+			It("Sends a resync message", func(done Done) {
+				messages := producer.Start(producerCtx, group)
+				Expect(<-messages).To(Equal(&notifications.Message{Resync: true})) // on initial connect
+				Expect(<-messages).To(Equal(&notifications.Message{Resync: true})) // first time the timer ticks
+				Expect(<-messages).To(Equal(&notifications.Message{Resync: true})) // second time the timer ticks
+				close(done)
+			}, (500 * time.Millisecond).Seconds())
+		})
+
+		Context("When a force resync (410 GONE) is triggered", func() {
+			BeforeEach(func() {
+				producerSettings.ResyncPeriod = 200 * time.Millisecond
+				producerSettings.ReconnectDelay = 150 * time.Millisecond
+
+				requestCnt := 0
+				server.onRequest = func(r *http.Request) {
+					requestCnt++
+					if requestCnt == 1 {
+						server.statusCode = 500
+					} else {
+						server.statusCode = 0
+					}
+				}
+			})
+			It("Resets the resync timer period", func() {
+				messages := producer.Start(producerCtx, group)
+				start := time.Now()
+				m := <-messages
+				t := time.Now().Sub(start)
+				Expect(m).To(Equal(&notifications.Message{Resync: true})) // on initial connect
+				Expect(t).To(BeNumerically(">=", producerSettings.ReconnectDelay))
+
+				m = <-messages
+				t = time.Now().Sub(start)
+				Expect(m).To(Equal(&notifications.Message{Resync: true})) // first time the timer ticks
+				Expect(t).To(BeNumerically(">=", producerSettings.ResyncPeriod+producerSettings.ReconnectDelay))
 			})
 		})
 	})
