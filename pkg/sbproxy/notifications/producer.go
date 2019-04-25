@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -47,6 +48,9 @@ type Producer struct {
 	pingPeriod               time.Duration
 	readTimeout              time.Duration
 	url                      *url.URL
+	lastTimeMutex            sync.Mutex
+	nextResyncTime           time.Time
+	timer                    *time.Timer
 }
 
 // ProducerSettings are the settings for the producer
@@ -61,6 +65,8 @@ type ProducerSettings struct {
 	PingPeriodPercentage int64 `mapstructure:"ping_period_percentage"`
 	//NotificationsAPIPath is the notifications endpoint of SM
 	NotificationsAPIPath string `mapstructure:"notifications_api_path"`
+	// MessagesQueueSize is the size of the messages queue
+	MessagesQueueSize int `mapstructure:"messages_queue_size"`
 }
 
 // Validate validates the producer settings
@@ -91,6 +97,7 @@ func DefaultProducerSettings() *ProducerSettings {
 		PongTimeout:          2 * time.Second,
 		PingPeriodPercentage: 60,
 		NotificationsAPIPath: "/v1/notifications",
+		MessagesQueueSize:    1024,
 	}
 }
 
@@ -132,11 +139,15 @@ func buildNotificationsURL(baseURL, notificationsPath string) (*url.URL, error) 
 }
 
 // Start starts the producer in a new go-routine
-func (p *Producer) Start(ctx context.Context, messages chan *Message) {
-	go p.run(ctx, messages)
+func (p *Producer) Start(ctx context.Context, group *sync.WaitGroup) <-chan *Message {
+	group.Add(1)
+	messages := make(chan *Message, p.producerSettings.MessagesQueueSize)
+	go p.run(ctx, messages, group)
+	return messages
 }
 
-func (p *Producer) run(ctx context.Context, messages chan *Message) {
+func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.WaitGroup) {
+	defer group.Done()
 	for {
 		needResync := p.lastNotificationRevision == 0
 		if err := p.connect(ctx); err != nil {
@@ -147,6 +158,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message) {
 			}
 		} else {
 			if needResync {
+				log.C(ctx).Debug("Last notification revision is gone. Triggering resync")
 				messages <- &Message{Resync: true}
 			}
 			p.conn.SetPongHandler(func(string) error {
@@ -178,6 +190,7 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 		log.C(ctx).Debug("Exiting notification reader")
 		done <- struct{}{}
 	}()
+	log.C(ctx).Debug("Starting notification reader")
 	for {
 		if ctx.Err() != nil {
 			return
@@ -207,6 +220,7 @@ func (p *Producer) ping(ctx context.Context, done chan<- struct{}) {
 		log.C(ctx).Debug("Exiting pinger")
 		done <- struct{}{}
 	}()
+	log.C(ctx).Debug("Starting pinger")
 	ticker := time.NewTicker(p.pingPeriod)
 	defer ticker.Stop()
 	for {
@@ -286,7 +300,7 @@ func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) 
 	}
 	p.pingPeriod = time.Duration(int64(maxPingPeriod) * p.producerSettings.PingPeriodPercentage / 100)
 	p.readTimeout = p.pingPeriod + p.producerSettings.PongTimeout // should be longer than pingPeriod
-	log.C(ctx).Debugf("Ping period: %s pong timeout: %s", p.pingPeriod, p.readTimeout)
+	log.C(ctx).Debugf("Connected! Ping period: %s pong timeout: %s", p.pingPeriod, p.readTimeout)
 	return nil
 }
 

@@ -184,8 +184,7 @@ func (p *SMProxy) Run() {
 	p.scheduler.Start()
 	defer p.scheduler.Stop()
 
-	messages := make(chan *notifications.Message, 1024)
-	p.notificationsProducer.Start(p.ctx, messages)
+	p.notificationsProducer.Start(p.ctx, p.group)
 
 	log.C(p.ctx).Info("Running SBProxy...")
 

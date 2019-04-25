@@ -84,7 +84,6 @@ var _ = Describe("Notifications", func() {
 	Describe("Producer", func() {
 		var ctx context.Context
 		var cancelFunc func()
-		var messages chan *notifications.Message
 		var logInterceptor *logWriter
 
 		var producerSettings *notifications.ProducerSettings
@@ -93,17 +92,19 @@ var _ = Describe("Notifications", func() {
 		var producerCtx context.Context
 
 		var server *wsServer
+		var group *sync.WaitGroup
 
 		BeforeEach(func() {
+			group = &sync.WaitGroup{}
 			ctx, cancelFunc = context.WithCancel(context.Background())
 			logInterceptor = &logWriter{}
 			logInterceptor.Reset()
-			log.AddHook(logInterceptor)
 			producerCtx = log.Configure(ctx, &log.Settings{
 				Level:  "debug",
 				Format: "text",
 				Output: GinkgoWriter,
 			})
+			log.AddHook(logInterceptor)
 			server = newWSServer()
 			server.Start()
 			smSettings = &sm.Settings{
@@ -118,17 +119,13 @@ var _ = Describe("Notifications", func() {
 				PongTimeout:          20 * time.Millisecond,
 				PingPeriodPercentage: 60,
 				NotificationsAPIPath: "/v1/notifications",
+				MessagesQueueSize:    10,
 			}
 
 			var err error
 			producer, err = notifications.NewProducer(producerSettings, smSettings)
 			Expect(err).ToNot(HaveOccurred())
 		})
-
-		startProducer := func() {
-			messages = make(chan *notifications.Message, 10)
-			producer.Start(producerCtx, messages)
-		}
 
 		notification := &types.Notification{
 			Revision: 123,
@@ -142,14 +139,16 @@ var _ = Describe("Notifications", func() {
 		})
 
 		Context("During websocket connect", func() {
-			It("Sends correct basic credentials", func() {
+			It("Sends correct basic credentials", func(done Done) {
 				server.onRequest = func(r *http.Request) {
+					defer GinkgoRecover()
 					username, password, ok := r.BasicAuth()
 					Expect(ok).To(BeTrue())
 					Expect(username).To(Equal(smSettings.User))
 					Expect(password).To(Equal(smSettings.Password))
+					close(done)
 				}
-				startProducer()
+				producer.Start(producerCtx, group)
 			})
 		})
 
@@ -164,11 +163,10 @@ var _ = Describe("Notifications", func() {
 						server.statusCode = 0
 					}
 				}
-				startProducer()
 			})
 
 			It("Sends restart message", func() {
-				Eventually(messages).Should(Receive(Equal(&notifications.Message{Resync: true})))
+				Eventually(producer.Start(producerCtx, group)).Should(Receive(Equal(&notifications.Message{Resync: true})))
 			})
 		})
 
@@ -179,11 +177,10 @@ var _ = Describe("Notifications", func() {
 					err := conn.WriteJSON(notification)
 					Expect(err).ToNot(HaveOccurred())
 				}
-				startProducer()
 			})
 
 			It("forwards the notification on the channel", func() {
-				Eventually(messages).Should(Receive(Equal(message)))
+				Eventually(producer.Start(producerCtx, group)).Should(Receive(Equal(message)))
 			})
 		})
 
@@ -205,11 +202,11 @@ var _ = Describe("Notifications", func() {
 						defer GinkgoRecover()
 						err := conn.WriteJSON(notification)
 						Expect(err).ToNot(HaveOccurred())
-						Eventually(messages).Should(Receive(Equal(message)))
 						conn.Close()
 					})
 				}
-				startProducer()
+				messages := producer.Start(producerCtx, group)
+				Eventually(messages).Should(Receive(Equal(message)))
 			})
 		})
 
@@ -237,17 +234,16 @@ var _ = Describe("Notifications", func() {
 					server.conn.WriteControl(websocket.PongMessage, []byte{}, now.Add(1*time.Second))
 					return nil
 				}
-				startProducer()
+				producer.Start(producerCtx, group)
 			})
 		})
 
 		Context("When invalid last notification revision is sent", func() {
 			BeforeEach(func() {
 				server.lastNotificationRevision = "-1"
-
 			})
 			It("returns error", func() {
-				startProducer()
+				producer.Start(producerCtx, group)
 				Eventually(logInterceptor.String).Should(ContainSubstring("invalid last notification revision"))
 			})
 		})
@@ -272,8 +268,7 @@ var _ = Describe("Notifications", func() {
 						close(done)
 					}
 				}
-				startProducer()
-
+				producer.Start(producerCtx, group)
 			})
 		})
 
@@ -290,7 +285,7 @@ var _ = Describe("Notifications", func() {
 						close(done)
 					}
 				}
-				startProducer()
+				producer.Start(producerCtx, group)
 			})
 		})
 
@@ -304,7 +299,7 @@ var _ = Describe("Notifications", func() {
 					close(done)
 				}
 			}
-			startProducer()
+			producer.Start(producerCtx, group)
 		}
 
 		Context("When last_notification_revision is not a number", func() {
@@ -359,24 +354,33 @@ var _ = Describe("Notifications", func() {
 					Eventually(logInterceptor.String).Should(ContainSubstring("bad handshake"))
 					close(done)
 				}
-				startProducer()
+				producer.Start(producerCtx, group)
 			})
 		})
 
 		Context("When cannot connect to given address", func() {
 			BeforeEach(func() {
 				smSettings.URL = "http://bad-host"
+			})
+			It("Logs the error and tries to reconnect", func() {
 				var err error
 				producer, err = notifications.NewProducer(producerSettings, smSettings)
 				Expect(err).ToNot(HaveOccurred())
-			})
-			It("Logs the error and tries to reconnect", func() {
-				startProducer()
+				producer.Start(producerCtx, group)
 				Eventually(logInterceptor.String).Should(ContainSubstring("no such host"))
 				Eventually(logInterceptor.String).Should(ContainSubstring("Attempting to reestablish websocket connection"))
 			})
 		})
 
+		Context("When context is canceled", func() {
+			It("Releases the group", func() {
+				testCtx, cancel := context.WithCancel(context.Background())
+				waitGroup := &sync.WaitGroup{}
+				producer.Start(testCtx, waitGroup)
+				cancel()
+				waitGroup.Wait()
+			})
+		})
 	})
 })
 
