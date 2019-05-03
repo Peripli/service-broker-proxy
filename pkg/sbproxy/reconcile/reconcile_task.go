@@ -23,13 +23,12 @@ import (
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
-	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/gofrs/uuid"
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
 
@@ -78,8 +77,8 @@ func NewTask(ctx context.Context,
 	}
 }
 
-// Process reconciles the desired state with the current state
-func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan chan *types.Notification) {
+// Process resync and notification messages
+func (r *ReconciliationTask) Process(messages <-chan *notifications.Message) {
 	consumer := &notifications.Consumer{
 		Handlers: map[string]notifications.ResourceNotificationHandler{
 			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
@@ -97,13 +96,33 @@ func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan
 	for {
 		select {
 		case <-r.globalContext.Done():
+			log.C(r.globalContext).Info("Context cancelled. Terminating reconciler.")
 			return
-		case <-resyncChan:
-			r.run()
-			// resync + toggle queue switch
-		case n := <-notificationsChan:
-			// notifications should only appear here if the switch is toggled
-			consumer.Consume(r.globalContext, n)
+		case m, ok := <-messages:
+			if !ok {
+				log.C(r.globalContext).Info("Messages channel closed. Terminating reconciler.")
+				return
+			}
+
+			log.C(r.globalContext).Debugf("Reconciler received message %+v", m)
+			if m.Resync {
+				// discard any pending change notifications as we will do a full resync
+				drain(messages)
+
+				r.run()
+			} else {
+				consumer.Consume(r.globalContext, m.Notification)
+			}
+		}
+	}
+}
+
+func drain(messages <-chan *notifications.Message) {
+	for {
+		select {
+		case <-messages:
+		default:
+			return
 		}
 	}
 }
@@ -122,7 +141,7 @@ func (r *ReconciliationTask) Run() {
 
 	newRunContext, taskID, err := r.generateRunContext()
 	if err != nil {
-		log.C(r.globalContext).WithError(err).Error("reconsilation task will not be scheduled")
+		log.C(r.globalContext).WithError(err).Error("reconciliation task will not be scheduled")
 		return
 	}
 	r.runContext = newRunContext
