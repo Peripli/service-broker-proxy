@@ -29,7 +29,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
 
@@ -49,7 +49,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		waitGroup *sync.WaitGroup
 
-		reconciliationTask *ReconciliationTask
+		reconciler *Reconciler
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -177,7 +177,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakePlatformClient.VisibilityReturns(fakeVisibilityClient)
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 
-		reconciliationTask = NewTask(
+		reconciler = NewReconciler(
 			context.TODO(), DefaultSettings(), waitGroup, fakePlatformClient, fakeSMClient,
 			fakeAppHost, visibilityCache)
 
@@ -742,7 +742,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			t.stubs()
 		}
 
-		reconciliationTask.Run()
+		reconciler.Run()
 
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
@@ -790,14 +790,14 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		BeforeEach(func() {
 			setFakes()
-			reconciliationTask.Run()
+			reconciler.Run()
 			assertCallCounts(1, 1)
 		})
 
 		Context("when visibility cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(platformVisibilityCacheKey, nil, time.Minute)
-				reconciliationTask.Run()
+				reconciler.Run()
 				assertCallCounts(2, 2)
 			})
 		})
@@ -808,7 +808,7 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(platformVisibilityCacheKey, visibilities, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciliationTask.Run()
+				reconciler.Run()
 				assertCallCounts(2, 2)
 			})
 		})
@@ -816,7 +816,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		Context("when plan cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(smPlansCacheKey, nil, time.Minute)
-				reconciliationTask.Run()
+				reconciler.Run()
 				assertCallCounts(2, 2)
 			})
 		})
@@ -827,14 +827,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(smPlansCacheKey, plans, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciliationTask.Run()
+				reconciler.Run()
 				assertCallCounts(2, 2)
 			})
 		})
 
 		Context("when there are no changes in SM plans", func() {
 			It("should use cache", func() {
-				reconciliationTask.Run()
+				reconciler.Run()
 				assertCallCounts(2, 1)
 			})
 		})
@@ -848,7 +848,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					fakeSMClient.GetPlansByServiceOfferingsReturns([]*types.ServicePlan{
 						smbroker1.ServiceOfferings[0].Plans[0],
 					}, nil)
-					reconciliationTask.Run()
+					reconciler.Run()
 					assertCallCounts(2, 2)
 				})
 			})
@@ -864,7 +864,7 @@ var _ = Describe("Reconcile visibilities", func() {
 						smbroker1.ServiceOfferings[1].Plans[0],
 					}, nil)
 
-					reconciliationTask.Run()
+					reconciler.Run()
 					assertCallCounts(2, 2)
 				})
 			})

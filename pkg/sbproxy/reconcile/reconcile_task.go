@@ -37,11 +37,11 @@ const notRunning int32 = 0
 
 const smBrokersStats = "sm_brokers"
 
-// ReconciliationTask type represents a registration task that takes care of propagating broker and visibility
-// creations and deletions to the platform. It reconciles the state of the proxy brokers and visibilities
+// Reconciler takes care of propagating broker and visibility changes to the platform.
+// It reconciles the state of the proxy brokers and visibilities
 // in the platform to match the desired state provided by the Service Manager.
 // TODO if the reg credentials are changed (the ones under cf.reg) we need to update the already registered brokers
-type ReconciliationTask struct {
+type Reconciler struct {
 	options        *Settings
 	group          *sync.WaitGroup
 	platformClient platform.Client
@@ -56,15 +56,15 @@ type ReconciliationTask struct {
 	stats map[string]interface{}
 }
 
-// NewTask builds a new ReconciliationTask
-func NewTask(ctx context.Context,
+// NewReconciler builds a new Reconciler
+func NewReconciler(ctx context.Context,
 	options *Settings,
 	group *sync.WaitGroup,
 	platformClient platform.Client,
 	smClient sm.Client,
 	proxyPath string,
-	c *cache.Cache) *ReconciliationTask {
-	return &ReconciliationTask{
+	c *cache.Cache) *Reconciler {
+	return &Reconciler{
 		options:        options,
 		group:          group,
 		platformClient: platformClient,
@@ -78,7 +78,7 @@ func NewTask(ctx context.Context,
 }
 
 // Process resync and notification messages
-func (r *ReconciliationTask) Process(messages <-chan *notifications.Message) {
+func (r *Reconciler) Process(messages <-chan *notifications.Message) {
 	consumer := &notifications.Consumer{
 		Handlers: map[string]notifications.ResourceNotificationHandler{
 			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
@@ -109,7 +109,7 @@ func (r *ReconciliationTask) Process(messages <-chan *notifications.Message) {
 				// discard any pending change notifications as we will do a full resync
 				drain(messages)
 
-				r.run()
+				r.Run()
 			} else {
 				consumer.Consume(r.globalContext, m.Notification)
 			}
@@ -129,7 +129,7 @@ func drain(messages <-chan *notifications.Message) {
 
 // Run executes the registration task that is responsible for reconciling the state of the proxy
 // brokers and visibilities at the platform with the brokers provided by the Service Manager
-func (r *ReconciliationTask) Run() {
+func (r *Reconciler) Run() {
 	isAlreadyRunnning := !atomic.CompareAndSwapInt32(r.state, notRunning, running)
 	if isAlreadyRunnning {
 		log.C(r.globalContext).Warning("Reconciliation task cannot start. Another reconciliation task is already running")
@@ -153,16 +153,16 @@ func (r *ReconciliationTask) Run() {
 	log.C(r.globalContext).Infof("FINISHED scheduled reconciliation task %s...", taskID)
 }
 
-func (r *ReconciliationTask) run() {
+func (r *Reconciler) run() {
 	r.processBrokers()
 	r.processVisibilities()
 }
 
-func (r *ReconciliationTask) end() {
+func (r *Reconciler) end() {
 	atomic.StoreInt32(r.state, notRunning)
 }
 
-func (r *ReconciliationTask) generateRunContext() (context.Context, string, error) {
+func (r *Reconciler) generateRunContext() (context.Context, string, error) {
 	correlationID, err := uuid.NewV4()
 	if err != nil {
 		return nil, "", errors.Wrap(err, "could not generate correlationID")
@@ -171,7 +171,7 @@ func (r *ReconciliationTask) generateRunContext() (context.Context, string, erro
 	return log.ContextWithLogger(r.globalContext, entry), correlationID.String(), nil
 }
 
-func (r *ReconciliationTask) stat(key string) interface{} {
+func (r *Reconciler) stat(key string) interface{} {
 	result, found := r.stats[key]
 	if !found {
 		log.C(r.runContext).Infof("No %s found in cache", key)

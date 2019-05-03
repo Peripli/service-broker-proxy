@@ -30,7 +30,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 )
 
 var _ = Describe("Reconcile brokers", func() {
@@ -45,7 +45,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		waitGroup *sync.WaitGroup
 
-		reconciliationTask *ReconciliationTask
+		reconciler *Reconciler
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -102,7 +102,7 @@ var _ = Describe("Reconcile brokers", func() {
 			FakeClient:         fakePlatformClient,
 		}
 
-		reconciliationTask = NewTask(
+		reconciler = NewReconciler(
 			context.TODO(), DefaultSettings(), waitGroup, platformClient, fakeSMClient,
 			fakeAppHost, visibilityCache)
 
@@ -453,7 +453,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
 		t.stubs()
 
-		reconciliationTask.Run()
+		reconciler.Run()
 
 		if err1 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))

@@ -67,7 +67,7 @@ type SMProxyBuilder struct {
 	ctx                   context.Context
 	cfg                   *Settings
 	group                 *sync.WaitGroup
-	reconciler            *reconcile.ReconciliationTask
+	reconciler            *reconcile.Reconciler
 	notificationsProducer *notifications.Producer
 }
 
@@ -77,7 +77,7 @@ type SMProxy struct {
 
 	ctx                   context.Context
 	group                 *sync.WaitGroup
-	reconciler            *reconcile.ReconciliationTask
+	reconciler            *reconcile.Reconciler
 	notificationsProducer *notifications.Producer
 }
 
@@ -138,7 +138,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	var group sync.WaitGroup
 
 	c := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
-	reconciler := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
+	reconciler := reconcile.NewReconciler(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
 
 	notificationsProducer, err := notifications.NewProducer(cfg.Producer, cfg.Sm)
 	if err != nil {

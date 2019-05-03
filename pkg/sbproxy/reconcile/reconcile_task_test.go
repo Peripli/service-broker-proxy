@@ -38,14 +38,14 @@ var _ = Describe("Reconcile", func() {
 			isRunning      chan bool
 			wg             sync.WaitGroup
 			platformClient platformfakes.FakeClient
-			task           *ReconciliationTask
+			reconciler     *Reconciler
 		)
 
 		startRunAsync := func() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				task.Run()
+				reconciler.Run()
 			}()
 		}
 
@@ -66,7 +66,7 @@ var _ = Describe("Reconcile", func() {
 				Expect(waitForChannel(stopRun)).ToNot(HaveOccurred())
 				return nil
 			}
-			task = NewTask(context.TODO(), nil, &sync.WaitGroup{}, &platformClient, nil, "", nil)
+			reconciler = NewReconciler(context.TODO(), nil, &sync.WaitGroup{}, &platformClient, nil, "", nil)
 		})
 
 		AfterEach(func() {
@@ -78,7 +78,7 @@ var _ = Describe("Reconcile", func() {
 			It("should not be started", func() {
 				startRunAsync()
 				Expect(waitForChannel(isRunning)).ToNot(HaveOccurred())
-				task.Run()
+				reconciler.Run()
 				stopRun <- true
 			})
 		})
