@@ -31,9 +31,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const running int32 = 1
-const notRunning int32 = 0
-
 const smBrokersStats = "sm_brokers"
 
 // for stubbing in unit tests
