@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "notifications-create"
-  digest = "1:6955bacf1f680d48a34079d13f3aa2b84ca79e5079dcdc28e4db64c7e35568de"
+  digest = "1:d1bb2a50ad8a30b76c8d71dd3b268f81f63556ecbb22dcb5e71a010f92179184"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "dff4ef021006640435d88bc88f89ac5a7e6e776f"
+  revision = "327634a9389f1f34410ecef49e9852e620d30f3a"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -777,6 +777,7 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/cast",
     "github.com/spf13/pflag",
+    "github.com/tidwall/gjson",
     "github.com/tidwall/sjson",
   ]
   solver-name = "gps-cdcl"
