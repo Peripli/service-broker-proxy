@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/tidwall/sjson"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	. "github.com/onsi/gomega"
 
@@ -26,6 +28,8 @@ var _ = Describe("Broker Handler", func() {
 	var brokerURL string
 
 	var smBrokerID string
+
+	var err error
 
 	BeforeEach(func() {
 		ctx = context.TODO()
@@ -61,7 +65,31 @@ var _ = Describe("Broker Handler", func() {
 						}
 					},
 					"additional": {
-
+						"services": [
+							{
+    							"name": "another-fake-service",
+    							"id": "another-fake-service-id",
+    							"description": "test-description",
+    							"requires": ["another-route_forwarding"],
+    							"tags": ["another-no-sql", "another-relational"],
+    							"bindable": true,	
+    							"instances_retrievable": true,	
+    							"bindings_retrievable": true,	
+    							"metadata": {	
+      								"provider": {	
+        								"name": "another name"	
+      								},	
+      								"listing": {	
+        								"imageUrl": "http://example.com/cat.gif",	
+        								"blurb": "another blurb here",	
+        								"longDescription": "A long time ago, in a another galaxy far far away..."	
+      								},	
+      								"displayName": "another Fake Service Broker"	
+    							},	
+    							"plan_updateable": true,	
+    							"plans": []
+							}
+						]
 					}
 				}
 			}`, smBrokerID, brokerName, brokerURL)
@@ -100,23 +128,8 @@ var _ = Describe("Broker Handler", func() {
 
 			Context("when the resource ID is missing", func() {
 				BeforeEach(func() {
-					brokerNotificationPayload = fmt.Sprintf(`
-					{
-						"new": {
-							"resource": {
-								"name": "%s",
-								"broker_url": "%s",
-								"description": "brokerDescription",
-								"labels": {
-									"key1": ["value1", "value2"],
-									"key2": ["value3", "value4"]
-								}
-							},
-							"additional": {
-
-							}
-						}
-					}`, brokerName, brokerURL)
+					brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "new.resource.id")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to create, update or delete broker", func() {
@@ -131,23 +144,8 @@ var _ = Describe("Broker Handler", func() {
 
 			Context("when the resource name is missing", func() {
 				BeforeEach(func() {
-					brokerNotificationPayload = fmt.Sprintf(`
-					{
-						"new": {
-							"resource": {
-								"id": "%s",
-								"broker_url": "%s",
-								"description": "brokerDescription",
-								"labels": {
-									"key1": ["value1", "value2"],
-									"key2": ["value3", "value4"]
-								}
-							},
-							"additional": {
-
-							}
-						}
-					}`, smBrokerID, brokerURL)
+					brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "new.resource.name")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to create, update or delete broker", func() {
@@ -162,23 +160,24 @@ var _ = Describe("Broker Handler", func() {
 
 			Context("when the resource URL is missing", func() {
 				BeforeEach(func() {
-					brokerNotificationPayload = fmt.Sprintf(`
-					{
-						"new": {
-							"resource": {
-								"id": "%s",
-								"name": "%s",
-								"description": "brokerDescription",
-								"labels": {
-									"key1": ["value1", "value2"],
-									"key2": ["value3", "value4"]
-								}
-							},
-							"additional": {
+					brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "new.resource.broker_url")
+					Expect(err).ShouldNot(HaveOccurred())
+				})
 
-							}
-						}
-					}`, smBrokerID, brokerName)
+				It("does not try to create, update or delete broker", func() {
+					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+
+					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
+					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
+				})
+			})
+
+			Context("when additional services are empty", func() {
+				BeforeEach(func() {
+					brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "new.additional.services")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to create, update or delete broker", func() {
@@ -302,7 +301,31 @@ var _ = Describe("Broker Handler", func() {
 					}
 				},
 				"additional": {
-
+					"services": [
+						{
+							"name": "another-fake-service",
+							"id": "another-fake-service-id",
+							"description": "test-description",
+							"requires": ["another-route_forwarding"],
+							"tags": ["another-no-sql", "another-relational"],
+							"bindable": true,	
+							"instances_retrievable": true,	
+							"bindings_retrievable": true,	
+							"metadata": {	
+								"provider": {	
+									"name": "another name"	
+								},	
+								"listing": {	
+									"imageUrl": "http://example.com/cat.gif",	
+									"blurb": "another blurb here",	
+									"longDescription": "A long time ago, in a another galaxy far far away..."	
+								},	
+								"displayName": "another Fake Service Broker"	
+							},	
+							"plan_updateable": true,	
+							"plans": []
+						}
+					]
 				}
 			},
 			"new": {
@@ -318,7 +341,31 @@ var _ = Describe("Broker Handler", func() {
 					}
 				},
 				"additional": {
-
+					"services": [
+						{
+							"name": "another-fake-service",
+							"id": "another-fake-service-id",
+							"description": "test-description",
+							"requires": ["another-route_forwarding"],
+							"tags": ["another-no-sql", "another-relational"],
+							"bindable": true,	
+							"instances_retrievable": true,	
+							"bindings_retrievable": true,	
+							"metadata": {	
+								"provider": {	
+									"name": "another name"	
+								},	
+								"listing": {	
+									"imageUrl": "http://example.com/cat.gif",	
+									"blurb": "another blurb here",	
+									"longDescription": "A long time ago, in a another galaxy far far away..."	
+								},	
+								"displayName": "another Fake Service Broker"	
+							},	
+							"plan_updateable": true,	
+							"plans": []
+						}
+					]
 				}
 			},
 			"label_changes": {
@@ -343,30 +390,8 @@ var _ = Describe("Broker Handler", func() {
 
 		Context("when old resource is missing", func() {
 			BeforeEach(func() {
-				brokerNotificationPayload = fmt.Sprintf(`
-				{
-					"new": {
-						"resource": {
-							"id": "%s",
-							"name": "%s",
-							"broker_url": "%s",
-							"description": "brokerDescription",
-							"labels": {
-								"key1": ["value1", "value2"],
-								"key2": ["value3", "value4"],
-								"key3": ["value5", "value6"]
-							}
-						},
-						"additional": {
-
-						}
-					},
-					"label_changes": {
-						"op": "add",
-						"key": "key3",
-						"values": ["value5", "value6"]
-					}
-				}`, smBrokerID, brokerName, brokerURL)
+				brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "old")
+				Expect(err).ShouldNot(HaveOccurred())
 			})
 
 			It("does not try to create, update or delete broker", func() {
@@ -381,30 +406,8 @@ var _ = Describe("Broker Handler", func() {
 
 		Context("when new resource is missing", func() {
 			BeforeEach(func() {
-				brokerNotificationPayload = fmt.Sprintf(`
-				{
-					"old": {
-						"resource": {
-							"id": "%s",
-							"name": "%s",
-							"broker_url": "%s",
-							"description": "brokerDescription",
-							"labels": {
-								"key1": ["value1", "value2"],
-								"key2": ["value3", "value4"],
-								"key3": ["value5", "value6"]
-							}
-						},
-						"additional": {
-
-						}
-					},
-					"label_changes": {
-						"op": "add",
-						"key": "key3",
-						"values": ["value5", "value6"]
-					}
-				}`, smBrokerID, brokerName, brokerURL)
+				brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "new")
+				Expect(err).ShouldNot(HaveOccurred())
 			})
 
 			It("does not try to create, update or delete broker", func() {
@@ -518,7 +521,31 @@ var _ = Describe("Broker Handler", func() {
 					}
 				},
 				"additional": {
-
+					"services": [
+						{
+							"name": "another-fake-service",
+							"id": "another-fake-service-id",
+							"description": "test-description",
+							"requires": ["another-route_forwarding"],
+							"tags": ["another-no-sql", "another-relational"],
+							"bindable": true,	
+							"instances_retrievable": true,	
+							"bindings_retrievable": true,	
+							"metadata": {	
+								"provider": {	
+									"name": "another name"	
+								},	
+								"listing": {	
+									"imageUrl": "http://example.com/cat.gif",	
+									"blurb": "another blurb here",	
+									"longDescription": "A long time ago, in a another galaxy far far away..."	
+								},	
+								"displayName": "another Fake Service Broker"	
+							},	
+							"plan_updateable": true,	
+							"plans": []
+						}
+					]	
 				}
 			}
 		}`, smBrokerID, brokerName, brokerURL)
@@ -542,7 +569,8 @@ var _ = Describe("Broker Handler", func() {
 		Context("when notification payload is invalid", func() {
 			Context("when old resource is missing", func() {
 				BeforeEach(func() {
-					brokerNotificationPayload = `{"randomKey":"randomValue"}`
+					brokerNotificationPayload, err = sjson.Delete(brokerNotificationPayload, "old")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to create, update or delete broker", func() {
