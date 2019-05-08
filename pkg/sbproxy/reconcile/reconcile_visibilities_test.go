@@ -18,7 +18,6 @@ package reconcile
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -46,8 +45,6 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakeVisibilityClient       *platformfakes.FakeVisibilityClient
 
 		visibilityCache *cache.Cache
-
-		waitGroup *sync.WaitGroup
 
 		reconciler *Reconciler
 
@@ -171,15 +168,19 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
 
 		visibilityCache = cache.New(5*time.Minute, 10*time.Minute)
-		waitGroup = &sync.WaitGroup{}
 
 		fakePlatformClient.BrokerReturns(fakePlatformBrokerClient)
 		fakePlatformClient.VisibilityReturns(fakeVisibilityClient)
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 
-		reconciler = NewReconciler(
-			context.TODO(), DefaultSettings(), waitGroup, fakePlatformClient, fakeSMClient,
-			fakeAppHost, visibilityCache)
+		reconciler = &Reconciler{
+			Options:        DefaultSettings(),
+			PlatformClient: fakePlatformClient,
+			SMClient:       fakeSMClient,
+			ProxyPath:      fakeAppHost,
+			GlobalContext:  context.TODO(),
+			Cache:          visibilityCache,
+		}
 
 		smPlan1 = &types.ServicePlan{
 			Base: types.Base{
@@ -722,7 +723,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 	}
 
-	DescribeTable("Run", func(t testCase) {
+	DescribeTable("Resync", func(t testCase) {
 		setFakeBrokersClients()
 
 		fakeSMClient.GetVisibilitiesReturns(t.smVisibilities())
@@ -742,7 +743,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			t.stubs()
 		}
 
-		reconciler.Run()
+		reconciler.resync()
 
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
@@ -765,7 +766,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 	}, entries...)
 
-	Describe("Run cache", func() {
+	Describe("Resync cache", func() {
 
 		setVisibilityClients := func() {
 			fakeSMClient.GetVisibilitiesReturns([]*types.Visibility{}, nil)
@@ -790,14 +791,14 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		BeforeEach(func() {
 			setFakes()
-			reconciler.Run()
+			reconciler.resync()
 			assertCallCounts(1, 1)
 		})
 
 		Context("when visibility cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(platformVisibilityCacheKey, nil, time.Minute)
-				reconciler.Run()
+				reconciler.resync()
 				assertCallCounts(2, 2)
 			})
 		})
@@ -808,7 +809,7 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(platformVisibilityCacheKey, visibilities, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciler.Run()
+				reconciler.resync()
 				assertCallCounts(2, 2)
 			})
 		})
@@ -816,7 +817,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		Context("when plan cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(smPlansCacheKey, nil, time.Minute)
-				reconciler.Run()
+				reconciler.resync()
 				assertCallCounts(2, 2)
 			})
 		})
@@ -827,14 +828,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(smPlansCacheKey, plans, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciler.Run()
+				reconciler.resync()
 				assertCallCounts(2, 2)
 			})
 		})
 
 		Context("when there are no changes in SM plans", func() {
 			It("should use cache", func() {
-				reconciler.Run()
+				reconciler.resync()
 				assertCallCounts(2, 1)
 			})
 		})
@@ -848,7 +849,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					fakeSMClient.GetPlansByServiceOfferingsReturns([]*types.ServicePlan{
 						smbroker1.ServiceOfferings[0].Plans[0],
 					}, nil)
-					reconciler.Run()
+					reconciler.resync()
 					assertCallCounts(2, 2)
 				})
 			})
@@ -864,7 +865,7 @@ var _ = Describe("Reconcile visibilities", func() {
 						smbroker1.ServiceOfferings[1].Plans[0],
 					}, nil)
 
-					reconciler.Run()
+					reconciler.resync()
 					assertCallCounts(2, 2)
 				})
 			})

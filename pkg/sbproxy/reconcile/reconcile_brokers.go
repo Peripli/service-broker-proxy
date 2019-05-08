@@ -33,9 +33,9 @@ type brokerKey struct {
 
 // processBrokers handles the reconciliation of the service brokers.
 // it gets the brokers from SM and the platform and runs the reconciliation
-func (r *Reconciler) processBrokers() {
-	logger := log.C(r.runContext)
-	if r.platformClient.Broker() == nil {
+func (r *resyncJob) processBrokers() {
+	logger := log.C(r.resyncContext)
+	if r.PlatformClient.Broker() == nil {
 		logger.Debug("Platform client cannot handle brokers. Broker reconciliation will be skipped.")
 		return
 	}
@@ -60,9 +60,9 @@ func (r *Reconciler) processBrokers() {
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
-func (r *Reconciler) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
+func (r *resyncJob) reconcileBrokers(existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
 	brokerKeyMap := indexBrokersByKey(existingBrokers)
-	proxyBrokerIDMap := indexProxyBrokersByID(existingBrokers, r.proxyPath)
+	proxyBrokerIDMap := indexProxyBrokersByID(existingBrokers, r.ProxyPath)
 
 	for _, payloadBroker := range payloadBrokers {
 		existingBroker := proxyBrokerIDMap[payloadBroker.GUID]
@@ -84,23 +84,23 @@ func (r *Reconciler) reconcileBrokers(existingBrokers []platform.ServiceBroker, 
 	}
 }
 
-func (r *Reconciler) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {
-	logger := log.C(r.runContext)
-	logger.Info("Reconciler getting brokers from platform...")
-	registeredBrokers, err := r.platformClient.Broker().GetBrokers(r.runContext)
+func (r *resyncJob) getBrokersFromPlatform() ([]platform.ServiceBroker, error) {
+	logger := log.C(r.resyncContext)
+	logger.Info("resyncJob getting brokers from platform...")
+	registeredBrokers, err := r.PlatformClient.Broker().GetBrokers(r.resyncContext)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from platform")
 	}
-	logger.Debugf("Reconciler SUCCESSFULLY retrieved %d brokers from platform", len(registeredBrokers))
+	logger.Debugf("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(registeredBrokers))
 
 	return registeredBrokers, nil
 }
 
-func (r *Reconciler) getBrokersFromSM() ([]platform.ServiceBroker, error) {
-	logger := log.C(r.runContext)
-	logger.Info("Reconciler getting brokers from Service Manager...")
+func (r *resyncJob) getBrokersFromSM() ([]platform.ServiceBroker, error) {
+	logger := log.C(r.resyncContext)
+	logger.Info("resyncJob getting brokers from Service Manager...")
 
-	proxyBrokers, err := r.smClient.GetBrokers(r.runContext)
+	proxyBrokers, err := r.SMClient.GetBrokers(r.resyncContext)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from SM")
 	}
@@ -116,69 +116,69 @@ func (r *Reconciler) getBrokersFromSM() ([]platform.ServiceBroker, error) {
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
-	logger.Infof("Reconciler SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
+	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
 
 	return brokersFromSM, nil
 }
 
-func (r *Reconciler) fetchBrokerCatalog(broker *platform.ServiceBroker) {
-	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
-		logger := log.C(r.runContext)
-		logger.WithFields(logBroker(broker)).Infof("Reconciler refetching catalog for broker...")
-		if err := f.Fetch(r.runContext, broker); err != nil {
+func (r *resyncJob) fetchBrokerCatalog(broker *platform.ServiceBroker) {
+	if f, isFetcher := r.PlatformClient.(platform.CatalogFetcher); isFetcher {
+		logger := log.C(r.resyncContext)
+		logger.WithFields(logBroker(broker)).Infof("resyncJob refetching catalog for broker...")
+		if err := f.Fetch(r.resyncContext, broker); err != nil {
 			logger.WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
 		} else {
-			logger.WithFields(logBroker(broker)).Info("Reconciler SUCCESSFULLY refetched catalog for broker")
+			logger.WithFields(logBroker(broker)).Info("resyncJob SUCCESSFULLY refetched catalog for broker")
 		}
 	}
 }
 
-func (r *Reconciler) createBrokerRegistration(broker *platform.ServiceBroker) {
-	logger := log.C(r.runContext)
-	logger.WithFields(logBroker(broker)).Info("Reconciler creating proxy for broker in platform...")
+func (r *resyncJob) createBrokerRegistration(broker *platform.ServiceBroker) {
+	logger := log.C(r.resyncContext)
+	logger.WithFields(logBroker(broker)).Info("resyncJob creating proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      r.options.BrokerPrefix + broker.GUID,
-		BrokerURL: r.proxyPath + "/" + broker.GUID,
+		Name:      r.Options.BrokerPrefix + broker.GUID,
+		BrokerURL: r.ProxyPath + "/" + broker.GUID,
 	}
 
-	if b, err := r.platformClient.Broker().CreateBroker(r.runContext, createRequest); err != nil {
+	if b, err := r.PlatformClient.Broker().CreateBroker(r.resyncContext, createRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
 	} else {
-		logger.WithFields(logBroker(b)).Infof("Reconciler SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
+		logger.WithFields(logBroker(b)).Infof("resyncJob SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	}
 }
 
-func (r *Reconciler) updateBrokerRegistration(brokerGUID string, broker *platform.ServiceBroker) {
-	logger := log.C(r.runContext)
-	logger.WithFields(logBroker(broker)).Info("Reconciler updating broker registration in platform...")
+func (r *resyncJob) updateBrokerRegistration(brokerGUID string, broker *platform.ServiceBroker) {
+	logger := log.C(r.resyncContext)
+	logger.WithFields(logBroker(broker)).Info("resyncJob updating broker registration in platform...")
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		GUID:      brokerGUID,
-		Name:      r.options.BrokerPrefix + broker.GUID,
-		BrokerURL: r.proxyPath + "/" + broker.GUID,
+		Name:      r.Options.BrokerPrefix + broker.GUID,
+		BrokerURL: r.ProxyPath + "/" + broker.GUID,
 	}
 
-	if b, err := r.platformClient.Broker().UpdateBroker(r.runContext, updateRequest); err != nil {
+	if b, err := r.PlatformClient.Broker().UpdateBroker(r.resyncContext, updateRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker update")
 	} else {
-		logger.WithFields(logBroker(b)).Infof("Reconciler SUCCESSFULLY updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
+		logger.WithFields(logBroker(b)).Infof("resyncJob SUCCESSFULLY updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
 	}
 }
 
-func (r *Reconciler) deleteBrokerRegistration(broker *platform.ServiceBroker) {
-	logger := log.C(r.runContext)
-	logger.WithFields(logBroker(broker)).Info("Reconciler deleting broker from platform...")
+func (r *resyncJob) deleteBrokerRegistration(broker *platform.ServiceBroker) {
+	logger := log.C(r.resyncContext)
+	logger.WithFields(logBroker(broker)).Info("resyncJob deleting broker from platform...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		GUID: broker.GUID,
 		Name: broker.Name,
 	}
 
-	if err := r.platformClient.Broker().DeleteBroker(r.runContext, deleteRequest); err != nil {
+	if err := r.PlatformClient.Broker().DeleteBroker(r.resyncContext, deleteRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
 	} else {
-		logger.WithFields(logBroker(broker)).Infof("Reconciler SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
+		logger.WithFields(logBroker(broker)).Infof("resyncJob SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 	}
 }
 

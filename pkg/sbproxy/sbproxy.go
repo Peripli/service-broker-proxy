@@ -135,16 +135,21 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 		panic(err)
 	}
 
-	var group sync.WaitGroup
-
-	c := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
-	reconciler := reconcile.NewReconciler(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
+	reconciler := &reconcile.Reconciler{
+		Options:        cfg.Reconcile,
+		PlatformClient: platformClient,
+		SMClient:       smClient,
+		ProxyPath:      cfg.Reconcile.URL + APIPrefix,
+		GlobalContext:  ctx,
+		Cache:          cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval),
+	}
 
 	notificationsProducer, err := notifications.NewProducer(cfg.Producer, cfg.Sm)
 	if err != nil {
 		panic(err)
 	}
 
+	var group sync.WaitGroup
 	return &SMProxyBuilder{
 		API:                   api,
 		ctx:                   ctx,

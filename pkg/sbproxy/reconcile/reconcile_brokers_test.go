@@ -19,7 +19,6 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -42,8 +41,6 @@ var _ = Describe("Reconcile brokers", func() {
 
 		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
 		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
-
-		waitGroup *sync.WaitGroup
 
 		reconciler *Reconciler
 
@@ -92,7 +89,6 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformClient.VisibilityReturns(nil)
 
 		visibilityCache := cache.New(5*time.Minute, 10*time.Minute)
-		waitGroup = &sync.WaitGroup{}
 
 		platformClient := struct {
 			*platformfakes.FakeCatalogFetcher
@@ -102,9 +98,14 @@ var _ = Describe("Reconcile brokers", func() {
 			FakeClient:         fakePlatformClient,
 		}
 
-		reconciler = NewReconciler(
-			context.TODO(), DefaultSettings(), waitGroup, platformClient, fakeSMClient,
-			fakeAppHost, visibilityCache)
+		reconciler = &Reconciler{
+			Options:        DefaultSettings(),
+			PlatformClient: platformClient,
+			SMClient:       fakeSMClient,
+			ProxyPath:      fakeAppHost,
+			GlobalContext:  context.TODO(),
+			Cache:          visibilityCache,
+		}
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
@@ -445,7 +446,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}),
 	}
 
-	DescribeTable("Run", func(t testCase) {
+	DescribeTable("resync", func(t testCase) {
 		smBrokers, err1 := t.smBrokers()
 		platformBrokers, err2 := t.platformBrokers()
 
@@ -453,7 +454,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
 		t.stubs()
 
-		reconciler.Run()
+		reconciler.resync()
 
 		if err1 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
