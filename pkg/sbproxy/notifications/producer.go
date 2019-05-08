@@ -99,7 +99,7 @@ func DefaultProducerSettings() *ProducerSettings {
 	}
 }
 
-// Message is the Payload sent by the producer
+// Message is the payload sent by the producer
 type Message struct {
 	// Notification is the notification that needs to be applied on the platform
 	Notification *types.Notification
