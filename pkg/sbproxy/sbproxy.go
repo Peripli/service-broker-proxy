@@ -19,6 +19,8 @@ package sbproxy
 import (
 	"sync"
 
+	"github.com/Peripli/service-manager/pkg/types"
+
 	"github.com/patrickmn/go-cache"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
@@ -146,13 +148,13 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	proxyPath := cfg.Reconcile.URL + APIPrefix
 	resyncer := reconcile.NewResyncer(cfg.Reconcile, platformClient, smClient, proxyPath, cache)
 	consumer := &notifications.Consumer{
-		Handlers: map[string]notifications.ResourceNotificationHandler{
-			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
+		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
+			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
 				BrokerClient: platformClient.Broker(),
 				ProxyPrefix:  cfg.Reconcile.BrokerPrefix,
 				ProxyPath:    proxyPath,
 			},
-			"/v1/visibilities": &handlers.VisibilityResourceNotificationsHandler{
+			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),
 				ProxyPrefix:      cfg.Reconcile.BrokerPrefix,
 			},
