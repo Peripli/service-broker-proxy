@@ -95,7 +95,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 
 	v := visPayload.New
 
-	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerID
+	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerName
 	if err := vnh.VisibilityClient.EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    platformBrokerName,
 		CatalogPlanID: v.Additional.ServicePlan.CatalogID,
@@ -127,7 +127,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 	oldVisibilityPayload := visibilityPayload.Old
 	newVisibilityPayload := visibilityPayload.New
 
-	platformBrokerName := vnh.ProxyPrefix + oldVisibilityPayload.Additional.BrokerID
+	platformBrokerName := vnh.ProxyPrefix + oldVisibilityPayload.Additional.BrokerName
 
 	labelsToAdd, labelsToRemove := LabelChangesToLabels(visibilityPayload.LabelChanges)
 
@@ -190,7 +190,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 
 	v := visibilityPayload.Old
 
-	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerID
+	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerName
 	if err := vnh.VisibilityClient.DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    platformBrokerName,
 		CatalogPlanID: v.Additional.ServicePlan.CatalogID,
