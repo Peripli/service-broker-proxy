@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "notifications"
-  digest = "1:48712ca3f52b6088a99a1c2cd1d1d4bc09c0dff68da81e7c40ad4ea3261c9e55"
+  digest = "1:2683cbd06764d993fe56b3ed706bc592ad00df8e8450b488fcaf470dde2ab6dd"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -35,11 +35,12 @@
     "storage/catalog",
     "storage/interceptors",
     "storage/postgres",
+    "storage/postgres/notification_connection",
     "test/common",
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "65023d4a8cf842f1339f918a5e5ded95d8bc54ca"
+  revision = "f4700a0a76e28d6b99c917f563fb9220d3db1a07"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -240,7 +241,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5fe871eb8905c1f38d41a136a678125e5cdf9238c6c9a1711180b9b84b5c33a2"
+  digest = "1:2c7f9e2e9c7729a1785f57f95e0bbfddc384f11073e8213994d11113210644a0"
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
@@ -248,7 +249,7 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "1d3423c595d749e4613fce663591b44ae539d377"
+  revision = "38398a30ed8516ffda617a04c822de09df8a3ec5"
 
 [[projects]]
   digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
@@ -280,7 +281,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bc1c0be40c67b6b4aee09d7508d5a2a52c1c116b1fa43806dad2b0d6b4d4003b"
+  digest = "1:2abaafc9cb59897a71c84f1daf4131d59c0dd349c671206274ace759730fc1a0"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -288,7 +289,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "51e2106eed1cea199c802d2a49e91e2491b02056"
+  revision = "2ff3cb3adc01768e0a552b3a02575a6df38a9bea"
 
 [[projects]]
   digest = "1:c568d7727aa262c32bdf8a3f7db83614f7af0ed661474b24588de635c20024c7"
@@ -320,7 +321,7 @@
   name = "github.com/onrik/logrus"
   packages = ["filename"]
   pruneopts = "UT"
-  revision = "05335c5abaa99d4c7a3f36df162b483106ef38a8"
+  revision = "0331655e8b9ec13423e2b31914d0a2154b13474e"
 
 [[projects]]
   digest = "1:b013cb97ec8147b033199dfc5360d410130e1fc5d74dd6f08c4d777fe49b5c37"
@@ -381,12 +382,12 @@
   version = "v2.1.0"
 
 [[projects]]
-  digest = "1:e0f50a07c0def90588d69f77178712c6fdc67eb6576365f551cce98b44b501bf"
+  digest = "1:93131d8002d7025da13582877c32d1fc302486775a1b06f62241741006428c5e"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   pruneopts = "UT"
-  revision = "63909f0a90ab0f36909e8e044e46ace10cf13ba2"
-  version = "v1.3.0"
+  revision = "728039f679cbcd4f6a54e080d2219a4c4928c546"
+  version = "v1.4.0"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -422,14 +423,6 @@
   ]
   pruneopts = "UT"
   revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:ed615c5430ecabbb0fb7629a182da65ecee6523900ac1ac932520860878ffcad"
-  name = "github.com/robfig/cron"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b41be1df696709bb6395fe435af20370037c0b4c"
 
 [[projects]]
   digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
@@ -614,11 +607,11 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "c05e17bb3b2dca130fc919668a96b4bec9eb9442"
+  revision = "e1dfcc566284e143ba8f9afbb3fa563f2a0d212b"
 
 [[projects]]
   branch = "master"
-  digest = "1:88316b8c6e9e0535ad3c06d5c326eeaeca6ab0d26828622bde7a6d81167eac99"
+  digest = "1:a3618b1fc378635b02a2e0eef5694311e1e29137c562210ad46999d8f3e0cc2c"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -630,7 +623,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "4829fb13d2c62012c17688fa7f629f371014946d"
+  revision = "f4e77d36d62c17c2336347bb2670ddbd02d092b7"
 
 [[projects]]
   branch = "master"
@@ -645,14 +638,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:157e5158a7f29d6633eed502880463aa43de3c36d451c7051591efd12f455ac8"
+  digest = "1:4fc43e824f7e546353de724c00507b1d9c0bab56344b10c2330a97f166a0fba7"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "9f0b1ff7b46a4014ddb5d4bdb6602a43b882cb27"
+  revision = "2d0786266e9cd132da844109aa05016f11f3df28"
 
 [[projects]]
-  digest = "1:e95bdd2b63d703fe523e3ab8c38ecb24f75785f80a8ce2690029afb1be7aafaa"
+  digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -685,8 +678,8 @@
     "unicode/rangetable",
   ]
   pruneopts = "UT"
-  revision = "c942b20a5d85b458c4dce1589326051d85e25d6d"
-  version = "v0.3.1"
+  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
+  version = "v0.3.2"
 
 [[projects]]
   digest = "1:6eb6e3b6d9fffb62958cf7f7d88dbbe1dd6839436b0802e194c590667a40412a"
@@ -759,6 +752,7 @@
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
+    "github.com/Peripli/service-manager/storage",
     "github.com/Peripli/service-manager/test/common",
     "github.com/Peripli/service-manager/test/testutil",
     "github.com/fatih/structs",
@@ -771,7 +765,6 @@
     "github.com/onsi/gomega/ghttp",
     "github.com/patrickmn/go-cache",
     "github.com/pkg/errors",
-    "github.com/robfig/cron",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cast",
     "github.com/spf13/pflag",

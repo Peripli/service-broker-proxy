@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/patrickmn/go-cache"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -29,7 +31,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	cache "github.com/patrickmn/go-cache"
 )
 
 var _ = Describe("Reconcile brokers", func() {
@@ -99,12 +100,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 
 		reconciler = &Reconciler{
-			Options:        DefaultSettings(),
-			PlatformClient: platformClient,
-			SMClient:       fakeSMClient,
-			ProxyPath:      fakeAppHost,
-			GlobalContext:  context.TODO(),
-			Cache:          visibilityCache,
+			Resyncer: NewResyncer(DefaultSettings(), platformClient, fakeSMClient, fakeAppHost, visibilityCache),
 		}
 
 		smbroker1 = sm.Broker{
@@ -454,7 +450,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
 		t.stubs()
 
-		reconciler.resync()
+		reconciler.Resyncer.Resync(context.TODO())
 
 		if err1 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))

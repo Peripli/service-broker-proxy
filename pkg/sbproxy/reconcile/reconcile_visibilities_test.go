@@ -28,7 +28,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
 
@@ -174,12 +174,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 
 		reconciler = &Reconciler{
-			Options:        DefaultSettings(),
-			PlatformClient: fakePlatformClient,
-			SMClient:       fakeSMClient,
-			ProxyPath:      fakeAppHost,
-			GlobalContext:  context.TODO(),
-			Cache:          visibilityCache,
+			Resyncer: NewResyncer(DefaultSettings(), fakePlatformClient, fakeSMClient, fakeAppHost, visibilityCache),
 		}
 
 		smPlan1 = &types.ServicePlan{
@@ -743,7 +738,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			t.stubs()
 		}
 
-		reconciler.resync()
+		reconciler.Resyncer.Resync(context.TODO())
 
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
@@ -791,14 +786,14 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		BeforeEach(func() {
 			setFakes()
-			reconciler.resync()
+			reconciler.Resyncer.Resync(context.TODO())
 			assertCallCounts(1, 1)
 		})
 
 		Context("when visibility cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(platformVisibilityCacheKey, nil, time.Minute)
-				reconciler.resync()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
@@ -809,7 +804,7 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(platformVisibilityCacheKey, visibilities, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciler.resync()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
@@ -817,7 +812,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		Context("when plan cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(smPlansCacheKey, nil, time.Minute)
-				reconciler.resync()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
@@ -828,14 +823,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(smPlansCacheKey, plans, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciler.resync()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
 
 		Context("when there are no changes in SM plans", func() {
 			It("should use cache", func() {
-				reconciler.resync()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 1)
 			})
 		})
@@ -849,7 +844,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					fakeSMClient.GetPlansByServiceOfferingsReturns([]*types.ServicePlan{
 						smbroker1.ServiceOfferings[0].Plans[0],
 					}, nil)
-					reconciler.resync()
+					reconciler.Resyncer.Resync(context.TODO())
 					assertCallCounts(2, 2)
 				})
 			})
@@ -865,7 +860,7 @@ var _ = Describe("Reconcile visibilities", func() {
 						smbroker1.ServiceOfferings[1].Plans[0],
 					}, nil)
 
-					reconciler.resync()
+					reconciler.Resyncer.Resync(context.TODO())
 					assertCallCounts(2, 2)
 				})
 			})

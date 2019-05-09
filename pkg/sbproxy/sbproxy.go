@@ -19,6 +19,12 @@ package sbproxy
 import (
 	"sync"
 
+	"github.com/patrickmn/go-cache"
+
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
+
+	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/api/healthcheck"
@@ -26,9 +32,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/util"
-	cache "github.com/patrickmn/go-cache"
-
-	"fmt"
 
 	"context"
 	"time"
@@ -135,20 +138,30 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 		panic(err)
 	}
 
-	reconciler := &reconcile.Reconciler{
-		Options:        cfg.Reconcile,
-		PlatformClient: platformClient,
-		SMClient:       smClient,
-		ProxyPath:      cfg.Reconcile.URL + APIPrefix,
-		GlobalContext:  ctx,
-		Cache:          cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval),
-	}
-
 	notificationsProducer, err := notifications.NewProducer(cfg.Producer, cfg.Sm)
 	if err != nil {
 		panic(err)
 	}
-
+	cache := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
+	proxyPath := cfg.Reconcile.URL + APIPrefix
+	resyncer := reconcile.NewResyncer(cfg.Reconcile, platformClient, smClient, proxyPath, cache)
+	consumer := &notifications.Consumer{
+		Handlers: map[string]notifications.ResourceNotificationHandler{
+			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
+				BrokerClient: platformClient.Broker(),
+				ProxyPrefix:  cfg.Reconcile.BrokerPrefix,
+				ProxyPath:    proxyPath,
+			},
+			"/v1/visibilities": &handlers.VisibilityResourceNotificationsHandler{
+				VisibilityClient: platformClient.Visibility(),
+				ProxyPrefix:      cfg.Reconcile.BrokerPrefix,
+			},
+		},
+	}
+	reconciler := &reconcile.Reconciler{
+		Resyncer: resyncer,
+		Consumer: consumer,
+	}
 	var group sync.WaitGroup
 	return &SMProxyBuilder{
 		API:                   api,
@@ -187,8 +200,7 @@ func (p *SMProxy) Run() {
 	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
 
 	messages := p.notificationsProducer.Start(p.ctx, p.group)
-	p.group.Add(1)
-	go p.runReconciler(messages)
+	p.reconciler.Reconcile(p.ctx, messages, p.group)
 
 	log.C(p.ctx).Info("Running SBProxy...")
 	p.Server.Run(p.ctx)
@@ -196,7 +208,6 @@ func (p *SMProxy) Run() {
 
 func (p *SMProxy) runReconciler(messages <-chan *notifications.Message) {
 	defer p.group.Done()
-	p.reconciler.Process(messages)
 }
 
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards

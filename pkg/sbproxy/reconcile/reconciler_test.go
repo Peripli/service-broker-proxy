@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package reconcile
+package reconcile_test
 
 import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-manager/pkg/types"
@@ -32,36 +34,30 @@ var _ = Describe("Reconciler", func() {
 	Describe("Process", func() {
 		var (
 			wg         *sync.WaitGroup
-			reconciler *Reconciler
+			reconciler *reconcile.Reconciler
 			messages   chan *notifications.Message
 			ctx        context.Context
 			cancel     context.CancelFunc
-			fakeExec   *fakeExecutor
+			resyncer   *fakeResyncer
+			consumer   *fakeConsumer
 		)
-
-		startProcess := func() {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				defer GinkgoRecover()
-				reconciler.Process(messages)
-			}()
-		}
 
 		BeforeEach(func() {
 			ctx, cancel = context.WithCancel(context.Background())
 			wg = &sync.WaitGroup{}
-			fakeExec = &fakeExecutor{}
-			reconciler = &Reconciler{
-				GlobalContext: ctx,
-				exec:          fakeExec,
+			resyncer = &fakeResyncer{}
+			consumer = &fakeConsumer{}
+
+			reconciler = &reconcile.Reconciler{
+				Resyncer: resyncer,
+				Consumer: consumer,
 			}
 			messages = make(chan *notifications.Message, 10)
 		})
 
 		Context("when the context is canceled", func() {
 			It("quits", func(done Done) {
-				startProcess()
+				reconciler.Reconcile(ctx, messages, wg)
 				cancel()
 				wg.Wait()
 				close(done)
@@ -70,7 +66,7 @@ var _ = Describe("Reconciler", func() {
 
 		Context("when the messages channel is closed", func() {
 			It("quits", func(done Done) {
-				startProcess()
+				reconciler.Reconcile(ctx, messages, wg)
 				close(messages)
 				wg.Wait()
 				close(done)
@@ -81,7 +77,7 @@ var _ = Describe("Reconciler", func() {
 			It("quits", func(done Done) {
 				messages <- &notifications.Message{Resync: true}
 				close(messages)
-				startProcess()
+				reconciler.Reconcile(ctx, messages, wg)
 				wg.Wait()
 				close(done)
 			}, 0.1)
@@ -90,11 +86,11 @@ var _ = Describe("Reconciler", func() {
 		Context("when notifications are sent", func() {
 			It("applies them in the same order", func(done Done) {
 				ns := []*types.Notification{
-					&types.Notification{
+					{
 						Resource: "/v1/service_brokers",
 						Type:     "CREATED",
 					},
-					&types.Notification{
+					{
 						Resource: "/v1/service_brokers",
 						Type:     "DELETED",
 					},
@@ -103,9 +99,9 @@ var _ = Describe("Reconciler", func() {
 					messages <- &notifications.Message{Notification: n}
 				}
 				close(messages)
-				startProcess()
+				reconciler.Reconcile(ctx, messages, wg)
 				wg.Wait()
-				Expect(fakeExec.notifications).To(Equal(ns))
+				Expect(consumer.consumedNotifications).To(Equal(ns))
 				close(done)
 			})
 		})
@@ -128,54 +124,53 @@ var _ = Describe("Reconciler", func() {
 				messages <- &notifications.Message{Resync: true}
 				messages <- &notifications.Message{Notification: nDeleted}
 				messages <- &notifications.Message{Resync: true}
-				startProcess()
+				reconciler.Reconcile(ctx, messages, wg)
 
 				time.Sleep(50 * time.Millisecond)
-				Expect(fakeExec.getNotifications()).To(Equal([]*types.Notification{nCreated}))
-				Expect(fakeExec.getResyncCount()).To(Equal(1))
+				Expect(consumer.GetConsumedNotifications()).To(Equal([]*types.Notification{nCreated}))
+				Expect(resyncer.GetResyncCount()).To(Equal(1))
 
 				messages <- &notifications.Message{Notification: nModified}
 				close(messages)
 				wg.Wait()
-				Expect(fakeExec.getNotifications()).To(Equal([]*types.Notification{nCreated, nModified}))
+				Expect(consumer.GetConsumedNotifications()).To(Equal([]*types.Notification{nCreated, nModified}))
 				close(done)
 			})
 		})
 	})
 })
 
-type fakeExecutor struct {
-	mutex         sync.Mutex
-	notifications []*types.Notification
-	resyncCount   int
+type fakeResyncer struct {
+	mutex       sync.Mutex
+	resyncCount int
 }
 
-func (f *fakeExecutor) apply(n *types.Notification) {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	f.notifications = append(f.notifications, n)
+func (r *fakeResyncer) Resync(ctx context.Context) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.resyncCount++
 }
 
-func (f *fakeExecutor) resync() {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	f.resyncCount++
+func (r *fakeResyncer) GetResyncCount() int {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	return r.resyncCount
 }
 
-func (f *fakeExecutor) getResyncCount() int {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
-	return f.resyncCount
+type fakeConsumer struct {
+	mutex                 sync.Mutex
+	consumedNotifications []*types.Notification
 }
 
-func (f *fakeExecutor) getNotifications() []*types.Notification {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+func (c *fakeConsumer) Consume(ctx context.Context, notification *types.Notification) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	c.consumedNotifications = append(c.consumedNotifications, notification)
+}
 
-	notifications := make([]*types.Notification, len(f.notifications))
-	copy(notifications, f.notifications)
-	return notifications
+func (c *fakeConsumer) GetConsumedNotifications() []*types.Notification {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	return c.consumedNotifications
 }
