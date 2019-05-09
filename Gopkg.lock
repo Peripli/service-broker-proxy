@@ -425,14 +425,6 @@
   revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:ed615c5430ecabbb0fb7629a182da65ecee6523900ac1ac932520860878ffcad"
-  name = "github.com/robfig/cron"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "b41be1df696709bb6395fe435af20370037c0b4c"
-
-[[projects]]
   digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
   name = "github.com/sergi/go-diff"
   packages = ["diffmatchpatch"]
@@ -773,7 +765,6 @@
     "github.com/onsi/gomega/ghttp",
     "github.com/patrickmn/go-cache",
     "github.com/pkg/errors",
-    "github.com/robfig/cron",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cast",
     "github.com/spf13/pflag",

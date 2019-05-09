@@ -19,8 +19,9 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
@@ -30,7 +31,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/patrickmn/go-cache"
 )
 
 var _ = Describe("Reconcile brokers", func() {
@@ -43,9 +43,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
 		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
 
-		waitGroup *sync.WaitGroup
-
-		reconciliationTask *ReconciliationTask
+		reconciler *Reconciler
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -92,7 +90,6 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformClient.VisibilityReturns(nil)
 
 		visibilityCache := cache.New(5*time.Minute, 10*time.Minute)
-		waitGroup = &sync.WaitGroup{}
 
 		platformClient := struct {
 			*platformfakes.FakeCatalogFetcher
@@ -102,9 +99,9 @@ var _ = Describe("Reconcile brokers", func() {
 			FakeClient:         fakePlatformClient,
 		}
 
-		reconciliationTask = NewTask(
-			context.TODO(), DefaultSettings(), waitGroup, platformClient, fakeSMClient,
-			fakeAppHost, visibilityCache)
+		reconciler = &Reconciler{
+			Resyncer: NewResyncer(DefaultSettings(), platformClient, fakeSMClient, fakeAppHost, visibilityCache),
+		}
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
@@ -445,7 +442,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}),
 	}
 
-	DescribeTable("Run", func(t testCase) {
+	DescribeTable("resync", func(t testCase) {
 		smBrokers, err1 := t.smBrokers()
 		platformBrokers, err2 := t.platformBrokers()
 
@@ -453,7 +450,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
 		t.stubs()
 
-		reconciliationTask.Run()
+		reconciler.Resyncer.Resync(context.TODO())
 
 		if err1 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
