@@ -193,7 +193,7 @@ func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Con
 func (r *resyncJob) brokerNames(brokers []platform.ServiceBroker) []string {
 	names := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		names = append(names, r.options.BrokerPrefix+broker.GUID)
+		names = append(names, r.options.BrokerPrefix+broker.Name)
 	}
 	return names
 }
@@ -262,7 +262,7 @@ func (r *resyncJob) getSMVisibilities(ctx context.Context, smPlansMap map[broker
 			if !found {
 				continue
 			}
-			converted := r.convertSMVisibility(visibility, smPlan, broker.GUID)
+			converted := r.convertSMVisibility(visibility, smPlan, broker.Name)
 			result = append(result, converted...)
 		}
 	}
@@ -271,7 +271,7 @@ func (r *resyncJob) getSMVisibilities(ctx context.Context, smPlansMap map[broker
 	return result, nil
 }
 
-func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerGUID string) []*platform.Visibility {
+func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerNAME string) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -279,7 +279,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
+				PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
 				Labels:             map[string]string{},
 			},
 		}
@@ -291,7 +291,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
+			PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}

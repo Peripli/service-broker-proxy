@@ -140,7 +140,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, broker *platfo
 	logger.WithFields(logBroker(broker)).Info("resyncJob creating proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      r.options.BrokerPrefix + broker.GUID,
+		Name:      r.options.BrokerPrefix + broker.Name,
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
@@ -157,7 +157,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUID str
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		GUID:      brokerGUID,
-		Name:      r.options.BrokerPrefix + broker.GUID,
+		Name:      r.options.BrokerPrefix + broker.Name,
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 

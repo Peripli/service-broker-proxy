@@ -171,13 +171,13 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      brokerPrefix + "smBrokerID1",
+			Name:      brokerPrefix + "smBroker1",
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      brokerPrefix + "smBrokerID2",
+			Name:      brokerPrefix + "smBroker2",
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -201,7 +201,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformBrokerProxy = platform.ServiceBroker{
 			GUID:      platformbrokerNonProxy.GUID,
-			Name:      "sm-proxy-" + smbroker3.ID,
+			Name:      "sm-proxy-" + smbroker3.Name,
 			BrokerURL: fakeAppHost + "/" + smbroker3.ID,
 		}
 	})
