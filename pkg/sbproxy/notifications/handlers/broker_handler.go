@@ -204,7 +204,7 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.Ser
 }
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
-	return bnh.ProxyPrefix + broker.GetID()
+	return bnh.ProxyPrefix + broker.Name
 }
 
 func shouldBeProxified(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {

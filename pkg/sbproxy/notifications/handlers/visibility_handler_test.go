@@ -35,6 +35,7 @@ var _ = Describe("Visibility Handler", func() {
 	var catalogPlanID string
 	var anotherCatalogPlanID string
 	var smBrokerID string
+	var smBrokerName string
 
 	var err error
 
@@ -58,6 +59,8 @@ var _ = Describe("Visibility Handler", func() {
 		ctx = context.TODO()
 
 		smBrokerID = "brokerID"
+		smBrokerName = "brokerName"
+
 		labels = `
 		{
 			"key1": ["value1", "value2"],
@@ -117,10 +120,11 @@ var _ = Describe("Visibility Handler", func() {
 					},
 					"additional": {
 						"broker_id": "%s",
+						"broker_name": "%s",
 						"service_plan": %s
 					}
 				}
-			}`, labels, smBrokerID, catalogPlan)
+			}`, labels, smBrokerID, smBrokerName, catalogPlan)
 		})
 
 		Context("when visibility client is nil", func() {
@@ -217,6 +221,20 @@ var _ = Describe("Visibility Handler", func() {
 			})
 		})
 
+		Context("when the broker name is missing", func() {
+			BeforeEach(func() {
+				visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "new.additional.broker_name")
+				Expect(err).ShouldNot(HaveOccurred())
+			})
+
+			It("does not try to enable or disable access", func() {
+				visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+
+				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+			})
+		})
+
 		Context("when the notification payload is valid", func() {
 			Context("when an error occurs while enabling access", func() {
 				BeforeEach(func() {
@@ -237,7 +255,7 @@ var _ = Describe("Visibility Handler", func() {
 					fakeVisibilityClient.EnableAccessForPlanReturns(nil)
 
 					expectedRequest = &platform.ModifyPlanAccessRequest{
-						BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+						BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 						CatalogPlanID: catalogPlanID,
 						Labels:        unmarshalLabels(labels),
 					}
@@ -292,6 +310,7 @@ var _ = Describe("Visibility Handler", func() {
 					},
 					"additional": {
 						"broker_id": "%s",
+						"broker_name": "%s",
 						"service_plan": %s
 					}
 				},
@@ -304,11 +323,12 @@ var _ = Describe("Visibility Handler", func() {
 					},
 					"additional": {
 						"broker_id": "%s",
+						"broker_name": "%s",
 						"service_plan": %s
 					}
 				},
 				"label_changes": %s
-			}`, labels, smBrokerID, catalogPlan, labels, smBrokerID, catalogPlan, labelChanges)
+			}`, labels, smBrokerID, smBrokerName, catalogPlan, labels, smBrokerID, smBrokerName, catalogPlan, labelChanges)
 		})
 
 		Context("when visibility client is nil", func() {
@@ -428,7 +448,7 @@ var _ = Describe("Visibility Handler", func() {
 					labelsToAdd, labelsToRemove = handlers.LabelChangesToLabels(unmarshalLabelChanges(labelChanges))
 					expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{
 						{
-							BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+							BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 							CatalogPlanID: catalogPlanID,
 							Labels:        labelsToAdd,
 						},
@@ -436,7 +456,7 @@ var _ = Describe("Visibility Handler", func() {
 
 					expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{
 						{
-							BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+							BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 							CatalogPlanID: catalogPlanID,
 							Labels:        labelsToRemove,
 						},
@@ -454,12 +474,12 @@ var _ = Describe("Visibility Handler", func() {
 
 						expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{
 							{
-								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 								CatalogPlanID: anotherCatalogPlanID,
 								Labels:        unmarshalLabels(labels),
 							},
 							{
-								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 								CatalogPlanID: anotherCatalogPlanID,
 								Labels:        labelsToAdd,
 							},
@@ -467,12 +487,12 @@ var _ = Describe("Visibility Handler", func() {
 
 						expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{
 							{
-								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 								CatalogPlanID: catalogPlanID,
 								Labels:        unmarshalLabels(labels),
 							},
 							{
-								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 								CatalogPlanID: anotherCatalogPlanID,
 								Labels:        labelsToRemove,
 							},
@@ -500,10 +520,11 @@ var _ = Describe("Visibility Handler", func() {
 							},
 							"additional": {
 								"broker_id": "%s",
+								"broker_name": "%s",
 								"service_plan": %s
 							}
 						}
-					}`, labels, smBrokerID, catalogPlan)
+					}`, labels, smBrokerID, smBrokerName, catalogPlan)
 		})
 
 		Context("when visibility client is nil", func() {
@@ -565,7 +586,7 @@ var _ = Describe("Visibility Handler", func() {
 					fakeVisibilityClient.DisableAccessForPlanReturns(nil)
 
 					expectedRequest = &platform.ModifyPlanAccessRequest{
-						BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+						BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
 						CatalogPlanID: catalogPlanID,
 						Labels:        unmarshalLabels(labels),
 					}
