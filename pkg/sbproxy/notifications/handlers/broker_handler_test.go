@@ -199,11 +199,11 @@ var _ = Describe("Broker Handler", func() {
 				fakeBrokerClient.GetBrokerByNameReturns(nil, fmt.Errorf("error"))
 			})
 
-			It("does not try to create, update or delete broker", func() {
+			It("does try to create and not update or delete broker", func() {
 				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
-				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
+				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(1))
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 			})

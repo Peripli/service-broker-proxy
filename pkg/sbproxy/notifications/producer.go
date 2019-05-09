@@ -327,7 +327,7 @@ func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) 
 
 	maxPingPeriod, err := time.ParseDuration(header.Get("max_ping_period"))
 	if err != nil {
-		return err
+		return err // TODO: wrap "time: invalid duration"
 	}
 	if maxPingPeriod < p.producerSettings.MinPingPeriod {
 		return fmt.Errorf("invalid max ping period (%s) must be greater than the minimum ping period (%s)", maxPingPeriod, p.producerSettings.MinPingPeriod)
