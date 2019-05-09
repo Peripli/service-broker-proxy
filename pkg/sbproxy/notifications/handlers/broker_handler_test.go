@@ -28,6 +28,7 @@ var _ = Describe("Broker Handler", func() {
 	var brokerURL string
 
 	var smBrokerID string
+	var catalog string
 
 	var err error
 
@@ -37,6 +38,34 @@ var _ = Describe("Broker Handler", func() {
 		smBrokerID = "brokerID"
 		brokerName = "brokerName"
 		brokerURL = "brokerURL"
+
+		catalog = `{
+			"services": [
+				{
+					"name": "another-fake-service",
+					"id": "another-fake-service-id",
+					"description": "test-description",
+					"requires": ["another-route_forwarding"],
+					"tags": ["another-no-sql", "another-relational"],
+					"bindable": true,
+					"instances_retrievable": true,
+					"bindings_retrievable": true,
+					"metadata": {
+					"provider": {
+					"name": "another name"
+				},
+					"listing": {
+					"imageUrl": "http://example.com/cat.gif",
+					"blurb": "another blurb here",
+					"longDescription": "A long time ago, in a another galaxy far far away..."
+				},
+					"displayName": "another Fake Service Broker"
+				},
+					"plan_updateable": true,
+					"plans": []
+				}
+			]
+		}`
 
 		fakeCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
@@ -64,35 +93,9 @@ var _ = Describe("Broker Handler", func() {
 							"key2": ["value3", "value4"]
 						}
 					},
-					"additional": {
-						"services": [
-							{
-    							"name": "another-fake-service",
-    							"id": "another-fake-service-id",
-    							"description": "test-description",
-    							"requires": ["another-route_forwarding"],
-    							"tags": ["another-no-sql", "another-relational"],
-    							"bindable": true,	
-    							"instances_retrievable": true,	
-    							"bindings_retrievable": true,	
-    							"metadata": {	
-      								"provider": {	
-        								"name": "another name"	
-      								},	
-      								"listing": {	
-        								"imageUrl": "http://example.com/cat.gif",	
-        								"blurb": "another blurb here",	
-        								"longDescription": "A long time ago, in a another galaxy far far away..."	
-      								},	
-      								"displayName": "another Fake Service Broker"	
-    							},	
-    							"plan_updateable": true,	
-    							"plans": []
-							}
-						]
-					}
+					"additional": %s
 				}
-			}`, smBrokerID, brokerName, brokerURL)
+			}`, smBrokerID, brokerName, brokerURL, catalog)
 		})
 
 		Context("when unmarshaling notification payload fails", func() {
@@ -300,33 +303,7 @@ var _ = Describe("Broker Handler", func() {
 						"key2": ["value3", "value4"]
 					}
 				},
-				"additional": {
-					"services": [
-						{
-							"name": "another-fake-service",
-							"id": "another-fake-service-id",
-							"description": "test-description",
-							"requires": ["another-route_forwarding"],
-							"tags": ["another-no-sql", "another-relational"],
-							"bindable": true,	
-							"instances_retrievable": true,	
-							"bindings_retrievable": true,	
-							"metadata": {	
-								"provider": {	
-									"name": "another name"	
-								},	
-								"listing": {	
-									"imageUrl": "http://example.com/cat.gif",	
-									"blurb": "another blurb here",	
-									"longDescription": "A long time ago, in a another galaxy far far away..."	
-								},	
-								"displayName": "another Fake Service Broker"	
-							},	
-							"plan_updateable": true,	
-							"plans": []
-						}
-					]
-				}
+				"additional": %s
 			},
 			"new": {
 				"resource": {
@@ -340,40 +317,14 @@ var _ = Describe("Broker Handler", func() {
 						"key3": ["value5", "value6"]
 					}
 				},
-				"additional": {
-					"services": [
-						{
-							"name": "another-fake-service",
-							"id": "another-fake-service-id",
-							"description": "test-description",
-							"requires": ["another-route_forwarding"],
-							"tags": ["another-no-sql", "another-relational"],
-							"bindable": true,	
-							"instances_retrievable": true,	
-							"bindings_retrievable": true,	
-							"metadata": {	
-								"provider": {	
-									"name": "another name"	
-								},	
-								"listing": {	
-									"imageUrl": "http://example.com/cat.gif",	
-									"blurb": "another blurb here",	
-									"longDescription": "A long time ago, in a another galaxy far far away..."	
-								},	
-								"displayName": "another Fake Service Broker"	
-							},	
-							"plan_updateable": true,	
-							"plans": []
-						}
-					]
-				}
+				"additional": %s
 			},
 			"label_changes": {
 				"op": "add",
 				"key": "key3",
 				"values": ["value5", "value6"]
 			}
-		}`, smBrokerID, brokerName, brokerURL, smBrokerID, brokerName, brokerURL)
+		}`, smBrokerID, brokerName, brokerURL, catalog, smBrokerID, brokerName, brokerURL, catalog)
 		})
 
 		Context("when unmarshaling notification payload fails", func() {
@@ -520,35 +471,9 @@ var _ = Describe("Broker Handler", func() {
 						"key2": ["value3", "value4"]
 					}
 				},
-				"additional": {
-					"services": [
-						{
-							"name": "another-fake-service",
-							"id": "another-fake-service-id",
-							"description": "test-description",
-							"requires": ["another-route_forwarding"],
-							"tags": ["another-no-sql", "another-relational"],
-							"bindable": true,	
-							"instances_retrievable": true,	
-							"bindings_retrievable": true,	
-							"metadata": {	
-								"provider": {	
-									"name": "another name"	
-								},	
-								"listing": {	
-									"imageUrl": "http://example.com/cat.gif",	
-									"blurb": "another blurb here",	
-									"longDescription": "A long time ago, in a another galaxy far far away..."	
-								},	
-								"displayName": "another Fake Service Broker"	
-							},	
-							"plan_updateable": true,	
-							"plans": []
-						}
-					]	
-				}
+				"additional": %s
 			}
-		}`, smBrokerID, brokerName, brokerURL)
+		}`, smBrokerID, brokerName, brokerURL, catalog)
 		})
 
 		Context("when unmarshaling notification payload fails", func() {
