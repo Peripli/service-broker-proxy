@@ -206,10 +206,6 @@ func (p *SMProxy) Run() {
 	p.Server.Run(p.ctx)
 }
 
-func (p *SMProxy) runReconciler(messages <-chan *notifications.Message) {
-	defer p.group.Done()
-}
-
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards
 // WaitGroup parameter should be pointer or else the copy won't get notified about .Done() calls
 func waitWithTimeout(ctx context.Context, group *sync.WaitGroup, timeout time.Duration) {
