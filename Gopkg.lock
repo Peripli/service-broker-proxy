@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "notifications"
-  digest = "1:56e18675c34a2f49317c276056b07d10f1c20bad94d835174a344bc39786d368"
+  digest = "1:502b85322288882b55185f4f6924c3c12fd5ac90ef9ba77c2d6c368cf3e512a2"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -12,6 +12,7 @@
     "api/filters/authn/oauth",
     "api/healthcheck",
     "api/info",
+    "api/notifications",
     "api/osb",
     "cf",
     "config",
@@ -31,6 +32,7 @@
     "pkg/util",
     "pkg/util/slice",
     "pkg/web",
+    "pkg/ws",
     "storage",
     "storage/catalog",
     "storage/interceptors",
@@ -40,7 +42,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "e8442809d1728747be8f302801fca089d5aebabb"
+  revision = "2d8eb484f03a8bd8c1380987d33583f58efc357e"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"

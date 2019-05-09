@@ -205,7 +205,9 @@ func (p *SMProxy) Run() {
 	p.reconciler.Reconcile(p.ctx, messages, p.group)
 
 	log.C(p.ctx).Info("Running SBProxy...")
-	p.Server.Run(p.ctx)
+	p.Server.Run(p.ctx, p.group)
+
+	p.group.Wait()
 }
 
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards
