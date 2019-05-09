@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
+	"github.com/Peripli/service-manager/storage/interceptors"
 
 	"github.com/Peripli/service-manager/pkg/log"
 
@@ -20,23 +20,25 @@ type brokerPayload struct {
 }
 
 type brokerWithAdditionalDetails struct {
-	Resource *types.ServiceBroker `json:"resource"`
+	Resource   *types.ServiceBroker          `json:"resource"`
+	Additional interceptors.BrokerAdditional `json:"additional"`
 }
 
-func (bp brokerPayload) Validate(op notifications.OperationType) error {
+// Validate validates the broker payload
+func (bp brokerPayload) Validate(op types.OperationType) error {
 	switch op {
-	case notifications.CREATED:
+	case types.CREATED:
 		if err := bp.New.Validate(); err != nil {
 			return err
 		}
-	case notifications.MODIFIED:
+	case types.MODIFIED:
 		if err := bp.Old.Validate(); err != nil {
 			return err
 		}
 		if err := bp.New.Validate(); err != nil {
 			return err
 		}
-	case notifications.DELETED:
+	case types.DELETED:
 		if err := bp.Old.Validate(); err != nil {
 			return err
 		}
@@ -45,6 +47,7 @@ func (bp brokerPayload) Validate(op notifications.OperationType) error {
 	return nil
 }
 
+// Validate validates the broker and its additional details
 func (bad brokerWithAdditionalDetails) Validate() error {
 	if bad.Resource == nil {
 		return fmt.Errorf("resource in notification payload cannot be nil")
@@ -59,7 +62,7 @@ func (bad brokerWithAdditionalDetails) Validate() error {
 		return fmt.Errorf("broker name cannot be empty")
 	}
 
-	return nil
+	return bad.Additional.Validate()
 }
 
 // BrokerResourceNotificationsHandler handles notifications for brokers
@@ -79,7 +82,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 		return
 	}
 
-	if err := brokerPayload.Validate(notifications.CREATED); err != nil {
+	if err := brokerPayload.Validate(types.CREATED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating broker payload")
 		return
 	}
@@ -125,7 +128,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 		return
 	}
 
-	if err := brokerPayload.Validate(notifications.MODIFIED); err != nil {
+	if err := brokerPayload.Validate(types.MODIFIED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating broker payload")
 		return
 	}
@@ -166,7 +169,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 		return
 	}
 
-	if err := brokerPayload.Validate(notifications.DELETED); err != nil {
+	if err := brokerPayload.Validate(types.DELETED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating broker payload")
 		return
 	}

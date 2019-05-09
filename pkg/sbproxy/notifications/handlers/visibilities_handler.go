@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
+	"github.com/Peripli/service-manager/storage/interceptors"
 
 	"github.com/Peripli/service-manager/pkg/query"
 
@@ -23,29 +23,25 @@ type visibilityPayload struct {
 }
 
 type visibilityWithAdditionalDetails struct {
-	Resource   *types.Visibility `json:"resource"`
-	Additional visibilityDetails `json:"additional"`
+	Resource   *types.Visibility                 `json:"resource"`
+	Additional interceptors.VisibilityAdditional `json:"additional"`
 }
 
-type visibilityDetails struct {
-	BrokerID      string `json:"broker_id"`
-	CatalogPlanID string `json:"catalog_plan_id"`
-}
-
-func (vp visibilityPayload) Validate(op notifications.OperationType) error {
+// Validate validates the visibility payload
+func (vp visibilityPayload) Validate(op types.OperationType) error {
 	switch op {
-	case notifications.CREATED:
+	case types.CREATED:
 		if err := vp.New.Validate(); err != nil {
 			return err
 		}
-	case notifications.MODIFIED:
+	case types.MODIFIED:
 		if err := vp.Old.Validate(); err != nil {
 			return err
 		}
 		if err := vp.New.Validate(); err != nil {
 			return err
 		}
-	case notifications.DELETED:
+	case types.DELETED:
 		if err := vp.Old.Validate(); err != nil {
 			return err
 		}
@@ -54,23 +50,21 @@ func (vp visibilityPayload) Validate(op notifications.OperationType) error {
 	return nil
 }
 
+// Validate validates the visibility details
 func (vwad visibilityWithAdditionalDetails) Validate() error {
 	if vwad.Resource == nil {
 		return fmt.Errorf("resource in notification payload cannot be nil")
 	}
 
+	if vwad.Resource.ID == "" {
+		return fmt.Errorf("visibility id cannot be empty")
+	}
+
+	if vwad.Resource.ServicePlanID == "" {
+		return fmt.Errorf("visibility service plan id cannot be empty")
+	}
+
 	return vwad.Additional.Validate()
-}
-
-func (vd visibilityDetails) Validate() error {
-	if vd.BrokerID == "" {
-		return fmt.Errorf("broker id cannot be empty")
-	}
-	if vd.CatalogPlanID == "" {
-		return fmt.Errorf("catalog plan id cannot be empty")
-	}
-
-	return nil
 }
 
 // VisibilityResourceNotificationsHandler handles notifications for visibilities
@@ -87,26 +81,27 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 		return
 	}
 
-	visibilityPayload := visibilityPayload{}
-	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
+	visPayload := visibilityPayload{}
+
+	if err := json.Unmarshal(payload, &visPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
 		return
 	}
 
-	if err := visibilityPayload.Validate(notifications.CREATED); err != nil {
+	if err := visPayload.Validate(types.CREATED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating visibility payload")
 		return
 	}
 
-	v := visibilityPayload.New
+	v := visPayload.New
 
 	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerID
 	if err := vnh.VisibilityClient.EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    platformBrokerName,
-		CatalogPlanID: v.Additional.CatalogPlanID,
+		CatalogPlanID: v.Additional.ServicePlan.CatalogID,
 		Labels:        v.Resource.GetLabels(),
 	}); err != nil {
-		log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", v.Additional.CatalogPlanID, platformBrokerName)
+		log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", v.Additional.ServicePlan.CatalogID, platformBrokerName)
 		return
 	}
 }
@@ -124,31 +119,53 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 		return
 	}
 
-	if err := visibilityPayload.Validate(notifications.MODIFIED); err != nil {
+	if err := visibilityPayload.Validate(types.MODIFIED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating visibility payload")
 		return
 	}
 
-	v := visibilityPayload.New
+	oldVisibilityPayload := visibilityPayload.Old
+	newVisibilityPayload := visibilityPayload.New
+
+	platformBrokerName := vnh.ProxyPrefix + oldVisibilityPayload.Additional.BrokerID
 
 	labelsToAdd, labelsToRemove := LabelChangesToLabels(visibilityPayload.LabelChanges)
 
-	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerID
+	if oldVisibilityPayload.Additional.ServicePlan.CatalogID != newVisibilityPayload.Additional.ServicePlan.CatalogID {
+		if err := vnh.VisibilityClient.DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
+			BrokerName:    platformBrokerName,
+			CatalogPlanID: oldVisibilityPayload.Additional.ServicePlan.CatalogID,
+			Labels:        oldVisibilityPayload.Resource.GetLabels(),
+		}); err != nil {
+			log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
+			return
+		}
+
+		if err := vnh.VisibilityClient.EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
+			BrokerName:    platformBrokerName,
+			CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
+			Labels:        newVisibilityPayload.Resource.GetLabels(),
+		}); err != nil {
+			log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
+			return
+		}
+	}
+
 	if err := vnh.VisibilityClient.EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    platformBrokerName,
-		CatalogPlanID: v.Additional.CatalogPlanID,
+		CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
 		Labels:        labelsToAdd,
 	}); err != nil {
-		log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", v.Additional.CatalogPlanID, platformBrokerName)
+		log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
 		return
 	}
 
 	if err := vnh.VisibilityClient.DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    platformBrokerName,
-		CatalogPlanID: v.Additional.CatalogPlanID,
+		CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
 		Labels:        labelsToRemove,
 	}); err != nil {
-		log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", v.Additional.CatalogPlanID, platformBrokerName)
+		log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
 		return
 	}
 }
@@ -166,7 +183,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 		return
 	}
 
-	if err := visibilityPayload.Validate(notifications.DELETED); err != nil {
+	if err := visibilityPayload.Validate(types.DELETED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating visibility payload")
 		return
 	}
@@ -176,10 +193,10 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerID
 	if err := vnh.VisibilityClient.DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    platformBrokerName,
-		CatalogPlanID: v.Additional.CatalogPlanID,
+		CatalogPlanID: v.Additional.ServicePlan.CatalogID,
 		Labels:        v.Resource.GetLabels(),
 	}); err != nil {
-		log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", v.Additional.CatalogPlanID, platformBrokerName)
+		log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", v.Additional.ServicePlan.CatalogID, platformBrokerName)
 		return
 	}
 }

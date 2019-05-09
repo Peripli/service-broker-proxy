@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/tidwall/gjson"
+
+	"github.com/tidwall/sjson"
+
 	"github.com/Peripli/service-manager/pkg/query"
 
 	"github.com/Peripli/service-manager/pkg/types"
@@ -27,8 +31,12 @@ var _ = Describe("Visibility Handler", func() {
 	var visibilityNotificationPayload string
 
 	var labels string
+	var catalogPlan string
 	var catalogPlanID string
+	var anotherCatalogPlanID string
 	var smBrokerID string
+
+	var err error
 
 	unmarshalLabels := func(labelsJSON string) types.Labels {
 		labels := types.Labels{}
@@ -55,7 +63,39 @@ var _ = Describe("Visibility Handler", func() {
 			"key1": ["value1", "value2"],
 			"key2": ["value3", "value4"]
 		}`
-		catalogPlanID = "catalogPlanID"
+		catalogPlan = `
+		{
+			"name": "another-plan-name-123",
+			"id": "another-plan-id-123",
+			"catalog_id": "catalog_id-123",
+			"catalog_name": "catalog_name-123",
+			"service_offering_id": "so-id-123",
+			"description": "test-description",
+			"free": true,
+			"metadata": {
+				"max_storage_tb": 5,
+				"costs":[
+					{
+						"amount":{
+							"usd":199.0
+						},
+						"unit":"MONTHLY"
+					},
+					{
+				   		"amount":{
+					  		"usd":0.99
+				   		},
+				   		"unit":"1GB of messages over 20GB"
+					}
+			 	],
+				"bullets": [
+			  	"40 concurrent connections"
+				]
+		  	}
+		}`
+
+		catalogPlanID = gjson.Get(catalogPlan, "catalog_id").Str
+		anotherCatalogPlanID = "anotherCatalogPlanID"
 
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
 
@@ -77,10 +117,10 @@ var _ = Describe("Visibility Handler", func() {
 					},
 					"additional": {
 						"broker_id": "%s",
-						"catalog_plan_id": "%s"
+						"service_plan": %s
 					}
 				}
-			}`, labels, smBrokerID, catalogPlanID)
+			}`, labels, smBrokerID, catalogPlan)
 		})
 
 		Context("when visibility client is nil", func() {
@@ -120,22 +160,10 @@ var _ = Describe("Visibility Handler", func() {
 				})
 			})
 
-			Context("when the broker ID is missing", func() {
+			Context("when the visibility ID is missing", func() {
 				BeforeEach(func() {
-					visibilityNotificationPayload = fmt.Sprintf(`
-					{
-						"new": {
-							"resource": {
-								"id": "visID",
-								"platform_id": "smPlatformID",
-								"service_plan_id": "smServicePlanID",
-								"labels": %s
-							},
-							"additional": {
-								"catalog_plan_id": "%s"
-							}
-						}
-					}`, labels, catalogPlanID)
+					visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "new.resource.id")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to enable or disable access", func() {
@@ -146,22 +174,10 @@ var _ = Describe("Visibility Handler", func() {
 				})
 			})
 
-			Context("when the catalog plan ID is missing", func() {
+			Context("when the visibility plan ID is missing", func() {
 				BeforeEach(func() {
-					visibilityNotificationPayload = fmt.Sprintf(`
-					{
-						"new": {
-							"resource": {
-								"id": "visID",
-								"platform_id": "smPlatformID",
-								"service_plan_id": "smServicePlanID",
-								"labels": %s
-							},
-							"additional": {
-								"broker_id": "%s"
-							}
-						}
-					}`, labels, smBrokerID)
+					visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "new.resource.service_plan_id")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to enable or disable access", func() {
@@ -170,6 +186,34 @@ var _ = Describe("Visibility Handler", func() {
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
 				})
+			})
+
+			Context("when the catalog plan is missing", func() {
+				BeforeEach(func() {
+					visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "new.additional.service_plan")
+					Expect(err).ShouldNot(HaveOccurred())
+				})
+
+				It("does not try to enable or disable access", func() {
+					visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+
+					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+				})
+			})
+		})
+
+		Context("when the broker ID is missing", func() {
+			BeforeEach(func() {
+				visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "new.additional.broker_id")
+				Expect(err).ShouldNot(HaveOccurred())
+			})
+
+			It("does not try to enable or disable access", func() {
+				visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+
+				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
 			})
 		})
 
@@ -248,7 +292,7 @@ var _ = Describe("Visibility Handler", func() {
 					},
 					"additional": {
 						"broker_id": "%s",
-						"catalog_plan_id": "%s"
+						"service_plan": %s
 					}
 				},
 				"new": {
@@ -260,11 +304,11 @@ var _ = Describe("Visibility Handler", func() {
 					},
 					"additional": {
 						"broker_id": "%s",
-						"catalog_plan_id": "%s"
+						"service_plan": %s
 					}
 				},
 				"label_changes": %s
-			}`, labels, smBrokerID, catalogPlanID, labels, smBrokerID, catalogPlanID, labelChanges)
+			}`, labels, smBrokerID, catalogPlan, labels, smBrokerID, catalogPlan, labelChanges)
 		})
 
 		Context("when visibility client is nil", func() {
@@ -292,22 +336,8 @@ var _ = Describe("Visibility Handler", func() {
 
 		Context("when old resource is missing", func() {
 			BeforeEach(func() {
-				visibilityNotificationPayload = fmt.Sprintf(`
-				{
-					"new": {
-						"resource": {
-							"id": "visID",
-							"platform_id": "smPlatformID",
-							"service_plan_id": "smServicePlanID",
-							"labels": %s
-						},
-						"additional": {
-							"broker_id": "%s",
-							"catalog_plan_id": "%s"
-						}
-					},
-					"label_changes": %s
-				}`, labels, smBrokerID, catalogPlanID, labelChanges)
+				visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "old")
+				Expect(err).ShouldNot(HaveOccurred())
 			})
 
 			It("does not try to enable or disable access", func() {
@@ -320,22 +350,8 @@ var _ = Describe("Visibility Handler", func() {
 
 		Context("when new resource is missing", func() {
 			BeforeEach(func() {
-				visibilityNotificationPayload = fmt.Sprintf(`
-				{
-					"old": {
-						"resource": {
-							"id": "visID",
-							"platform_id": "smPlatformID",
-							"service_plan_id": "smServicePlanID",
-							"labels": %s
-						},
-						"additional": {
-							"broker_id": "%s",
-							"catalog_plan_id": "%s"
-						}
-					},
-					"label_changes": %s
-				}`, labels, smBrokerID, catalogPlanID, labelChanges)
+				visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "new")
+				Expect(err).ShouldNot(HaveOccurred())
 			})
 
 			It("does not try to enable or disable access", func() {
@@ -375,19 +391,50 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			Context("when no error occurs", func() {
-				var expectedRequests []*platform.ModifyPlanAccessRequest
+				var expectedEnableAccessRequests []*platform.ModifyPlanAccessRequest
+				var expectedDisableAccessRequests []*platform.ModifyPlanAccessRequest
+				var labelsToAdd types.Labels
+				var labelsToRemove types.Labels
+
+				verifyInvocations := func(enableAccessCount, disableAccessCount int) {
+					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
+					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+
+					visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+
+					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(enableAccessCount))
+					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(disableAccessCount))
+
+					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(len(expectedEnableAccessRequests)))
+					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(len(expectedDisableAccessRequests)))
+
+					for i, expectedRequest := range expectedEnableAccessRequests {
+						callCtx, enableAccessRequest := fakeVisibilityClient.EnableAccessForPlanArgsForCall(i)
+						Expect(callCtx).To(Equal(ctx))
+						Expect(enableAccessRequest).To(Equal(expectedRequest))
+					}
+
+					for i, expectedRequest := range expectedDisableAccessRequests {
+						callCtx, enableAccessRequest := fakeVisibilityClient.DisableAccessForPlanArgsForCall(i)
+						Expect(callCtx).To(Equal(ctx))
+						Expect(enableAccessRequest).To(Equal(expectedRequest))
+					}
+				}
 
 				BeforeEach(func() {
 					fakeVisibilityClient.EnableAccessForPlanReturns(nil)
 					fakeVisibilityClient.DisableAccessForPlanReturns(nil)
 
-					labelsToAdd, labelsToRemove := handlers.LabelChangesToLabels(unmarshalLabelChanges(labelChanges))
-					expectedRequests = []*platform.ModifyPlanAccessRequest{
+					labelsToAdd, labelsToRemove = handlers.LabelChangesToLabels(unmarshalLabelChanges(labelChanges))
+					expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{
 						{
 							BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
 							CatalogPlanID: catalogPlanID,
 							Labels:        labelsToAdd,
 						},
+					}
+
+					expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{
 						{
 							BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
 							CatalogPlanID: catalogPlanID,
@@ -397,21 +444,44 @@ var _ = Describe("Visibility Handler", func() {
 				})
 
 				It("invokes enable and disable access for the plan", func() {
-					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
-					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
+					verifyInvocations(1, 1)
+				})
 
-					visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+				Context("when the catalog plan ID is modified", func() {
+					BeforeEach(func() {
+						visibilityNotificationPayload, err = sjson.Set(visibilityNotificationPayload, "new.additional.service_plan.catalog_id", anotherCatalogPlanID)
+						Expect(err).ShouldNot(HaveOccurred())
 
-					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(1))
-					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(1))
+						expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{
+							{
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								CatalogPlanID: anotherCatalogPlanID,
+								Labels:        unmarshalLabels(labels),
+							},
+							{
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								CatalogPlanID: anotherCatalogPlanID,
+								Labels:        labelsToAdd,
+							},
+						}
 
-					callCtx, enableAccessRequest := fakeVisibilityClient.EnableAccessForPlanArgsForCall(0)
-					Expect(callCtx).To(Equal(ctx))
-					Expect(enableAccessRequest).To(Equal(expectedRequests[0]))
+						expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{
+							{
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								CatalogPlanID: catalogPlanID,
+								Labels:        unmarshalLabels(labels),
+							},
+							{
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerID,
+								CatalogPlanID: anotherCatalogPlanID,
+								Labels:        labelsToRemove,
+							},
+						}
+					})
 
-					callCtx, disableAccessRequest := fakeVisibilityClient.DisableAccessForPlanArgsForCall(0)
-					Expect(callCtx).To(Equal(ctx))
-					Expect(disableAccessRequest).To(Equal(expectedRequests[1]))
+					It("invokes enable access for the new catalog plan id and disable access for the old catalog plan id", func() {
+						verifyInvocations(2, 2)
+					})
 				})
 			})
 		})
@@ -430,10 +500,10 @@ var _ = Describe("Visibility Handler", func() {
 							},
 							"additional": {
 								"broker_id": "%s",
-								"catalog_plan_id": "%s"
+								"service_plan": %s
 							}
 						}
-					}`, labels, smBrokerID, catalogPlanID)
+					}`, labels, smBrokerID, catalogPlan)
 		})
 
 		Context("when visibility client is nil", func() {
@@ -462,7 +532,8 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when notification payload is invalid", func() {
 			Context("when old resource is missing", func() {
 				BeforeEach(func() {
-					visibilityNotificationPayload = `{"randomKey":"randomValue"}`
+					visibilityNotificationPayload, err = sjson.Delete(visibilityNotificationPayload, "old")
+					Expect(err).ShouldNot(HaveOccurred())
 				})
 
 				It("does not try to enable or disable access", func() {
