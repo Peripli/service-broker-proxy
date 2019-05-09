@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "notifications"
-  digest = "1:2683cbd06764d993fe56b3ed706bc592ad00df8e8450b488fcaf470dde2ab6dd"
+  digest = "1:56e18675c34a2f49317c276056b07d10f1c20bad94d835174a344bc39786d368"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "f4700a0a76e28d6b99c917f563fb9220d3db1a07"
+  revision = "e8442809d1728747be8f302801fca089d5aebabb"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -425,6 +425,14 @@
   revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:ed615c5430ecabbb0fb7629a182da65ecee6523900ac1ac932520860878ffcad"
+  name = "github.com/robfig/cron"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "b41be1df696709bb6395fe435af20370037c0b4c"
+
+[[projects]]
   digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
   name = "github.com/sergi/go-diff"
   packages = ["diffmatchpatch"]
@@ -752,7 +760,6 @@
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
-    "github.com/Peripli/service-manager/storage",
     "github.com/Peripli/service-manager/test/common",
     "github.com/Peripli/service-manager/test/testutil",
     "github.com/fatih/structs",
@@ -765,6 +772,7 @@
     "github.com/onsi/gomega/ghttp",
     "github.com/patrickmn/go-cache",
     "github.com/pkg/errors",
+    "github.com/robfig/cron",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cast",
     "github.com/spf13/pflag",
