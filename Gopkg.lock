@@ -760,6 +760,7 @@
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/web",
+    "github.com/Peripli/service-manager/storage/interceptors",
     "github.com/Peripli/service-manager/test/common",
     "github.com/Peripli/service-manager/test/testutil",
     "github.com/fatih/structs",
@@ -776,6 +777,8 @@
     "github.com/sirupsen/logrus",
     "github.com/spf13/cast",
     "github.com/spf13/pflag",
+    "github.com/tidwall/gjson",
+    "github.com/tidwall/sjson",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

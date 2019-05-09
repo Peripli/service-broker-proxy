@@ -81,13 +81,13 @@ func NewTask(ctx context.Context,
 // Process reconciles the desired state with the current state
 func (r *ReconciliationTask) Process(resyncChan chan struct{}, notificationsChan chan *types.Notification) {
 	consumer := &notifications.Consumer{
-		Handlers: map[string]notifications.ResourceNotificationHandler{
-			"/v1/service_brokers": &handlers.BrokerResourceNotificationsHandler{
+		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
+			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
 				BrokerClient: r.platformClient.Broker(),
 				ProxyPrefix:  r.options.BrokerPrefix,
 				ProxyPath:    r.proxyPath,
 			},
-			"/v1/visibilities": &handlers.VisibilityResourceNotificationsHandler{
+			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: r.platformClient.Visibility(),
 				ProxyPrefix:      r.options.BrokerPrefix,
 			},
