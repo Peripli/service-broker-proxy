@@ -2,8 +2,8 @@
 
 
 [[projects]]
-  branch = "notifications-create"
-  digest = "1:d1bb2a50ad8a30b76c8d71dd3b268f81f63556ecbb22dcb5e71a010f92179184"
+  branch = "notifications"
+  digest = "1:56e18675c34a2f49317c276056b07d10f1c20bad94d835174a344bc39786d368"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "327634a9389f1f34410ecef49e9852e620d30f3a"
+  revision = "e8442809d1728747be8f302801fca089d5aebabb"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -646,11 +646,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f42e547cbcaa2cf6548b0bb27a350f75db23340d062877fb534c06eb57934e8c"
+  digest = "1:4fc43e824f7e546353de724c00507b1d9c0bab56344b10c2330a97f166a0fba7"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "12bbe5a7a5209180b72cc7e3ed9da40442fe3246"
+  revision = "2d0786266e9cd132da844109aa05016f11f3df28"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
