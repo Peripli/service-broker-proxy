@@ -143,7 +143,7 @@ func (r *ReconciliationTask) createBrokerRegistration(broker *platform.ServiceBr
 	logger.WithFields(logBroker(broker)).Info("ReconciliationTask task attempting to create proxy for broker in platform...")
 
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      r.options.BrokerPrefix + broker.GUID,
+		Name:      r.options.BrokerPrefix + broker.Name,
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 
@@ -160,7 +160,7 @@ func (r *ReconciliationTask) updateBrokerRegistration(brokerGUID string, broker 
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		GUID:      brokerGUID,
-		Name:      r.options.BrokerPrefix + broker.GUID,
+		Name:      r.options.BrokerPrefix + broker.Name,
 		BrokerURL: r.proxyPath + "/" + broker.GUID,
 	}
 

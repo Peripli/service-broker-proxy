@@ -184,7 +184,7 @@ func (r *ReconciliationTask) getPlatformVisibilitiesByBrokersFromPlatform(broker
 func (r *ReconciliationTask) brokerNames(brokers []platform.ServiceBroker) []string {
 	names := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		names = append(names, r.options.BrokerPrefix+broker.GUID)
+		names = append(names, r.options.BrokerPrefix+broker.Name)
 	}
 	return names
 }
@@ -253,7 +253,7 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 			if !found {
 				continue
 			}
-			converted := r.convertSMVisibility(visibility, smPlan, broker.GUID)
+			converted := r.convertSMVisibility(visibility, smPlan, broker.Name)
 			result = append(result, converted...)
 		}
 	}
@@ -262,7 +262,7 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 	return result, nil
 }
 
-func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerGUID string) []*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerNAME string) []*platform.ServiceVisibilityEntity {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -270,7 +270,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
+				PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
 				Labels:             map[string]string{},
 			},
 		}
@@ -282,7 +282,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 		result = append(result, &platform.ServiceVisibilityEntity{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.options.BrokerPrefix + brokerGUID,
+			PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
