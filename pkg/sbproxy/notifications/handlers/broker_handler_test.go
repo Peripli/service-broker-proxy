@@ -221,7 +221,7 @@ var _ = Describe("Broker Handler", func() {
 
 				expectedUpdateBrokerRequest = &platform.UpdateServiceBrokerRequest{
 					GUID:      smBrokerID,
-					Name:      brokerHandler.ProxyPrefix + smBrokerID,
+					Name:      brokerHandler.ProxyPrefix + brokerName,
 					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 				}
 
@@ -265,7 +265,7 @@ var _ = Describe("Broker Handler", func() {
 					}, nil)
 
 					expectedCreateBrokerRequest = &platform.CreateServiceBrokerRequest{
-						Name:      brokerHandler.ProxyPrefix + smBrokerID,
+						Name:      brokerHandler.ProxyPrefix + brokerName,
 						BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 					}
 
@@ -433,7 +433,7 @@ var _ = Describe("Broker Handler", func() {
 				BeforeEach(func() {
 					expectedUpdateBrokerRequest = &platform.ServiceBroker{
 						GUID:      smBrokerID,
-						Name:      brokerHandler.ProxyPrefix + smBrokerID,
+						Name:      brokerHandler.ProxyPrefix + brokerName,
 						BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 					}
 
@@ -570,7 +570,7 @@ var _ = Describe("Broker Handler", func() {
 				BeforeEach(func() {
 					expectedDeleteBrokerRequest = &platform.DeleteServiceBrokerRequest{
 						GUID: smBrokerID,
-						Name: brokerHandler.ProxyPrefix + smBrokerID,
+						Name: brokerHandler.ProxyPrefix + brokerName,
 					}
 
 					fakeBrokerClient.DeleteBrokerReturns(nil)
