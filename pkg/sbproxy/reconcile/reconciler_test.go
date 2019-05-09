@@ -19,7 +19,6 @@ package reconcile_test
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
@@ -126,8 +125,7 @@ var _ = Describe("Reconciler", func() {
 				messages <- &notifications.Message{Resync: true}
 				reconciler.Reconcile(ctx, messages, wg)
 
-				time.Sleep(50 * time.Millisecond)
-				Expect(consumer.GetConsumedNotifications()).To(Equal([]*types.Notification{nCreated}))
+				Eventually(consumer.GetConsumedNotifications).Should(Equal([]*types.Notification{nCreated}))
 				Expect(resyncer.GetResyncCount()).To(Equal(1))
 
 				messages <- &notifications.Message{Notification: nModified}
