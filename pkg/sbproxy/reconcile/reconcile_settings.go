@@ -23,7 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const defaultProxyBrokerPrefix = "sm-"
+const DefaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
 type Settings struct {
@@ -43,7 +43,7 @@ func DefaultSettings() *Settings {
 		URL:             "",
 		Username:        "",
 		Password:        "",
-		BrokerPrefix:    defaultProxyBrokerPrefix,
+		BrokerPrefix:    DefaultProxyBrokerPrefix,
 		VisibilityCache: true,
 		CacheExpiration: 2 * time.Hour,
 	}
