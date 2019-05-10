@@ -33,6 +33,7 @@ func (c *Consumer) Consume(ctx context.Context, n *types.Notification) {
 
 	if !found {
 		log.C(ctx).Warnf("No notification handler found for notification for resource %s. Ignoring notification...", n.Resource)
+		return
 	}
 
 	correlationID, err := uuid.NewV4()
