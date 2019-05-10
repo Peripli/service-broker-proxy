@@ -42,7 +42,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "3489923534c263067f63e87481363a6315e73902"
+  revision = "e492b82798aae17b49f543b2ef935c98d77dbff2"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -743,6 +743,7 @@
     "github.com/Peripli/service-manager/api/filters",
     "github.com/Peripli/service-manager/api/filters/authn/basic",
     "github.com/Peripli/service-manager/api/healthcheck",
+    "github.com/Peripli/service-manager/api/notifications",
     "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
     "github.com/Peripli/service-manager/pkg/env/envfakes",

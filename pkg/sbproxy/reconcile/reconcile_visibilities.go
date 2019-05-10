@@ -271,7 +271,7 @@ func (r *resyncJob) getSMVisibilities(ctx context.Context, smPlansMap map[broker
 	return result, nil
 }
 
-func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerNAME string) []*platform.Visibility {
+func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerName string) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -279,7 +279,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
+				PlatformBrokerName: r.options.BrokerPrefix + brokerName,
 				Labels:             map[string]string{},
 			},
 		}
@@ -291,7 +291,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
+			PlatformBrokerName: r.options.BrokerPrefix + brokerName,
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
