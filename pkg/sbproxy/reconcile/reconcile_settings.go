@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DefaultProxyBrokerPrefix prefix for brokers registered by the proxy
 const DefaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
