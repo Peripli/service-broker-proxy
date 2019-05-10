@@ -93,11 +93,11 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	brokerProxyPath := bnh.brokerProxyPath(brokerToCreate.Resource)
 	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
 
-	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToCreate.Resource.Name)
 
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToCreate.Resource.Name)
 	if err != nil {
-		log.C(ctx).Warnf("Could not find platform broker in platform with name %s: %s", brokerProxyName, err)
+		log.C(ctx).Warnf("Could not find platform broker in platform with name %s: %s", brokerToCreate.Resource.Name, err)
 	}
 
 	if existingBroker == nil {
