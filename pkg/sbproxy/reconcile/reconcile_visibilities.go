@@ -262,7 +262,7 @@ func (r *ReconciliationTask) getSMVisibilities(smPlansMap map[brokerPlanKey]*typ
 	return result, nil
 }
 
-func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerNAME string) []*platform.ServiceVisibilityEntity {
+func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerName string) []*platform.ServiceVisibilityEntity {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -270,7 +270,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
+				PlatformBrokerName: r.options.BrokerPrefix + brokerName,
 				Labels:             map[string]string{},
 			},
 		}
@@ -282,7 +282,7 @@ func (r *ReconciliationTask) convertSMVisibility(visibility *types.Visibility, s
 		result = append(result, &platform.ServiceVisibilityEntity{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.options.BrokerPrefix + brokerNAME,
+			PlatformBrokerName: r.options.BrokerPrefix + brokerName,
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}

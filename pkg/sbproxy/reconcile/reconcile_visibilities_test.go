@@ -36,7 +36,7 @@ import (
 
 var _ = Describe("Reconcile visibilities", func() {
 	const fakeAppHost = "https://smproxy.com"
-	const brokerPrefix = "sm-proxy-"
+	const brokerPrefix = "sm-"
 
 	var (
 		fakeSMClient *smfakes.FakeClient

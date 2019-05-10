@@ -23,7 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const defaultProxyBrokerPrefix = "sm-proxy-"
+const defaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
 type Settings struct {
