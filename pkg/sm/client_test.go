@@ -59,14 +59,14 @@ var _ = Describe("Client", func() {
 
 		BeforeEach(func() {
 			settings = &Settings{
-				User:              "admin",
-				Password:          "admin",
-				URL:               "http://example.com",
-				OSBAPIPath:        "/osb",
-				RequestTimeout:    5,
-				ResyncPeriod:      5,
-				SkipSSLValidation: false,
-				Transport:         nil,
+				User:                 "admin",
+				Password:             "admin",
+				URL:                  "http://example.com",
+				OSBAPIPath:           "/osb",
+				NotificationsAPIPath: "/v1/notifications",
+				RequestTimeout:       5,
+				SkipSSLValidation:    false,
+				Transport:            nil,
 			}
 		})
 
@@ -113,14 +113,14 @@ var _ = Describe("Client", func() {
 
 	newClient := func(t *testCase) *ServiceManagerClient {
 		client, err := NewClient(&Settings{
-			User:              "admin",
-			Password:          "admin",
-			URL:               "http://example.com",
-			OSBAPIPath:        "/osb",
-			RequestTimeout:    2 * time.Second,
-			ResyncPeriod:      5 * time.Second,
-			SkipSSLValidation: false,
-			Transport:         httpClient(t.reaction, t.expectations),
+			User:                 "admin",
+			Password:             "admin",
+			URL:                  "http://example.com",
+			OSBAPIPath:           "/osb",
+			NotificationsAPIPath: "/v1/notifications",
+			RequestTimeout:       2 * time.Second,
+			SkipSSLValidation:    false,
+			Transport:            httpClient(t.reaction, t.expectations),
 		})
 		Expect(err).ShouldNot(HaveOccurred())
 		return client

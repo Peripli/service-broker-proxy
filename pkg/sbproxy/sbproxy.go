@@ -1,7 +1,31 @@
+/*
+ * Copyright 2019 The Service Manager Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package sbproxy
 
 import (
 	"sync"
+
+	"github.com/Peripli/service-manager/pkg/types"
+
+	"github.com/patrickmn/go-cache"
+
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
+
+	"fmt"
 
 	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
@@ -10,15 +34,13 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/util"
-	cache "github.com/patrickmn/go-cache"
-
-	"fmt"
 
 	"context"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/api/filters"
@@ -26,7 +48,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/env"
 	"github.com/Peripli/service-manager/pkg/server"
 	"github.com/Peripli/service-manager/pkg/web"
-	"github.com/robfig/cron"
 	"github.com/spf13/pflag"
 )
 
@@ -47,20 +68,22 @@ const (
 // controllers before running SMProxy.
 type SMProxyBuilder struct {
 	*web.API
-	*cron.Cron
 
-	ctx   context.Context
-	cfg   *Settings
-	group *sync.WaitGroup
+	ctx                   context.Context
+	cfg                   *Settings
+	group                 *sync.WaitGroup
+	reconciler            *reconcile.Reconciler
+	notificationsProducer *notifications.Producer
 }
 
 // SMProxy  struct
 type SMProxy struct {
 	*server.Server
 
-	scheduler *cron.Cron
-	ctx       context.Context
-	group     *sync.WaitGroup
+	ctx                   context.Context
+	group                 *sync.WaitGroup
+	reconciler            *reconcile.Reconciler
+	notificationsProducer *notifications.Producer
 }
 
 // DefaultEnv creates a default environment that can be used to boot up a Service Broker proxy
@@ -117,24 +140,38 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 		panic(err)
 	}
 
-	var group sync.WaitGroup
-	c := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
-	regJob := reconcile.NewTask(ctx, cfg.Reconcile, &group, platformClient, smClient, cfg.Reconcile.URL+APIPrefix, c)
-
-	resyncSchedule := "@every " + cfg.Sm.ResyncPeriod.String()
-	log.C(ctx).Info("Brokers and Access resync schedule: ", resyncSchedule)
-
-	cronScheduler := cron.New()
-	if err := cronScheduler.AddJob(resyncSchedule, regJob); err != nil {
+	notificationsProducer, err := notifications.NewProducer(cfg.Producer, cfg.Sm)
+	if err != nil {
 		panic(err)
 	}
-
+	cache := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
+	proxyPath := cfg.Reconcile.URL + APIPrefix
+	resyncer := reconcile.NewResyncer(cfg.Reconcile, platformClient, smClient, proxyPath, cache)
+	consumer := &notifications.Consumer{
+		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
+			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
+				BrokerClient: platformClient.Broker(),
+				ProxyPrefix:  cfg.Reconcile.BrokerPrefix,
+				ProxyPath:    proxyPath,
+			},
+			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
+				VisibilityClient: platformClient.Visibility(),
+				ProxyPrefix:      cfg.Reconcile.BrokerPrefix,
+			},
+		},
+	}
+	reconciler := &reconcile.Reconciler{
+		Resyncer: resyncer,
+		Consumer: consumer,
+	}
+	var group sync.WaitGroup
 	return &SMProxyBuilder{
-		API:   api,
-		Cron:  cronScheduler,
-		ctx:   ctx,
-		cfg:   cfg,
-		group: &group,
+		API:                   api,
+		ctx:                   ctx,
+		cfg:                   cfg,
+		group:                 &group,
+		reconciler:            reconciler,
+		notificationsProducer: notificationsProducer,
 	}
 }
 
@@ -146,10 +183,11 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 	srv.Use(filters.NewRecoveryMiddleware())
 
 	return &SMProxy{
-		Server:    srv,
-		scheduler: smb.Cron,
-		ctx:       smb.ctx,
-		group:     smb.group,
+		Server:                srv,
+		ctx:                   smb.ctx,
+		group:                 smb.group,
+		reconciler:            smb.reconciler,
+		notificationsProducer: smb.notificationsProducer,
 	}
 }
 
@@ -162,12 +200,14 @@ func (smb *SMProxyBuilder) installHealth() {
 // Run starts the proxy
 func (p *SMProxy) Run() {
 	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
-	p.scheduler.Start()
-	defer p.scheduler.Stop()
+
+	messages := p.notificationsProducer.Start(p.ctx, p.group)
+	p.reconciler.Reconcile(p.ctx, messages, p.group)
 
 	log.C(p.ctx).Info("Running SBProxy...")
+	p.Server.Run(p.ctx, p.group)
 
-	p.Server.Run(p.ctx)
+	p.group.Wait()
 }
 
 // waitWithTimeout waits for a WaitGroup to finish for a certain duration and times out afterwards
@@ -180,7 +220,7 @@ func waitWithTimeout(ctx context.Context, group *sync.WaitGroup, timeout time.Du
 	}()
 	select {
 	case <-c:
-		log.C(ctx).Debug(fmt.Sprintf("Timeout WaitGroup %+v finished successfully", group))
+		log.C(ctx).Debugf("Timeout WaitGroup %+v finished successfully", group)
 	case <-time.After(timeout):
 		log.C(ctx).Fatal("Shutdown took more than ", timeout)
 		close(c)

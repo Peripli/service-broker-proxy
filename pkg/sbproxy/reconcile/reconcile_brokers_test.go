@@ -19,8 +19,9 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
@@ -30,12 +31,10 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/patrickmn/go-cache"
 )
 
 var _ = Describe("Reconcile brokers", func() {
 	const fakeAppHost = "https://smproxy.com"
-	const brokerPrefix = "sm-proxy-"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
@@ -43,9 +42,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
 		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
 
-		waitGroup *sync.WaitGroup
-
-		reconciliationTask *ReconciliationTask
+		reconciler *Reconciler
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -92,7 +89,6 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformClient.VisibilityReturns(nil)
 
 		visibilityCache := cache.New(5*time.Minute, 10*time.Minute)
-		waitGroup = &sync.WaitGroup{}
 
 		platformClient := struct {
 			*platformfakes.FakeCatalogFetcher
@@ -102,9 +98,9 @@ var _ = Describe("Reconcile brokers", func() {
 			FakeClient:         fakePlatformClient,
 		}
 
-		reconciliationTask = NewTask(
-			context.TODO(), DefaultSettings(), waitGroup, platformClient, fakeSMClient,
-			fakeAppHost, visibilityCache)
+		reconciler = &Reconciler{
+			Resyncer: NewResyncer(DefaultSettings(), platformClient, fakeSMClient, fakeAppHost, visibilityCache),
+		}
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
@@ -174,13 +170,13 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      brokerPrefix + "smBroker1",
+			Name:      DefaultProxyBrokerPrefix + "smBroker1",
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      brokerPrefix + "smBroker2",
+			Name:      DefaultProxyBrokerPrefix + "smBroker2",
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -200,12 +196,11 @@ var _ = Describe("Reconcile brokers", func() {
 			ID:        "smBrokerID3",
 			Name:      platformbrokerNonProxy.Name,
 			BrokerURL: platformbrokerNonProxy.BrokerURL,
-			// ServiceOfferings: []types.ServiceOffering{},
 		}
 
 		platformBrokerProxy = platform.ServiceBroker{
 			GUID:      platformbrokerNonProxy.GUID,
-			Name:      "sm-proxy-" + smbroker3.Name,
+			Name:      DefaultProxyBrokerPrefix + smbroker3.Name,
 			BrokerURL: fakeAppHost + "/" + smbroker3.ID,
 		}
 	})
@@ -347,7 +342,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is in SM and is also in platform it should be catalog refetched and access enabled", testCase{
+		Entry("When broker is in SM and is also in platform it should be catalog refetched", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 			},
@@ -417,7 +412,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker that is registered in SM is also registered in the platform, but not as a proxy, it should be proxified/updated", testCase{
+		Entry("When broker is registered in the platform and SM, but not yet proxified, it should be updated", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker()
@@ -446,7 +441,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}),
 	}
 
-	DescribeTable("Run", func(t testCase) {
+	DescribeTable("resync", func(t testCase) {
 		smBrokers, err1 := t.smBrokers()
 		platformBrokers, err2 := t.platformBrokers()
 
@@ -454,7 +449,7 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.GetBrokersReturns(platformBrokers, err2)
 		t.stubs()
 
-		reconciliationTask.Run()
+		reconciler.Resyncer.Resync(context.TODO())
 
 		if err1 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))

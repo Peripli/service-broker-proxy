@@ -18,8 +18,6 @@ package reconcile
 
 import (
 	"context"
-	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -36,7 +34,6 @@ import (
 
 var _ = Describe("Reconcile visibilities", func() {
 	const fakeAppHost = "https://smproxy.com"
-	const brokerPrefix = "sm-proxy-"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
@@ -48,9 +45,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		visibilityCache *cache.Cache
 
-		waitGroup *sync.WaitGroup
-
-		reconciliationTask *ReconciliationTask
+		reconciler *Reconciler
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -115,20 +110,41 @@ var _ = Describe("Reconcile visibilities", func() {
 		return result, nil
 	}
 
-	checkAccessArguments := func(data json.RawMessage, servicePlanGUID, platformBrokerName string, visibilities []*platform.ServiceVisibilityEntity) {
-		var labels map[string]string
-		err := json.Unmarshal(data, &labels)
-		Expect(err).To(Not(HaveOccurred()))
-		if labels == nil {
-			labels = map[string]string{}
+	flattenLabelsMap := func(labels types.Labels) []map[string]string {
+		m := make([]map[string]string, len(labels), len(labels))
+		for k, values := range labels {
+			for i, value := range values {
+				if m[i] == nil {
+					m[i] = make(map[string]string)
+				}
+				m[i][k] = value
+			}
 		}
-		visibility := &platform.ServiceVisibilityEntity{
-			Public:             len(labels) == 0,
-			CatalogPlanID:      servicePlanGUID,
-			Labels:             labels,
-			PlatformBrokerName: platformBrokerName,
+
+		return m
+	}
+
+	checkAccessArguments := func(data types.Labels, servicePlanGUID, platformBrokerName string, visibilities []*platform.Visibility) {
+		maps := flattenLabelsMap(data)
+		if len(maps) == 0 {
+			visibility := &platform.Visibility{
+				Public:             true,
+				CatalogPlanID:      servicePlanGUID,
+				Labels:             map[string]string{},
+				PlatformBrokerName: platformBrokerName,
+			}
+			Expect(visibilities).To(ContainElement(visibility))
+		} else {
+			for _, m := range maps {
+				visibility := &platform.Visibility{
+					Public:             false,
+					CatalogPlanID:      servicePlanGUID,
+					Labels:             m,
+					PlatformBrokerName: platformBrokerName,
+				}
+				Expect(visibilities).To(ContainElement(visibility))
+			}
 		}
-		Expect(visibilities).To(ContainElement(visibility))
 	}
 
 	setFakeBrokersClients := func() {
@@ -151,15 +167,14 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
 
 		visibilityCache = cache.New(5*time.Minute, 10*time.Minute)
-		waitGroup = &sync.WaitGroup{}
 
 		fakePlatformClient.BrokerReturns(fakePlatformBrokerClient)
 		fakePlatformClient.VisibilityReturns(fakeVisibilityClient)
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 
-		reconciliationTask = NewTask(
-			context.TODO(), DefaultSettings(), waitGroup, fakePlatformClient, fakeSMClient,
-			fakeAppHost, visibilityCache)
+		reconciler = &Reconciler{
+			Resyncer: NewResyncer(DefaultSettings(), fakePlatformClient, fakeSMClient, fakeAppHost, visibilityCache),
+		}
 
 		smPlan1 = &types.ServicePlan{
 			Base: types.Base{
@@ -274,13 +289,13 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      brokerPrefix + "smBroker1",
+			Name:      DefaultProxyBrokerPrefix + "smBroker1",
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      brokerPrefix + "smBroker2",
+			Name:      DefaultProxyBrokerPrefix + "smBroker2",
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -292,26 +307,25 @@ var _ = Describe("Reconcile visibilities", func() {
 	})
 
 	type expectations struct {
-		enablePlanVisibilityCalledFor  []*platform.ServiceVisibilityEntity
-		disablePlanVisibilityCalledFor []*platform.ServiceVisibilityEntity
+		enablePlanVisibilityCalledFor  []*platform.Visibility
+		disablePlanVisibilityCalledFor []*platform.Visibility
 	}
 
 	type testCase struct {
 		stubs func()
 
-		platformVisibilities    func() ([]*platform.ServiceVisibilityEntity, error)
-		smVisibilities          func() ([]*types.Visibility, error)
-		smPlans                 func() ([]*types.ServicePlan, error)
-		smOfferings             func() ([]*types.ServiceOffering, error)
-		convertedSMVisibilities func() []*platform.ServiceVisibilityEntity
+		platformVisibilities func() ([]*platform.Visibility, error)
+		smVisibilities       func() ([]*types.Visibility, error)
+		smPlans              func() ([]*types.ServicePlan, error)
+		smOfferings          func() ([]*types.ServiceOffering, error)
 
 		expectations func() expectations
 	}
 
 	entries := []TableEntry{
 		Entry("When no visibilities are present in platform and SM - should not enable access for plan", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{}, nil
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{}, nil
 			},
 			smVisibilities: func() ([]*types.Visibility, error) {
 				return []*types.Visibility{}, nil
@@ -323,8 +337,8 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When no visibilities are present in platform and there are some in SM - should reconcile", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{}, nil
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{}, nil
 			},
 			smVisibilities: func() ([]*types.Visibility, error) {
 				return []*types.Visibility{
@@ -343,35 +357,35 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans:     stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					enablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
 						},
 						{
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
 						},
 					},
-					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{},
+					disablePlanVisibilityCalledFor: []*platform.Visibility{},
 				}
 			},
 		}),
 
 		Entry("When visibilities in platform and in SM are the same - should do nothing", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value0"},
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value1"},
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 				}, nil
 			},
@@ -391,24 +405,24 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans: stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					enablePlanVisibilityCalledFor:  []*platform.ServiceVisibilityEntity{},
-					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{},
+					enablePlanVisibilityCalledFor:  []*platform.Visibility{},
+					disablePlanVisibilityCalledFor: []*platform.Visibility{},
 				}
 			},
 		}),
 
 		Entry("When visibilities in platform and in SM are not the same - should reconcile", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value2"},
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value3"},
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 				}, nil
 			},
@@ -428,28 +442,28 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans: stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					enablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
-					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					disablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value2"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value3"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
 				}
@@ -460,8 +474,8 @@ var _ = Describe("Reconcile visibilities", func() {
 			stubs: func() {
 				fakeVisibilityClient.EnableAccessForPlanReturnsOnCall(0, errors.New("Expected"))
 			},
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{}, nil
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{}, nil
 			},
 			smVisibilities: func() ([]*types.Visibility, error) {
 				return []*types.Visibility{
@@ -488,16 +502,16 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans: stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					enablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
 				}
@@ -508,17 +522,17 @@ var _ = Describe("Reconcile visibilities", func() {
 			stubs: func() {
 				fakeVisibilityClient.DisableAccessForPlanReturnsOnCall(0, errors.New("Expected"))
 			},
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value0"},
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 						Labels:             map[string]string{"key": "value1"},
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 				}, nil
 			},
@@ -528,16 +542,16 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans: stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					disablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
 				}
@@ -545,8 +559,8 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When visibility from SM doesn't have scope label and scope is enabled - should not enable visibility", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{}, nil
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{}, nil
 			},
 			smVisibilities: func() ([]*types.Visibility, error) {
 				return []*types.Visibility{
@@ -571,8 +585,8 @@ var _ = Describe("Reconcile visibilities", func() {
 			stubs: func() {
 				fakeVisibilityClient.VisibilityScopeLabelKeyReturns("")
 			},
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{}, nil
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{}, nil
 			},
 			smVisibilities: func() ([]*types.Visibility, error) {
 				return []*types.Visibility{
@@ -590,12 +604,12 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans: stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					enablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							Public:             true,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
 				}
@@ -603,12 +617,12 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When visibilities in platform and in SM are both public - should reconcile", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{
 					{
 						Public:             true,
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 				}, nil
 			},
@@ -622,20 +636,20 @@ var _ = Describe("Reconcile visibilities", func() {
 			smPlans: stubGetSMPlans,
 			expectations: func() expectations {
 				return expectations{
-					enablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					enablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							Public:             true,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
-					disablePlanVisibilityCalledFor: []*platform.ServiceVisibilityEntity{
+					disablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							Public:             true,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:             map[string]string{},
-							PlatformBrokerName: brokerPrefix + smbroker1.Name,
+							PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 						},
 					},
 				}
@@ -643,12 +657,12 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When plans from SM could not be fetched - should not reconcile", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{
 					{
 						Public:             true,
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 				}, nil
 			},
@@ -667,12 +681,12 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When visibilities from SM cannot be fetched - no reconcilation is done", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
-				return []*platform.ServiceVisibilityEntity{
+			platformVisibilities: func() ([]*platform.Visibility, error) {
+				return []*platform.Visibility{
 					{
 						Public:             true,
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						PlatformBrokerName: brokerPrefix + smbroker1.Name,
+						PlatformBrokerName: DefaultProxyBrokerPrefix + smbroker1.Name,
 					},
 				}, nil
 			},
@@ -686,7 +700,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When visibilities from platform cannot be fetched - no reconcilation is done", testCase{
-			platformVisibilities: func() ([]*platform.ServiceVisibilityEntity, error) {
+			platformVisibilities: func() ([]*platform.Visibility, error) {
 				return nil, errors.New("Expected")
 			},
 			smVisibilities: func() ([]*types.Visibility, error) {
@@ -703,7 +717,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 	}
 
-	DescribeTable("Run", func(t testCase) {
+	DescribeTable("Resync", func(t testCase) {
 		setFakeBrokersClients()
 
 		fakeSMClient.GetVisibilitiesReturns(t.smVisibilities())
@@ -723,7 +737,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			t.stubs()
 		}
 
-		reconciliationTask.Run()
+		reconciler.Resyncer.Resync(context.TODO())
 
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
@@ -733,26 +747,26 @@ var _ = Describe("Reconcile visibilities", func() {
 		Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(len(expected.enablePlanVisibilityCalledFor)))
 
 		for index := range expected.enablePlanVisibilityCalledFor {
-			_, data, servicePlanGUID, platformBrokerName := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, platformBrokerName, expected.enablePlanVisibilityCalledFor)
+			_, request := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
+			checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, expected.enablePlanVisibilityCalledFor)
 		}
 
 		Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(len(expected.disablePlanVisibilityCalledFor)))
 
 		for index := range expected.disablePlanVisibilityCalledFor {
-			_, data, servicePlanGUID, platformBrokerName := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
-			checkAccessArguments(data, servicePlanGUID, platformBrokerName, expected.disablePlanVisibilityCalledFor)
+			_, request := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
+			checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, expected.disablePlanVisibilityCalledFor)
 		}
 
 	}, entries...)
 
-	Describe("Run cache", func() {
+	Describe("Resync cache", func() {
 
 		setVisibilityClients := func() {
 			fakeSMClient.GetVisibilitiesReturns([]*types.Visibility{}, nil)
 			fakeSMClient.GetPlansReturns(stubGetSMPlans())
 
-			fakeVisibilityClient.GetVisibilitiesByBrokersReturns([]*platform.ServiceVisibilityEntity{}, nil)
+			fakeVisibilityClient.GetVisibilitiesByBrokersReturns([]*platform.Visibility{}, nil)
 			fakeVisibilityClient.VisibilityScopeLabelKeyReturns("key")
 		}
 
@@ -771,14 +785,14 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		BeforeEach(func() {
 			setFakes()
-			reconciliationTask.Run()
+			reconciler.Resyncer.Resync(context.TODO())
 			assertCallCounts(1, 1)
 		})
 
 		Context("when visibility cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(platformVisibilityCacheKey, nil, time.Minute)
-				reconciliationTask.Run()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
@@ -789,7 +803,7 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(platformVisibilityCacheKey, visibilities, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciliationTask.Run()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
@@ -797,7 +811,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		Context("when plan cache is invalid", func() {
 			It("should call platform", func() {
 				visibilityCache.Replace(smPlansCacheKey, nil, time.Minute)
-				reconciliationTask.Run()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
@@ -808,14 +822,14 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(found).To(BeTrue())
 				visibilityCache.Set(smPlansCacheKey, plans, time.Nanosecond)
 				time.Sleep(time.Nanosecond)
-				reconciliationTask.Run()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 2)
 			})
 		})
 
 		Context("when there are no changes in SM plans", func() {
 			It("should use cache", func() {
-				reconciliationTask.Run()
+				reconciler.Resyncer.Resync(context.TODO())
 				assertCallCounts(2, 1)
 			})
 		})
@@ -829,7 +843,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					fakeSMClient.GetPlansByServiceOfferingsReturns([]*types.ServicePlan{
 						smbroker1.ServiceOfferings[0].Plans[0],
 					}, nil)
-					reconciliationTask.Run()
+					reconciler.Resyncer.Resync(context.TODO())
 					assertCallCounts(2, 2)
 				})
 			})
@@ -845,7 +859,7 @@ var _ = Describe("Reconcile visibilities", func() {
 						smbroker1.ServiceOfferings[1].Plans[0],
 					}, nil)
 
-					reconciliationTask.Run()
+					reconciler.Resyncer.Resync(context.TODO())
 					assertCallCounts(2, 2)
 				})
 			})
