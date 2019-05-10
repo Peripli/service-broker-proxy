@@ -468,7 +468,7 @@ type wsServer struct {
 func newWSServer() *wsServer {
 	s := &wsServer{
 		maxPingPeriod:            (100 * time.Millisecond).String(),
-		lastNotificationRevision: "1",
+		lastNotificationRevision: "0",
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/notifications", s.handler)
