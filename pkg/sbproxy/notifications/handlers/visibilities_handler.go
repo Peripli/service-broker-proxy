@@ -163,30 +163,33 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 		log.C(ctx).Infof("Successfully enabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, newVisibilityPayload.Resource.GetLabels())
 	}
 
-	log.C(ctx).Infof("Attempting to enable access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToAdd)
+	if (len(labelsToAdd) == 0 && newVisibilityPayload.Resource.PlatformID == "") || (len(labelsToAdd) != 0 && newVisibilityPayload.Resource.PlatformID != "") {
+		log.C(ctx).Infof("Attempting to enable access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToAdd)
 
-	if err := vnh.VisibilityClient.EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
-		BrokerName:    platformBrokerName,
-		CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
-		Labels:        labelsToAdd,
-	}); err != nil {
-		log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
-		return
+		if err := vnh.VisibilityClient.EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
+			BrokerName:    platformBrokerName,
+			CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
+			Labels:        labelsToAdd,
+		}); err != nil {
+			log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
+			return
+		}
+		log.C(ctx).Infof("Successfully enabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToAdd)
 	}
-	log.C(ctx).Infof("Successfully enabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToAdd)
 
-	log.C(ctx).Infof("Attempting to disable access for plan with catalog ID %s for platform broker with name %s and labels %v...", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToRemove)
+	if (len(labelsToRemove) == 0 && newVisibilityPayload.Resource.PlatformID == "") || (len(labelsToRemove) != 0 && newVisibilityPayload.Resource.PlatformID != "") {
+		log.C(ctx).Infof("Attempting to disable access for plan with catalog ID %s for platform broker with name %s and labels %v...", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToRemove)
 
-	if err := vnh.VisibilityClient.DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
-		BrokerName:    platformBrokerName,
-		CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
-		Labels:        labelsToRemove,
-	}); err != nil {
-		log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
-		return
+		if err := vnh.VisibilityClient.DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
+			BrokerName:    platformBrokerName,
+			CatalogPlanID: newVisibilityPayload.Additional.ServicePlan.CatalogID,
+			Labels:        labelsToRemove,
+		}); err != nil {
+			log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
+			return
+		}
+		log.C(ctx).Infof("Successfully disabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToRemove)
 	}
-	log.C(ctx).Infof("Successfully disabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToRemove)
-
 }
 
 // OnDelete deletes visibilities from the provided notification payload by invoking the proper platform clients

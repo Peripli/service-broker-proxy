@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Peripli/service-manager/test/common"
+
 	"github.com/tidwall/gjson"
 
 	"github.com/tidwall/sjson"
@@ -463,8 +465,63 @@ var _ = Describe("Visibility Handler", func() {
 					}
 				})
 
-				It("invokes enable and disable access for the plan", func() {
-					verifyInvocations(1, 1)
+				Context("When the labels are empty and the platform id is not", func() {
+					BeforeEach(func() {
+						visibilityNotificationPayload, err = sjson.Set(visibilityNotificationPayload, "label_changes", common.Array{})
+						Expect(err).ShouldNot(HaveOccurred())
+						expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{}
+						expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{}
+					})
+
+					It("Does not enable or disable access", func() {
+						verifyInvocations(0, 0)
+					})
+				})
+
+				Context("When the labels are empty and the platform id is empty", func() {
+					BeforeEach(func() {
+						visibilityNotificationPayload, err = sjson.Set(visibilityNotificationPayload, "new.resource.platform_id", "")
+						Expect(err).ShouldNot(HaveOccurred())
+						visibilityNotificationPayload, err = sjson.Set(visibilityNotificationPayload, "label_changes", common.Array{})
+						Expect(err).ShouldNot(HaveOccurred())
+						expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{
+							{
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
+								CatalogPlanID: catalogPlanID,
+								Labels:        types.Labels{},
+							},
+						}
+						expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{
+							{
+								BrokerName:    visibilityHandler.ProxyPrefix + smBrokerName,
+								CatalogPlanID: catalogPlanID,
+								Labels:        types.Labels{},
+							},
+						}
+					})
+
+					It("Enable and disable access", func() {
+						verifyInvocations(1, 1)
+					})
+				})
+
+				Context("When the labels are not empty and the platform id is not empty", func() {
+					BeforeEach(func() {
+						visibilityNotificationPayload, err = sjson.Set(visibilityNotificationPayload, "label_changes", common.Array{})
+						Expect(err).ShouldNot(HaveOccurred())
+						expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{}
+						expectedDisableAccessRequests = []*platform.ModifyPlanAccessRequest{}
+					})
+
+					It("Does not enable or disable access", func() {
+						verifyInvocations(0, 0)
+					})
+				})
+
+				Context("When the labels are not empty and the platform id is not empty", func() {
+					It("invokes enable and disable access for the plan", func() {
+						verifyInvocations(1, 1)
+					})
 				})
 
 				Context("when the catalog plan ID is modified", func() {
