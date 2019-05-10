@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "notifications"
-  digest = "1:502b85322288882b55185f4f6924c3c12fd5ac90ef9ba77c2d6c368cf3e512a2"
+  digest = "1:4ff150074e13190bc7632afeaa0aeb63a57b9251fad6d20bf7abbf7f324fe83d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -42,7 +42,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "2d8eb484f03a8bd8c1380987d33583f58efc357e"
+  revision = "3489923534c263067f63e87481363a6315e73902"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -625,7 +625,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "f4e77d36d62c17c2336347bb2670ddbd02d092b7"
+  revision = "a4d6f7feada510cc50e69a37b484cb0fdc6b7876"
 
 [[projects]]
   branch = "master"
