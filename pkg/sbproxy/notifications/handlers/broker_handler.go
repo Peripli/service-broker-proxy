@@ -76,6 +76,8 @@ type BrokerResourceNotificationsHandler struct {
 
 // OnCreate creates brokers from the specified notification payload by invoking the proper platform clients
 func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
+	log.C(ctx).Debugf("Processing broker create notification with payload %s...", string(payload))
+
 	brokerPayload := brokerPayload{}
 	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
@@ -91,37 +93,50 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	brokerProxyPath := bnh.brokerProxyPath(brokerToCreate.Resource)
 	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
 
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
+
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
-		log.C(ctx).WithError(err).Errorf("error finding broker with name %s in the platform", brokerProxyName)
+		log.C(ctx).Warnf("Could not find platform broker in platform with name %s: %s", brokerProxyName, err)
 	}
 
-	if existingBroker != nil && shouldBeProxified(existingBroker, brokerToCreate.Resource) {
-		updateRequest := &platform.UpdateServiceBrokerRequest{
-			GUID:      existingBroker.GUID,
-			Name:      brokerProxyName,
-			BrokerURL: brokerProxyPath,
-		}
-		if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
-			log.C(ctx).WithError(err).Errorf("error proxifying platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
-			return
-		}
-	} else {
+	if existingBroker == nil {
+		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
+
 		createRequest := &platform.CreateServiceBrokerRequest{
 			Name:      brokerProxyName,
 			BrokerURL: brokerProxyPath,
 		}
 		if _, err := bnh.BrokerClient.CreateBroker(ctx, createRequest); err != nil {
-			log.C(ctx).WithError(err).Errorf("error creating broker with name %s url %s", createRequest.Name, createRequest.BrokerURL)
+			log.C(ctx).WithError(err).Errorf("error creating broker with name %s and URL %s", createRequest.Name, createRequest.BrokerURL)
 			return
+		}
+		log.C(ctx).Infof("Successfully created SM proxy registration in platform for broker with name %s", brokerProxyName)
+	} else {
+		log.C(ctx).Infof("Successfully found broker in platform with name %s and URL %s. Checking if proxification is needed...", existingBroker.Name, existingBroker.BrokerURL)
+		if shouldBeProxified(existingBroker, brokerToCreate.Resource) {
+			updateRequest := &platform.UpdateServiceBrokerRequest{
+				GUID:      existingBroker.GUID,
+				Name:      brokerProxyName,
+				BrokerURL: brokerProxyPath,
+			}
+
+			log.C(ctx).Infof("Proxifying platform broker with name %s and URL %s...", existingBroker.Name, existingBroker.BrokerURL)
+			if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
+				log.C(ctx).WithError(err).Errorf("error proxifying platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
+				return
+			}
+		} else {
+			log.C(ctx).Errorf("conflict error: existing platform broker with name %s and URL %s CANNOT be proxified to SM broker with URL %s. The URLs need to be the same", existingBroker.Name, existingBroker.BrokerURL, brokerToCreate.Resource.BrokerURL)
 		}
 	}
 }
 
 // OnUpdate modifies brokers from the specified notification payload by invoking the proper platform clients
 func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
-	brokerPayload := brokerPayload{}
+	log.C(ctx).Debugf("Processing broker update notification with payload %s...", string(payload))
 
+	brokerPayload := brokerPayload{}
 	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
 		return
@@ -136,15 +151,20 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	brokerProxyName := bnh.brokerProxyName(brokerAfterUpdate.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
+
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
-		log.C(ctx).WithError(err).Errorf("error finding broker with name %s in the platform", brokerAfterUpdate.Resource.GetID())
+		log.C(ctx).Warnf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerProxyName, err)
 		return
 	}
+
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Infof("No broker in platform found for sm broker ID %s. Nothing to update", brokerAfterUpdate.Resource.ID)
+		log.C(ctx).Warnf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerProxyName, existingBroker.BrokerURL)
 		return
 	}
+
+	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s. Refetching catalog...", existingBroker.Name, existingBroker.BrokerURL)
 
 	fetchCatalogRequest := &platform.ServiceBroker{
 		GUID:      existingBroker.GUID,
@@ -153,16 +173,19 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	}
 	if bnh.CatalogFetcher != nil {
 		if err := bnh.CatalogFetcher.Fetch(ctx, fetchCatalogRequest); err != nil {
-			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", fetchCatalogRequest.GUID, brokerAfterUpdate.Resource.GetID())
+			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", fetchCatalogRequest.GUID, brokerAfterUpdate.Resource.ID)
 			return
 		}
 	}
+	log.C(ctx).Infof("Successfully refetched catalog for platform broker with name %s and URL %s", existingBroker.Name, existingBroker.BrokerURL)
+
 }
 
 // OnDelete deletes brokers from the provided notification payload by invoking the proper platform clients
 func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
-	brokerPayload := brokerPayload{}
+	log.C(ctx).Debugf("Processing broker delete notification with payload %s...", string(payload))
 
+	brokerPayload := brokerPayload{}
 	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
 		return
@@ -177,15 +200,24 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 	brokerProxyName := bnh.brokerProxyName(brokerToDelete.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerToDelete.Resource)
 
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
+
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
-		log.C(ctx).WithError(err).Errorf("error finding broker with name %s in the platform", brokerToDelete.Resource.GetID())
+		log.C(ctx).Warnf("Could not find broker with ID %s in the platform: %s", brokerToDelete.Resource.ID, err)
+	}
+
+	if existingBroker == nil {
+		log.C(ctx).Warnf("Could not find broker with ID %s in the platform. No deletion will be attempted", brokerToDelete.Resource.ID)
 		return
 	}
+
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Infof("No broker in platform found for sm broker ID %s. Nothing to delete", brokerToDelete.Resource.ID)
+		log.C(ctx).Warnf("Could not find proxified broker with ID %s in the platform. No deletion will be attempted", brokerToDelete.Resource.ID)
 		return
 	}
+
+	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s. Attempting to delete...", existingBroker.Name, existingBroker.BrokerURL)
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
 		GUID: existingBroker.GUID,
@@ -196,6 +228,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 		log.C(ctx).WithError(err).Errorf("error deleting broker with id %s name %s", deleteRequest.GUID, deleteRequest.Name)
 		return
 	}
+	log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
 }
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.ServiceBroker) string {

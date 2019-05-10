@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/Peripli/service-manager/pkg/log"
+	"github.com/gofrs/uuid"
 
 	"github.com/Peripli/service-manager/pkg/types"
 )
@@ -32,6 +33,14 @@ func (c *Consumer) Consume(ctx context.Context, n *types.Notification) {
 
 	if !found {
 		log.C(ctx).Warnf("No notification handler found for notification for resource %s. Ignoring notification...", n.Resource)
+	}
+
+	correlationID, err := uuid.NewV4()
+	if err != nil {
+		log.C(ctx).Warnf("could not generate correlationID: %s", err)
+	} else {
+		entry := log.C(ctx).WithField(log.FieldCorrelationID, correlationID.String())
+		ctx = log.ContextWithLogger(ctx, entry)
 	}
 
 	switch n.Type {

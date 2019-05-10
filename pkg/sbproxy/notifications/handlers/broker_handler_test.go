@@ -258,11 +258,7 @@ var _ = Describe("Broker Handler", func() {
 				var expectedCreateBrokerRequest *platform.CreateServiceBrokerRequest
 
 				BeforeEach(func() {
-					fakeBrokerClient.GetBrokerByNameReturns(&platform.ServiceBroker{
-						GUID:      smBrokerID,
-						Name:      brokerName,
-						BrokerURL: "randomURL",
-					}, nil)
+					fakeBrokerClient.GetBrokerByNameReturns(nil, nil)
 
 					expectedCreateBrokerRequest = &platform.CreateServiceBrokerRequest{
 						Name:      brokerHandler.ProxyPrefix + brokerName,
@@ -283,6 +279,32 @@ var _ = Describe("Broker Handler", func() {
 
 					Expect(callCtx).To(Equal(ctx))
 					Expect(callRequest).To(Equal(expectedCreateBrokerRequest))
+				})
+			})
+		})
+
+		Context("when a broker with the same name and different URL exists in the platform", func() {
+			BeforeEach(func() {
+				fakeBrokerClient.GetBrokerByNameReturns(&platform.ServiceBroker{
+					GUID:      smBrokerID,
+					Name:      brokerName,
+					BrokerURL: "randomURL",
+				}, nil)
+
+			})
+
+			It("does not try to create, update or delete broker", func() {
+				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+
+				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
+				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
+				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
+			})
+
+			It("logs an error", func() {
+				VerifyErrorLogged(func() {
+					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
 				})
 			})
 		})
