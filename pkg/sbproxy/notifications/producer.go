@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -29,6 +28,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/Peripli/service-manager/api/notifications"
+	"github.com/pkg/errors"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/log"
@@ -163,7 +165,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 			}
 		} else {
 			if needResync {
-				log.C(ctx).Debug("Last notification revision is gone. Triggering resync")
+				log.C(ctx).Info("Last notification revision is gone. Triggering resync")
 				resyncChan <- struct{}{}
 			}
 			p.conn.SetPongHandler(func(string) error {
@@ -279,7 +281,7 @@ func (p *Producer) connect(ctx context.Context) error {
 	connectURL := *p.url
 	if p.lastNotificationRevision > 0 {
 		q := connectURL.Query()
-		q.Set("last_notification_revision", strconv.FormatInt(p.lastNotificationRevision, 10))
+		q.Set(notifications.LastKnownRevisionQueryParam, strconv.FormatInt(p.lastNotificationRevision, 10))
 		connectURL.RawQuery = q.Encode()
 	}
 	dialer := &websocket.Dialer{
@@ -294,9 +296,7 @@ func (p *Producer) connect(ctx context.Context) error {
 	var resp *http.Response
 	p.conn, resp, err = dialer.DialContext(ctx, connectURL.String(), headers)
 	if err != nil {
-		if resp == nil {
-			log.C(ctx).WithError(err).Errorf("Could not connect to %s", &connectURL)
-		} else {
+		if resp != nil {
 			log.C(ctx).WithError(err).Errorf("Could not connect to %s: status: %d", &connectURL, resp.StatusCode)
 			if resp.StatusCode == http.StatusGone {
 				return errLastNotificationGone
@@ -313,9 +313,8 @@ func (p *Producer) connect(ctx context.Context) error {
 }
 
 func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) error {
-	// TODO: define constants for these headers in service-manager
 	if p.lastNotificationRevision == 0 {
-		revision, err := strconv.ParseInt(header.Get("last_notification_revision"), 10, 64)
+		revision, err := strconv.ParseInt(header.Get(notifications.LastKnownRevisionHeader), 10, 64)
 		if err != nil {
 			return err
 		}
@@ -325,16 +324,16 @@ func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) 
 		p.lastNotificationRevision = revision
 	}
 
-	maxPingPeriod, err := time.ParseDuration(header.Get("max_ping_period"))
+	maxPingPeriod, err := time.ParseDuration(header.Get(notifications.MaxPingPeriodHeader))
 	if err != nil {
-		return err // TODO: wrap "time: invalid duration"
+		return errors.Wrap(err, "invalid max ping period received")
 	}
 	if maxPingPeriod < p.producerSettings.MinPingPeriod {
 		return fmt.Errorf("invalid max ping period (%s) must be greater than the minimum ping period (%s)", maxPingPeriod, p.producerSettings.MinPingPeriod)
 	}
 	p.pingPeriod = time.Duration(int64(maxPingPeriod) * p.producerSettings.PingPeriodPercentage / 100)
 	p.readTimeout = p.pingPeriod + p.producerSettings.PongTimeout // should be longer than pingPeriod
-	log.C(ctx).Debugf("Connected! Ping period: %s pong timeout: %s", p.pingPeriod, p.readTimeout)
+	log.C(ctx).Infof("Connected! Ping period: %s pong timeout: %s", p.pingPeriod, p.readTimeout)
 	return nil
 }
 

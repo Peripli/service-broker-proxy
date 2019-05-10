@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	smnotifications "github.com/Peripli/service-manager/api/notifications"
+
 	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/sirupsen/logrus"
 
@@ -194,7 +196,7 @@ var _ = Describe("Notifications", func() {
 					defer GinkgoRecover()
 					requestCount++
 					if requestCount > 1 {
-						rev := r.URL.Query().Get("last_notification_revision")
+						rev := r.URL.Query().Get(smnotifications.LastKnownRevisionQueryParam)
 						Expect(rev).To(Equal(strconv.FormatInt(notification.Revision, 10)))
 						close(done)
 					}
@@ -505,8 +507,8 @@ func (s *wsServer) handler(w http.ResponseWriter, r *http.Request) {
 		WriteBufferSize: 1024,
 	}
 	header := http.Header{}
-	header.Set("last_notification_revision", s.lastNotificationRevision)
-	header.Set("max_ping_period", s.maxPingPeriod)
+	header.Set(smnotifications.LastKnownRevisionHeader, s.lastNotificationRevision)
+	header.Set(smnotifications.MaxPingPeriodHeader, s.maxPingPeriod)
 	if s.statusCode != 0 {
 		w.WriteHeader(s.statusCode)
 		w.Write([]byte{})
