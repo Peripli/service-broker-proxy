@@ -40,6 +40,8 @@ import (
 
 var errLastNotificationGone = errors.New("last notification revision no longer present in SM")
 
+const unknownRevision int64 = -1
+
 // Producer reads notifications coming from the websocket connection and regularly
 // triggers full resync
 type Producer struct {
@@ -154,13 +156,14 @@ func (p *Producer) Start(ctx context.Context, group *sync.WaitGroup) <-chan *Mes
 func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.WaitGroup) {
 	defer group.Done()
 	resyncChan := make(chan struct{})
+	p.lastNotificationRevision = unknownRevision
 	go p.scheduleResync(ctx, resyncChan, messages)
 	for {
-		needResync := p.lastNotificationRevision == 0
+		needResync := p.lastNotificationRevision == unknownRevision
 		if err := p.connect(ctx); err != nil {
 			log.C(ctx).WithError(err).Error("could not connect websocket")
 			if err == errLastNotificationGone { // skip reconnect delay
-				p.lastNotificationRevision = 0
+				p.lastNotificationRevision = unknownRevision
 				continue
 			}
 		} else {
@@ -279,7 +282,7 @@ func (p *Producer) connect(ctx context.Context) error {
 	headers.Add("Authorization", auth)
 
 	connectURL := *p.url
-	if p.lastNotificationRevision > 0 {
+	if p.lastNotificationRevision != unknownRevision {
 		q := connectURL.Query()
 		q.Set(notifications.LastKnownRevisionQueryParam, strconv.FormatInt(p.lastNotificationRevision, 10))
 		connectURL.RawQuery = q.Encode()
@@ -313,12 +316,13 @@ func (p *Producer) connect(ctx context.Context) error {
 }
 
 func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) error {
-	if p.lastNotificationRevision == 0 {
-		revision, err := strconv.ParseInt(header.Get(notifications.LastKnownRevisionHeader), 10, 64)
+	if p.lastNotificationRevision == unknownRevision {
+		rev := header.Get(notifications.LastKnownRevisionHeader)
+		revision, err := strconv.ParseInt(rev, 10, 64)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid last notification revision received (%s): %v", rev, err)
 		}
-		if revision <= 0 {
+		if revision < 0 {
 			return fmt.Errorf("invalid last notification revision received (%d)", revision)
 		}
 		p.lastNotificationRevision = revision
