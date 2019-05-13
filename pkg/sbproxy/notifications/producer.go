@@ -181,13 +181,15 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 			return p.conn.SetReadDeadline(time.Now().Add(p.readTimeout))
 		})
 
-		done := make(chan struct{}, 1)
-		childContext, stopChildren := context.WithCancel(ctx)
+		done := make(chan struct{}, 2)
+		childContext, cancelChildrenFunc := context.WithCancel(ctx)
 		go p.readNotifications(childContext, messages, done)
 		go p.ping(childContext, done)
 
 		<-done // wait for at least one child goroutine (reader/writer) to exit
-		stopChildren()
+		cancelChildrenFunc()
+		<-done
+
 		p.closeConnection(ctx)
 	}
 }
@@ -222,6 +224,7 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 		log.C(ctx).Debug("Exiting notification reader")
 		done <- struct{}{}
 	}()
+
 	log.C(ctx).Debug("Starting notification reader")
 	for {
 		if err := p.conn.SetReadDeadline(time.Now().Add(p.readTimeout)); err != nil {
@@ -315,7 +318,7 @@ func (p *Producer) connect(ctx context.Context, resyncChan chan struct{}) error 
 	}
 
 	// Set the new revision as well as the ping interval and read timeout
-	if err = p.readResponseHeaders(ctx, resp.Header); err != nil {
+	if err := p.readResponseHeaders(ctx, resp.Header); err != nil {
 		p.closeConnection(ctx)
 
 		return err
