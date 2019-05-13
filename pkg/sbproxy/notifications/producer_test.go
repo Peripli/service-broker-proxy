@@ -247,6 +247,7 @@ var _ = Describe("Notifications", func() {
 			BeforeEach(func() {
 				server.lastNotificationRevision = "-1"
 			})
+
 			It("returns error", func() {
 				producer.Start(producerCtx, group)
 				Eventually(logInterceptor.String).Should(ContainSubstring("invalid last notification revision"))
