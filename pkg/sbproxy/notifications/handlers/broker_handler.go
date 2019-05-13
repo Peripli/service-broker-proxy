@@ -97,7 +97,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToCreate.Resource.Name)
 	if err != nil {
-		log.C(ctx).Warnf("Could not find platform broker in platform with name %s: %s", brokerToCreate.Resource.Name, err)
+		log.C(ctx).Debugf("Could not find platform broker in platform with name %s: %s", brokerToCreate.Resource.Name, err)
 	}
 
 	if existingBroker == nil {
@@ -155,12 +155,15 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
-		log.C(ctx).Warnf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerProxyName, err)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerProxyName, err)
+		return
+	} else if existingBroker == nil {
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No update will be attempted", brokerProxyName)
 		return
 	}
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Warnf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerProxyName, existingBroker.BrokerURL)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerProxyName, existingBroker.BrokerURL)
 		return
 	}
 
@@ -206,16 +209,15 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
-		log.C(ctx).Warnf("Could not find broker with ID %s in the platform: %s", brokerToDelete.Resource.ID, err)
-	}
-
-	if existingBroker == nil {
-		log.C(ctx).Warnf("Could not find broker with ID %s in the platform. No deletion will be attempted", brokerToDelete.Resource.ID)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No deletion will be attempted", brokerProxyName, err)
+		return
+	} else if existingBroker == nil {
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No deletion will be attempted", brokerProxyName)
 		return
 	}
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Warnf("Could not find proxified broker with ID %s in the platform. No deletion will be attempted", brokerToDelete.Resource.ID)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No deletion will be attempted", brokerProxyName, existingBroker.BrokerURL)
 		return
 	}
 

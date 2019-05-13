@@ -158,7 +158,10 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 	resyncChan := make(chan struct{})
 	p.lastNotificationRevision = unknownRevision
 	go p.scheduleResync(ctx, resyncChan, messages)
+
 	for {
+		// Store the state of p.lastNotificationRevision as it will be changed in p.connect after reading headers
+		// We need the value that was set before establishing the connection to determine whether to resync
 		needResync := p.lastNotificationRevision == unknownRevision
 		if err := p.connect(ctx); err != nil {
 			log.C(ctx).WithError(err).Error("could not connect websocket")
@@ -167,6 +170,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 				continue
 			}
 		} else {
+			log.C(ctx).Info("Successfully established websocket connection")
 			if needResync {
 				log.C(ctx).Info("Last notification revision is gone. Triggering resync")
 				resyncChan <- struct{}{}
@@ -176,13 +180,15 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 				return p.conn.SetReadDeadline(time.Now().Add(p.readTimeout))
 			})
 
-			done := make(chan struct{}, 1)
-			childContext, stopChildren := context.WithCancel(ctx)
+			done := make(chan struct{}, 2)
+			childContext, cancelChildrenFunc := context.WithCancel(ctx)
 			go p.readNotifications(childContext, messages, done)
 			go p.ping(childContext, done)
 
-			<-done // wait for at least one child goroutine (reader/writer) to exit
-			stopChildren()
+			<-done
+			cancelChildrenFunc()
+			<-done // Wait for both go routines to finish before closing connection
+
 			p.closeConnection(ctx)
 		}
 		select {
@@ -190,7 +196,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 			log.C(ctx).Info("Context cancelled. Terminating notifications handler")
 			return
 		case <-time.After(p.producerSettings.ReconnectDelay):
-			log.C(ctx).Debug("Attempting to reestablish websocket connection")
+			log.C(ctx).Debug("Reconnection delay elapsed. Reattempting to establish websocket connection")
 		}
 	}
 }
@@ -225,6 +231,7 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 		log.C(ctx).Debug("Exiting notification reader")
 		done <- struct{}{}
 	}()
+
 	log.C(ctx).Debug("Starting notification reader")
 	for {
 		if err := p.conn.SetReadDeadline(time.Now().Add(p.readTimeout)); err != nil {
@@ -294,6 +301,7 @@ func (p *Producer) connect(ctx context.Context) error {
 			InsecureSkipVerify: p.smSettings.SkipSSLValidation,
 		},
 	}
+
 	log.C(ctx).Debugf("Connecting to %s ...", &connectURL)
 	var err error
 	var resp *http.Response
@@ -305,10 +313,14 @@ func (p *Producer) connect(ctx context.Context) error {
 				return errLastNotificationGone
 			}
 		}
+
 		return err
 	}
-	if err = p.readResponseHeaders(ctx, resp.Header); err != nil {
+
+	// Set the new revision as well as the ping interval and read timeout
+	if err := p.readResponseHeaders(ctx, resp.Header); err != nil {
 		p.closeConnection(ctx)
+
 		return err
 	}
 
@@ -337,7 +349,7 @@ func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) 
 	}
 	p.pingPeriod = time.Duration(int64(maxPingPeriod) * p.producerSettings.PingPeriodPercentage / 100)
 	p.readTimeout = p.pingPeriod + p.producerSettings.PongTimeout // should be longer than pingPeriod
-	log.C(ctx).Infof("Connected! Ping period: %s pong timeout: %s", p.pingPeriod, p.readTimeout)
+	log.C(ctx).Infof("Successfully set ping period: %s pong timeout: %s after processing headers", p.pingPeriod, p.readTimeout)
 	return nil
 }
 
