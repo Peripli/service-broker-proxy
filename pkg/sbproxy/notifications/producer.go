@@ -300,6 +300,7 @@ func (p *Producer) connect(ctx context.Context, resyncChan chan struct{}) error 
 		if resp != nil {
 			log.C(ctx).WithError(err).Errorf("Could not connect to %s: status: %d", &connectURL, resp.StatusCode)
 			if resp.StatusCode == http.StatusGone {
+				p.lastNotificationRevision = unknownRevision
 				return errLastNotificationGone
 			}
 		}
