@@ -159,39 +159,36 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 	p.lastNotificationRevision = unknownRevision
 	go p.scheduleResync(ctx, resyncChan, messages)
 	for {
-		needResync := p.lastNotificationRevision == unknownRevision
-		if err := p.connect(ctx); err != nil {
-			log.C(ctx).WithError(err).Error("could not connect websocket")
-			if err == errLastNotificationGone { // skip reconnect delay
-				p.lastNotificationRevision = unknownRevision
-				continue
+		if err := p.connect(ctx, resyncChan); err != nil {
+			if err != errLastNotificationGone {
+				// Wait for the reconnect delay to pass before attempting to reconnect
+				log.C(ctx).WithError(err).Error("could not connect websocket")
+				select {
+				case <-ctx.Done():
+					log.C(ctx).Info("Context cancelled. Terminating notifications handler")
+					return
+				case <-time.After(p.producerSettings.ReconnectDelay):
+					log.C(ctx).Debug("Reconnection delay elapsed. Reattempting to establish websocket connection")
+				}
 			}
-		} else {
-			if needResync {
-				log.C(ctx).Info("Last notification revision is gone. Triggering resync")
-				resyncChan <- struct{}{}
-			}
-			p.conn.SetPongHandler(func(string) error {
-				log.C(ctx).Debug("Received pong")
-				return p.conn.SetReadDeadline(time.Now().Add(p.readTimeout))
-			})
-
-			done := make(chan struct{}, 1)
-			childContext, stopChildren := context.WithCancel(ctx)
-			go p.readNotifications(childContext, messages, done)
-			go p.ping(childContext, done)
-
-			<-done // wait for at least one child goroutine (reader/writer) to exit
-			stopChildren()
-			p.closeConnection(ctx)
+			// Reattempt connecting
+			continue
 		}
-		select {
-		case <-ctx.Done():
-			log.C(ctx).Info("Context cancelled. Terminating notifications handler")
-			return
-		case <-time.After(p.producerSettings.ReconnectDelay):
-			log.C(ctx).Debug("Attempting to reestablish websocket connection")
-		}
+
+		log.C(ctx).Info("Successfully established websocket connection")
+		p.conn.SetPongHandler(func(string) error {
+			log.C(ctx).Debug("Received pong")
+			return p.conn.SetReadDeadline(time.Now().Add(p.readTimeout))
+		})
+
+		done := make(chan struct{}, 1)
+		childContext, stopChildren := context.WithCancel(ctx)
+		go p.readNotifications(childContext, messages, done)
+		go p.ping(childContext, done)
+
+		<-done // wait for at least one child goroutine (reader/writer) to exit
+		stopChildren()
+		p.closeConnection(ctx)
 	}
 }
 
@@ -276,7 +273,7 @@ func (p *Producer) ping(ctx context.Context, done chan<- struct{}) {
 	}
 }
 
-func (p *Producer) connect(ctx context.Context) error {
+func (p *Producer) connect(ctx context.Context, resyncChan chan struct{}) error {
 	headers := http.Header{}
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(p.smSettings.User+":"+p.smSettings.Password))
 	headers.Add("Authorization", auth)
@@ -294,6 +291,7 @@ func (p *Producer) connect(ctx context.Context) error {
 			InsecureSkipVerify: p.smSettings.SkipSSLValidation,
 		},
 	}
+
 	log.C(ctx).Debugf("Connecting to %s ...", &connectURL)
 	var err error
 	var resp *http.Response
@@ -305,10 +303,20 @@ func (p *Producer) connect(ctx context.Context) error {
 				return errLastNotificationGone
 			}
 		}
+
 		return err
 	}
+
+	// The websocket connection was successfully established but with unknown revision, therefore trigger resync
+	if p.lastNotificationRevision == unknownRevision {
+		log.C(ctx).Info("Websocket connection established with unknown revision. Triggering resync...")
+		resyncChan <- struct{}{}
+	}
+
+	// Set the new revision as well as the ping interval and read timeout
 	if err = p.readResponseHeaders(ctx, resp.Header); err != nil {
 		p.closeConnection(ctx)
+
 		return err
 	}
 

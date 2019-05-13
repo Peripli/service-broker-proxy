@@ -373,7 +373,7 @@ var _ = Describe("Notifications", func() {
 				Expect(err).ToNot(HaveOccurred())
 				producer.Start(producerCtx, group)
 				Eventually(logInterceptor.String).Should(ContainSubstring("no such host"))
-				Eventually(logInterceptor.String).Should(ContainSubstring("Attempting to reestablish websocket connection"))
+				Eventually(logInterceptor.String).Should(ContainSubstring("Reattempting to establish websocket connection"))
 			})
 		})
 
