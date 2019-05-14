@@ -797,43 +797,43 @@ var _ = Describe("Reconcile visibilities", func() {
 			assertCallCounts(1, 1)
 		})
 
-		//Context("when visibility cache is invalid", func() {
-		//	It("should call platform", func() {
-		//		visibilityCache.Replace(platformVisibilityCacheKey, nil, time.Minute)
-		//		reconciler.Resyncer.Resync(context.TODO())
-		//		assertCallCounts(2, 2)
-		//	})
-		//})
-		//
-		//Context("when visibility cache has expired", func() {
-		//	It("should call platform", func() {
-		//		visibilities, found := visibilityCache.Get(platformVisibilityCacheKey)
-		//		Expect(found).To(BeTrue())
-		//		visibilityCache.Set(platformVisibilityCacheKey, visibilities, time.Nanosecond)
-		//		time.Sleep(time.Nanosecond)
-		//		reconciler.Resyncer.Resync(context.TODO())
-		//		assertCallCounts(2, 2)
-		//	})
-		//})
-		//
-		//Context("when plan cache is invalid", func() {
-		//	It("should call platform", func() {
-		//		visibilityCache.Replace(smPlansCacheKey, nil, time.Minute)
-		//		reconciler.Resyncer.Resync(context.TODO())
-		//		assertCallCounts(2, 2)
-		//	})
-		//})
-		//
-		//Context("when plan cache has expired", func() {
-		//	It("should call platform", func() {
-		//		plans, found := visibilityCache.Get(smPlansCacheKey)
-		//		Expect(found).To(BeTrue())
-		//		visibilityCache.Set(smPlansCacheKey, plans, time.Nanosecond)
-		//		time.Sleep(time.Nanosecond)
-		//		reconciler.Resyncer.Resync(context.TODO())
-		//		assertCallCounts(2, 2)
-		//	})
-		//})
+		Context("when visibility cache is invalid", func() {
+			It("should call platform", func() {
+				visibilityCache.Replace("platform_visibilities", nil, time.Minute)
+				reconciler.Resyncer.Resync(context.TODO())
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when visibility cache has expired", func() {
+			It("should call platform", func() {
+				visibilities, found := visibilityCache.Get("platform_visibilities")
+				Expect(found).To(BeTrue())
+				visibilityCache.Set("platform_visibilities", visibilities, time.Nanosecond)
+				time.Sleep(time.Nanosecond)
+				reconciler.Resyncer.Resync(context.TODO())
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when plan cache is invalid", func() {
+			It("should call platform", func() {
+				visibilityCache.Replace("sm_plans", nil, time.Minute)
+				reconciler.Resyncer.Resync(context.TODO())
+				assertCallCounts(2, 2)
+			})
+		})
+
+		Context("when plan cache has expired", func() {
+			It("should call platform", func() {
+				plans, found := visibilityCache.Get("sm_plans")
+				Expect(found).To(BeTrue())
+				visibilityCache.Set("sm_plans", plans, time.Nanosecond)
+				time.Sleep(time.Nanosecond)
+				reconciler.Resyncer.Resync(context.TODO())
+				assertCallCounts(2, 2)
+			})
+		})
 
 		Context("when there are no changes in SM plans", func() {
 			It("should use cache", func() {
