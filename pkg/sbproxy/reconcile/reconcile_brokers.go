@@ -33,33 +33,6 @@ type brokerKey struct {
 	url  string
 }
 
-// processBrokers handles the reconciliation of the service brokers.
-// it gets the brokers from SM and the platform and runs the reconciliation
-func (r *resyncJob) processBrokers(ctx context.Context) {
-	logger := log.C(ctx)
-	if r.platformClient.Broker() == nil {
-		logger.Debug("Platform client cannot handle brokers. Broker reconciliation will be skipped.")
-		return
-	}
-
-	// get all the registered brokers from the platform
-	brokersFromPlatform, err := r.getBrokersFromPlatform(ctx)
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining already registered brokers")
-		return
-	}
-
-	brokersFromSM, err := r.getBrokersFromSM(ctx)
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining brokers from Service Manager")
-		return
-	}
-	r.stats[smBrokersStats] = brokersFromSM
-
-	// control logic - make sure current state matches desired state
-	r.reconcileBrokers(ctx, brokersFromPlatform, brokersFromSM)
-}
-
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
 func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
@@ -84,18 +57,6 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers []plat
 	for _, existingBroker := range proxyBrokerIDMap {
 		r.deleteBrokerRegistration(ctx, existingBroker)
 	}
-}
-
-func (r *resyncJob) getBrokersFromPlatform(ctx context.Context) ([]platform.ServiceBroker, error) {
-	logger := log.C(ctx)
-	logger.Info("resyncJob getting brokers from platform...")
-	registeredBrokers, err := r.platformClient.Broker().GetBrokers(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting brokers from platform")
-	}
-	logger.Debugf("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(registeredBrokers))
-
-	return registeredBrokers, nil
 }
 
 func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]platform.ServiceBroker, error) {

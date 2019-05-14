@@ -26,8 +26,6 @@ import (
 	"github.com/Peripli/service-manager/pkg/log"
 )
 
-const smBrokersStats = "sm_brokers"
-
 // Consumer provides functionality for consuming notifications
 type Consumer interface {
 	Consume(ctx context.Context, notification *types.Notification)

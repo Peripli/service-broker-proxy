@@ -32,80 +32,29 @@ const (
 	smPlansCacheKey            = "sm_plans"
 )
 
-func (r *resyncJob) stat(ctx context.Context, key string) interface{} {
-	result, found := r.stats[key]
-	if !found {
-		log.C(ctx).Infof("No %s found in cache", key)
-		return nil
-	}
-
-	log.C(ctx).Infof("Picked up %s from cache", key)
-
-	return result
-}
-
-// processVisibilities handles the reconsilation of the service visibilities.
-// It gets the service visibilities from Service Manager and the platform and runs the reconciliation
-// nolint: gocyclo
-func (r *resyncJob) processVisibilities(ctx context.Context) {
-	logger := log.C(ctx)
-	if r.platformClient.Visibility() == nil {
-		logger.Debug("Platform client cannot handle visibilities. Visibility reconciliation will be skipped.")
-		return
-	}
-
-	brokerFromStats := r.stat(ctx, smBrokersStats)
-	smBrokers, ok := brokerFromStats.([]platform.ServiceBroker)
-	logger.Infof("resyncJob SUCCESSFULLY retrieved %d Service Manager brokers from cache", len(smBrokers))
-
-	if !ok {
-		logger.Errorf("Expected %T to be %T", brokerFromStats, smBrokers)
-		return
-	}
-	if len(smBrokers) == 0 {
-		logger.Infof("No brokers from Service Manager found in cache. Skipping reconcile visibilities...")
-		return
-	}
-
-	smOfferings, err := r.getSMServiceOfferingsByBrokers(ctx, smBrokers)
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining service offerings from Service Manager")
-		return
-	}
-
-	smPlans, err := r.getSMPlansByBrokersAndOfferings(ctx, smOfferings)
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining plans from Service Manager")
-		return
-	}
-
-	plansMap := smPlansToMap(smPlans)
-	smVisibilities, err := r.getSMVisibilities(ctx, plansMap, smBrokers)
-	if err != nil {
-		logger.WithError(err).Error("An error occurred while obtaining Service Manager visibilities")
-		return
-	}
-
+// reconcileVisibilities handles the reconciliation of the service visibilities
+func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []platform.ServiceBroker, plans map[brokerPlanKey]*types.ServicePlan) {
 	var platformVisibilities []*platform.Visibility
 	visibilityCacheUsed := false
-	if r.options.VisibilityCache && r.areSMPlansSame(ctx, smPlans) {
-		logger.Infof("Actual SM plans and cached SM plans are same. Attempting to pick up cached platform visibilities...")
+	if r.options.VisibilityCache && r.areSMPlansSame(ctx, plans) {
+		log.C(ctx).Infof("Actual SM plans and cached SM plans are same. Attempting to pick up cached platform visibilities...")
 		platformVisibilities = r.getPlatformVisibilitiesFromCache(ctx)
 		visibilityCacheUsed = true
 	}
 
 	if platformVisibilities == nil {
-		logger.Infof("Actual SM plans and cached SM plans are different. Invalidating cached platform visibilities and calling platform API to fetch actual platform visibilities...")
+		log.C(ctx).Infof("Actual SM plans and cached SM plans are different. Invalidating cached platform visibilities and calling platform API to fetch actual platform visibilities...")
+		var err error
 		platformVisibilities, err = r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
 		if err != nil {
-			logger.WithError(err).Error("An error occurred while loading visibilities from platform")
+			log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from platform")
 			return
 		}
 	}
 
 	errorOccured := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
 	if errorOccured {
-		logger.Error("Could not reconcile visibilities")
+		log.C(ctx).Error("Could not reconcile visibilities")
 	}
 
 	if r.options.VisibilityCache {
@@ -113,12 +62,11 @@ func (r *resyncJob) processVisibilities(ctx context.Context) {
 			r.cache.Delete(platformVisibilityCacheKey)
 			r.cache.Delete(smPlansCacheKey)
 		} else {
-			r.updateVisibilityCache(ctx, visibilityCacheUsed, plansMap, smVisibilities)
+			r.updateVisibilityCache(ctx, visibilityCacheUsed, plans, smVisibilities)
 		}
 	}
 }
 
-// updateVisibilityCache
 func (r *resyncJob) updateVisibilityCache(ctx context.Context, visibilityCacheUsed bool, plansMap map[brokerPlanKey]*types.ServicePlan, visibilities []*platform.Visibility) {
 	log.C(ctx).Infof("Updating cache with the %d newly fetched SM plans as cached-SM-plans and expiration duration %s", len(plansMap), r.options.CacheExpiration)
 	r.cache.Set(smPlansCacheKey, plansMap, r.options.CacheExpiration)
@@ -136,7 +84,7 @@ func (r *resyncJob) updateVisibilityCache(ctx context.Context, visibilityCacheUs
 
 // areSMPlansSame checks if there are new or deleted plans in SM.
 // Returns true if there are no new or deleted plans, false otherwise
-func (r *resyncJob) areSMPlansSame(ctx context.Context, plans map[string][]*types.ServicePlan) bool {
+func (r *resyncJob) areSMPlansSame(ctx context.Context, plansMap map[brokerPlanKey]*types.ServicePlan) bool {
 	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
 	if !isPresent {
 		return false
@@ -148,15 +96,9 @@ func (r *resyncJob) areSMPlansSame(ctx context.Context, plans map[string][]*type
 		return false
 	}
 
-	for brokerID, brokerPlans := range plans {
-		for _, plan := range brokerPlans {
-			key := brokerPlanKey{
-				brokerID: brokerID,
-				planID:   plan.ID,
-			}
-			if cachedPlansMap[key] == nil {
-				return false
-			}
+	for key := range plansMap {
+		if cachedPlansMap[key] == nil {
+			return false
 		}
 	}
 	return true
@@ -240,7 +182,7 @@ func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers 
 	return result, nil
 }
 
-func (r *resyncJob) getSMVisibilities(ctx context.Context, smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []platform.ServiceBroker) ([]*platform.Visibility, error) {
+func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []platform.ServiceBroker) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
 
@@ -440,7 +382,7 @@ func (r *resyncJob) convertVisListToMap(list []*platform.Visibility) map[string]
 	return result
 }
 
-func smPlansToMap(plansByBroker map[string][]*types.ServicePlan) map[brokerPlanKey]*types.ServicePlan {
+func mapPlansByBrokerPlanID(plansByBroker map[string][]*types.ServicePlan) map[brokerPlanKey]*types.ServicePlan {
 	plansMap := make(map[brokerPlanKey]*types.ServicePlan, len(plansByBroker))
 	for brokerID, brokerPlans := range plansByBroker {
 		for _, plan := range brokerPlans {

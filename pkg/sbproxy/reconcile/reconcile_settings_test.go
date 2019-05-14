@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package reconcile
+package reconcile_test
 
 import (
 	"time"
+
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func validSettings() *Settings {
-	settings := DefaultSettings()
+func validSettings() *reconcile.Settings {
+	settings := reconcile.DefaultSettings()
 	settings.URL = "http://localhost:8080"
 	settings.Username = "user"
 	settings.Password = "password"
