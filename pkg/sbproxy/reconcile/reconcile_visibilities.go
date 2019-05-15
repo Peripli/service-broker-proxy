@@ -120,14 +120,14 @@ func (r *resyncJob) getPlatformVisibilitiesFromCache(ctx context.Context) []*pla
 
 func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Context, brokers []platform.ServiceBroker) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
-	logger.Debug("resyncJob getting visibilities from platform")
+	logger.Info("resyncJob getting visibilities from platform")
 
 	names := r.brokerNames(brokers)
 	visibilities, err := r.platformClient.Visibility().GetVisibilitiesByBrokers(ctx, names)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("resyncJob SUCCESSFULLY retrieved %d visibilities from platform", len(visibilities))
+	logger.Infof("resyncJob SUCCESSFULLY retrieved %d visibilities from platform", len(visibilities))
 
 	return visibilities, nil
 }
@@ -143,6 +143,7 @@ func (r *resyncJob) brokerNames(brokers []platform.ServiceBroker) []string {
 func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
 	result := make(map[string][]*types.ServicePlan)
 	count := 0
+	log.C(ctx).Info("resyncJob getting service plans from platform")
 	for brokerID, sos := range offerings {
 		if len(sos) == 0 {
 			continue
@@ -165,12 +166,12 @@ func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers 
 	for _, broker := range brokers {
 		brokerIDs = append(brokerIDs, broker.GUID)
 	}
-
+	log.C(ctx).Info("resyncJob getting service offerings from Service Manager...")
 	offerings, err := r.smClient.GetServiceOfferingsByBrokerIDs(ctx, brokerIDs)
 	if err != nil {
 		return nil, err
 	}
-	log.C(ctx).Infof("resyncJob SUCCESSFULLY retrieved %d services from Service Manager", len(offerings))
+	log.C(ctx).Infof("resyncJob SUCCESSFULLY retrieved %d service offerings from Service Manager", len(offerings))
 
 	for _, offering := range offerings {
 		if result[offering.BrokerID] == nil {

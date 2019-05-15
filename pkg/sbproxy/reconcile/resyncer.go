@@ -58,70 +58,51 @@ func createResyncContext(ctx context.Context) (context.Context, string, error) {
 
 func (r *resyncJob) process(ctx context.Context) {
 	logger := log.C(ctx)
-	smBrokers, err := r.getSMBrokers(ctx)
-	if err != nil {
-		logger.Error(err)
+	if r.platformClient.Broker() == nil || r.platformClient.Visibility() == nil {
+		logger.Error("platform must be able to handle both brokers and visibilities. Cannot perform reconciliation")
 		return
 	}
-	smVisibilities, mappedPlans, err := r.getSMVisibilitiesAndPlans(ctx, smBrokers) // fetch as soon as possible
+
+	smBrokers, err := r.getBrokersFromSM(ctx)
+	if err != nil {
+		logger.WithError(err).Error("an error occurred while obtaining brokers from Service Manager")
+		return
+	}
+
+	plansFromSM, err := r.getSMPlans(ctx, smBrokers)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
 
+	mappedPlans := mapPlansByBrokerPlanID(plansFromSM)
+	smVisibilities, err := r.getVisibilitiesFromSM(ctx, mappedPlans, smBrokers) // fetch as soon as possible
+	if err != nil {
+		logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
+		return
+	}
+
 	// get all the registered brokers from the platform
-	brokersFromPlatform, err := r.getBrokersFromPlatform(ctx)
+	logger.Info("resyncJob getting brokers from platform...")
+	brokersFromPlatform, err := r.platformClient.Broker().GetBrokers(ctx)
 	if err != nil {
 		logger.WithError(err).Error("an error occurred while obtaining brokers from Platform")
 		return
 	}
+	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(brokersFromPlatform))
 
 	r.reconcileBrokers(ctx, brokersFromPlatform, smBrokers)
 	r.reconcileVisibilities(ctx, smVisibilities, smBrokers, mappedPlans)
 }
 
-func (r *resyncJob) getSMBrokers(ctx context.Context) ([]platform.ServiceBroker, error) {
-	if r.platformClient.Broker() == nil {
-		return nil, errors.New("platform client cannot handle brokers. Cannot perform reconciliation")
-	}
-	brokersFromSM, err := r.getBrokersFromSM(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "an error occurred while obtaining brokers from Service Manager")
-	}
-	return brokersFromSM, nil
-}
-
-func (r *resyncJob) getSMVisibilitiesAndPlans(ctx context.Context, smBrokers []platform.ServiceBroker) ([]*platform.Visibility, map[brokerPlanKey]*types.ServicePlan, error) {
-	if r.platformClient.Visibility() == nil {
-		return nil, nil, errors.New("platform client cannot handle visibilities. Cannot perform reconciliation")
-	}
-
+func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []platform.ServiceBroker) (map[string][]*types.ServicePlan, error) {
 	smOfferings, err := r.getSMServiceOfferingsByBrokers(ctx, smBrokers)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "an error occurred while obtaining service offerings from Service Manager")
+		return nil, errors.Wrap(err, "an error occurred while obtaining service offerings from Service Manager")
 	}
-
 	smPlans, err := r.getSMPlansByBrokersAndOfferings(ctx, smOfferings)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "an error occurred while obtaining plans from Service Manager")
+		return nil, errors.Wrap(err, "an error occurred while obtaining plans from Service Manager")
 	}
-
-	mappedPlans := mapPlansByBrokerPlanID(smPlans)
-	visibilitiesFromSM, err := r.getVisibilitiesFromSM(ctx, mappedPlans, smBrokers)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "an error occurred while obtaining visibilities from Service Manager")
-	}
-	return visibilitiesFromSM, mappedPlans, nil
-}
-
-func (r *resyncJob) getBrokersFromPlatform(ctx context.Context) ([]platform.ServiceBroker, error) {
-	logger := log.C(ctx)
-	logger.Info("resyncJob getting brokers from platform...")
-	registeredBrokers, err := r.platformClient.Broker().GetBrokers(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting brokers from platform")
-	}
-	logger.Debugf("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(registeredBrokers))
-
-	return registeredBrokers, nil
+	return smPlans, nil
 }
