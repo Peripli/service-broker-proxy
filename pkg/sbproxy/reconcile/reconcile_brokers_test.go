@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package reconcile
+package reconcile_test
 
 import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/patrickmn/go-cache"
 
@@ -39,10 +41,11 @@ var _ = Describe("Reconcile brokers", func() {
 	var (
 		fakeSMClient *smfakes.FakeClient
 
-		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
-		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
+		fakePlatformCatalogFetcher     *platformfakes.FakeCatalogFetcher
+		fakePlatformBrokerClient       *platformfakes.FakeBrokerClient
+		fakePlatformVisibilitiesClient *platformfakes.FakeVisibilityClient
 
-		reconciler *Reconciler
+		reconciler *reconcile.Reconciler
 
 		smbroker1 sm.Broker
 		smbroker2 sm.Broker
@@ -83,10 +86,11 @@ var _ = Describe("Reconcile brokers", func() {
 
 		fakePlatformBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
+		fakePlatformVisibilitiesClient = &platformfakes.FakeVisibilityClient{}
 
 		fakePlatformClient.BrokerReturns(fakePlatformBrokerClient)
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
-		fakePlatformClient.VisibilityReturns(nil)
+		fakePlatformClient.VisibilityReturns(fakePlatformVisibilitiesClient)
 
 		visibilityCache := cache.New(5*time.Minute, 10*time.Minute)
 
@@ -98,8 +102,8 @@ var _ = Describe("Reconcile brokers", func() {
 			FakeClient:         fakePlatformClient,
 		}
 
-		reconciler = &Reconciler{
-			Resyncer: NewResyncer(DefaultSettings(), platformClient, fakeSMClient, fakeAppHost, visibilityCache),
+		reconciler = &reconcile.Reconciler{
+			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeAppHost, visibilityCache),
 		}
 
 		smbroker1 = sm.Broker{
@@ -170,13 +174,13 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      DefaultProxyBrokerPrefix + "smBroker1",
+			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker1",
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      DefaultProxyBrokerPrefix + "smBroker2",
+			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker2",
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -200,7 +204,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformBrokerProxy = platform.ServiceBroker{
 			GUID:      platformbrokerNonProxy.GUID,
-			Name:      DefaultProxyBrokerPrefix + smbroker3.Name,
+			Name:      reconcile.DefaultProxyBrokerPrefix + smbroker3.Name,
 			BrokerURL: fakeAppHost + "/" + smbroker3.ID,
 		}
 	})
@@ -452,7 +456,7 @@ var _ = Describe("Reconcile brokers", func() {
 		reconciler.Resyncer.Resync(context.TODO())
 
 		if err1 != nil {
-			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
+			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(0))
 			Expect(len(fakePlatformCatalogFetcher.Invocations())).To(Equal(0))
 			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 			return
@@ -461,7 +465,7 @@ var _ = Describe("Reconcile brokers", func() {
 		if err2 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
 			Expect(len(fakePlatformCatalogFetcher.Invocations())).To(Equal(0))
-			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(0))
+			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
 			return
 		}
 

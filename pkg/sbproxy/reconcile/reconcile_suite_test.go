@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reconcile
+package reconcile_test
 
 import (
 	"testing"
