@@ -35,7 +35,7 @@ type brokerKey struct {
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
-func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
+func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, payloadBrokers []platform.ServiceBroker) {
 	brokerKeyMap := indexBrokersByKey(existingBrokers)
 	proxyBrokerIDMap := indexProxyBrokersByID(existingBrokers, r.proxyPath)
 
