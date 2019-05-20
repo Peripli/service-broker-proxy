@@ -443,6 +443,55 @@ var _ = Describe("Reconcile brokers", func() {
 				}
 			},
 		}),
+		Entry("When broker with same name is in the platform, but with different ID in SM, it should change the URL", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+			},
+			platformBrokers: func() ([]platform.ServiceBroker, error) {
+				return []platform.ServiceBroker{
+					{
+						Name:             reconcile.DefaultProxyBrokerPrefix + "smBroker1",
+						BrokerURL:        platformbrokerNonProxy.BrokerURL,
+						ServiceOfferings: platformbrokerNonProxy.ServiceOfferings,
+						GUID:             platformbrokerNonProxy.GUID,
+						Metadata:         platformbrokerNonProxy.Metadata,
+					},
+					platformbroker2,
+				}, nil
+			},
+			smBrokers: func() ([]sm.Broker, error) {
+				return []sm.Broker{
+					smbroker1,
+					smbroker2,
+				}, nil
+			},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{
+						{
+							Name:             reconcile.DefaultProxyBrokerPrefix + "smBroker1", // old broker just with the same name
+							BrokerURL:        fakeAppHost + "/" + smbroker1.ID,
+							ServiceOfferings: smbroker1.ServiceOfferings,
+							GUID:             smbroker1.ID,
+							Metadata:         smbroker1.Metadata,
+						},
+					},
+					reconcileDeleteCalledFor: []platform.ServiceBroker{
+						{
+							Name:             reconcile.DefaultProxyBrokerPrefix + "smBroker1",
+							BrokerURL:        platformbrokerNonProxy.BrokerURL,
+							ServiceOfferings: platformbrokerNonProxy.ServiceOfferings,
+							GUID:             platformbrokerNonProxy.GUID,
+							Metadata:         platformbrokerNonProxy.Metadata,
+						},
+					},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{
+						platformbroker2,
+					},
+					reconcileUpdateCalledFor: []platform.ServiceBroker{},
+				}
+			},
+		}),
 	}
 
 	DescribeTable("resync", func(t testCase) {

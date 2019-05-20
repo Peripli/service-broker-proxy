@@ -18,31 +18,44 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/Peripli/service-manager/pkg/log"
-
-	"strings"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-type brokerKey struct {
-	name string
-	url  string
-}
-
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
 // to match the desired broker state coming from the Service Manager (payloadBrokers).
 func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers []platform.ServiceBroker, payloadBrokers []platform.ServiceBroker) {
-	brokerKeyMap := indexBrokersByKey(existingBrokers)
-	proxyBrokerIDMap := indexProxyBrokersByID(existingBrokers, r.proxyPath)
+	brokerKeyMap := indexBrokers(existingBrokers, func(broker platform.ServiceBroker) (string, bool) {
+		return getBrokerKey(broker), true
+	})
+	proxyBrokerIDMap := indexBrokers(existingBrokers, func(broker platform.ServiceBroker) (string, bool) {
+		if strings.HasPrefix(broker.BrokerURL, r.proxyPath) {
+			return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:], true
+		}
+		return "", false
+	})
+	existingBrokersByName := indexBrokers(existingBrokers, func(broker platform.ServiceBroker) (string, bool) {
+		return broker.Name, true
+	})
 
 	for _, payloadBroker := range payloadBrokers {
+		proxifiedBrokerName := r.options.BrokerPrefix + payloadBroker.Name
+		brokerWithProxifiedName, exists := existingBrokersByName[proxifiedBrokerName]
+		if exists && brokerWithProxifiedName.BrokerURL != r.proxyPath+"/"+payloadBroker.GUID { // broker is not created by SM, but is with an SM naming scheme
+			r.deleteBrokerRegistration(ctx, brokerWithProxifiedName)
+			r.createBrokerRegistration(ctx, &payloadBroker)
+			continue
+		}
+
 		existingBroker := proxyBrokerIDMap[payloadBroker.GUID]
 		delete(proxyBrokerIDMap, payloadBroker.GUID)
-		platformBroker, knownToPlatform := brokerKeyMap[getBrokerKey(&payloadBroker)]
+		platformBroker, knownToPlatform := brokerKeyMap[getBrokerKey(payloadBroker)]
 		knownToSM := existingBroker != nil
 		// Broker is registered in platform, this is its first registration in SM but not already known to this broker proxy
 		if knownToPlatform && !knownToSM {
@@ -153,29 +166,16 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 	}
 }
 
-func getBrokerKey(broker *platform.ServiceBroker) brokerKey {
-	return brokerKey{
-		name: broker.Name,
-		url:  broker.BrokerURL,
-	}
+func getBrokerKey(broker platform.ServiceBroker) string {
+	return fmt.Sprintf("name:%s|url:%s", broker.Name, broker.BrokerURL)
 }
 
-func indexBrokersByKey(brokerList []platform.ServiceBroker) map[brokerKey]*platform.ServiceBroker {
-	brokerMap := map[brokerKey]*platform.ServiceBroker{}
-	for _, broker := range brokerList {
-		broker := broker
-		brokerMap[getBrokerKey(&broker)] = &broker
-	}
-	return brokerMap
-}
-
-func indexProxyBrokersByID(brokerList []platform.ServiceBroker, proxyPath string) map[string]*platform.ServiceBroker {
+func indexBrokers(brokers []platform.ServiceBroker, indexingFunc func(broker platform.ServiceBroker) (string, bool)) map[string]*platform.ServiceBroker {
 	brokerMap := map[string]*platform.ServiceBroker{}
-	for _, broker := range brokerList {
+	for _, broker := range brokers {
 		broker := broker
-		if strings.HasPrefix(broker.BrokerURL, proxyPath) {
-			brokerID := broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:]
-			brokerMap[brokerID] = &broker
+		if key, ok := indexingFunc(broker); ok {
+			brokerMap[key] = &broker
 		}
 	}
 	return brokerMap
