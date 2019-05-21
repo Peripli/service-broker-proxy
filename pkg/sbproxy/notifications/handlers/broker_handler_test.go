@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/tidwall/sjson"
@@ -308,6 +309,52 @@ var _ = Describe("Broker Handler", func() {
 				})
 			})
 		})
+
+		Context("when a broker with the new broker proxy name already exists in the platform", func() {
+			BeforeEach(func() {
+				getBrokerInvocationsCount := 0
+				fakeBrokerClient.GetBrokerByNameStub = func(_ context.Context, name string) (*platform.ServiceBroker, error) {
+					if getBrokerInvocationsCount == 0 {
+						getBrokerInvocationsCount++
+						return nil, fmt.Errorf("broker with name %s does not exist", name)
+					}
+					return &platform.ServiceBroker{
+						GUID:      smBrokerID,
+						BrokerURL: brokerURL,
+						Name:      name,
+					}, nil
+				}
+			})
+
+			It("deletes the old broker and creates a new one", func() {
+				var deleteRequest *platform.DeleteServiceBrokerRequest
+				var createRequest *platform.CreateServiceBrokerRequest
+				fakeBrokerClient.DeleteBrokerStub = func(_ context.Context, request *platform.DeleteServiceBrokerRequest) error {
+					deleteRequest = request
+					return nil
+				}
+				createBrokerInvocationsCount := 0
+				fakeBrokerClient.CreateBrokerStub = func(_ context.Context, request *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+					if createBrokerInvocationsCount == 0 {
+						createBrokerInvocationsCount++
+						return nil, errors.New("duplicate broker with this name in the platform")
+					}
+					createRequest = request
+					return nil, nil
+				}
+
+				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+
+				Expect(*deleteRequest).To(Equal(platform.DeleteServiceBrokerRequest{
+					GUID: smBrokerID,
+					Name: brokerHandler.ProxyPrefix + brokerName,
+				}))
+				Expect(*createRequest).To(Equal(platform.CreateServiceBrokerRequest{
+					Name:      brokerHandler.ProxyPrefix + brokerName,
+					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
+				}))
+			})
+		})
 	})
 
 	Describe("OnUpdate", func() {
@@ -424,6 +471,76 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
+			})
+		})
+
+		Context("when the broker name is updated to a conflicting one", func() {
+			oldBrokerName, newBrokerName := "old-broker", "new-broker"
+			BeforeEach(func() {
+				brokerNotificationPayload = fmt.Sprintf(`
+		{
+			"old": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"]
+					}
+				},
+				"additional": %s
+			},
+			"new": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"],
+						"key3": ["value5", "value6"]
+					}
+				},
+				"additional": %s
+			},
+			"label_changes": {
+				"op": "add",
+				"key": "key3",
+				"values": ["value5", "value6"]
+			}
+		}`, smBrokerID, oldBrokerName, brokerURL, catalog, smBrokerID, newBrokerName, brokerURL, catalog)
+
+				fakeBrokerClient.GetBrokerByNameReturns(&platform.ServiceBroker{
+					GUID:      smBrokerID,
+					Name:      oldBrokerName,
+					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
+				}, nil)
+				fakeBrokerClient.UpdateBrokerReturns(nil, fmt.Errorf("broker with name %s already exists in the platform", newBrokerName))
+				fakeCatalogFetcher.FetchReturns(nil)
+			})
+			It("Should delete the conflicting broker and create a new one", func() {
+				var deleteRequest *platform.DeleteServiceBrokerRequest
+				var createRequest *platform.CreateServiceBrokerRequest
+				fakeBrokerClient.DeleteBrokerStub = func(_ context.Context, request *platform.DeleteServiceBrokerRequest) error {
+					deleteRequest = request
+					return nil
+				}
+				fakeBrokerClient.CreateBrokerStub = func(_ context.Context, request *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+					createRequest = request
+					return nil, nil
+				}
+				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				Expect(*deleteRequest).To(Equal(platform.DeleteServiceBrokerRequest{
+					GUID: smBrokerID,
+					Name: brokerHandler.ProxyPrefix + newBrokerName,
+				}))
+				Expect(*createRequest).To(Equal(platform.CreateServiceBrokerRequest{
+					Name:      brokerHandler.ProxyPrefix + newBrokerName,
+					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
+				}))
 			})
 		})
 

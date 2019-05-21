@@ -51,7 +51,7 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers []plat
 		proxifiedBrokerName := r.options.BrokerPrefix + payloadBroker.Name
 		brokerWithProxifiedName, exists := existingBrokersByName[proxifiedBrokerName]
 		if exists && brokerWithProxifiedName.BrokerURL != r.proxyPath+"/"+payloadBroker.GUID { // broker is not created by SM, but is with an SM naming scheme
-			log.C(ctx).Info("Broker with name %s is already registered in the platform but with a different URL. Deleting it and creating a SM representation", proxifiedBrokerName)
+			log.C(ctx).Infof("Broker with name %s is already registered in the platform but with a different URL. Deleting it and creating a SM representation", proxifiedBrokerName)
 			r.deleteBrokerRegistration(ctx, brokerWithProxifiedName)
 			r.createBrokerRegistration(ctx, &payloadBroker)
 			continue

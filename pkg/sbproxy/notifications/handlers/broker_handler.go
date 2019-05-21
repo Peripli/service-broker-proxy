@@ -101,7 +101,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	}
 
 	if existingBroker == nil {
-		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
+		log.C(ctx).Infof("Attempting to create a SM proxy registration for broker with name %s...", brokerProxyName)
 
 		createRequest := &platform.CreateServiceBrokerRequest{
 			Name:      brokerProxyName,
@@ -109,6 +109,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 		}
 		if _, err := bnh.BrokerClient.CreateBroker(ctx, createRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("error creating broker with name %s and URL %s", createRequest.Name, createRequest.BrokerURL)
+			bnh.handlePossibleNameConflict(ctx, brokerProxyName, brokerProxyPath)
 			return
 		}
 		log.C(ctx).Infof("Successfully created SM proxy registration in platform for broker with name %s", brokerProxyName)
@@ -147,31 +148,47 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 		return
 	}
 
+	brokerBeforeUpdate := brokerPayload.Old
 	brokerAfterUpdate := brokerPayload.New
-	brokerProxyName := bnh.brokerProxyName(brokerAfterUpdate.Resource)
+	oldBrokerProxyName := bnh.brokerProxyName(brokerBeforeUpdate.Resource)
+	newBrokerProxyName := bnh.brokerProxyName(brokerAfterUpdate.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
-	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
-
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
+	shouldUpdateBroker := oldBrokerProxyName != newBrokerProxyName
+	brokerName := oldBrokerProxyName
+	if shouldUpdateBroker {
+		brokerName = newBrokerProxyName
+	}
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerName)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerName)
 	if err != nil {
-		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerProxyName, err)
-		return
-	} else if existingBroker == nil {
-		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No update will be attempted", brokerProxyName)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerName, err)
 		return
 	}
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerProxyName, existingBroker.BrokerURL)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerName, existingBroker.BrokerURL)
 		return
 	}
 
 	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s. Refetching catalog...", existingBroker.Name, existingBroker.BrokerURL)
 
+	if shouldUpdateBroker {
+		updateRequest := &platform.UpdateServiceBrokerRequest{
+			GUID:      existingBroker.GUID,
+			Name:      newBrokerProxyName,
+			BrokerURL: brokerProxyPath,
+		}
+		if existingBroker, err = bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
+			log.C(ctx).WithError(err).Error("Error during broker update")
+			bnh.handlePossibleNameConflict(ctx, newBrokerProxyName, brokerProxyPath)
+			return
+		}
+	}
+
 	fetchCatalogRequest := &platform.ServiceBroker{
 		GUID:      existingBroker.GUID,
-		Name:      brokerProxyName,
+		Name:      newBrokerProxyName,
 		BrokerURL: brokerProxyPath,
 	}
 	if bnh.CatalogFetcher != nil {
@@ -241,6 +258,36 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.Ser
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
 	return bnh.ProxyPrefix + broker.Name
+}
+
+func (bnh *BrokerResourceNotificationsHandler) handlePossibleNameConflict(ctx context.Context, brokerProxyName string, brokerProxyURL string) {
+	log.C(ctx).Infof("Checking if a broker with name %s already exists in the platform...", brokerProxyName)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
+	if err != nil {
+		log.C(ctx).Debugf("An error occurred while trying to find platform broker in platform with name %s: %s", brokerProxyName, err)
+		return
+	}
+	if existingBroker != nil {
+		log.C(ctx).Infof("There is already a broker with name %s in the platform. Removing it and creating a new one...", brokerProxyName)
+		deleteRequest := &platform.DeleteServiceBrokerRequest{
+			GUID: existingBroker.GUID,
+			Name: brokerProxyName,
+		}
+
+		if err := bnh.BrokerClient.DeleteBroker(ctx, deleteRequest); err != nil {
+			log.C(ctx).WithError(err).Errorf("error deleting broker with id %s name %s", deleteRequest.GUID, deleteRequest.Name)
+			return
+		}
+		log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
+		if _, err := bnh.BrokerClient.CreateBroker(ctx, &platform.CreateServiceBrokerRequest{
+			Name:      brokerProxyName,
+			BrokerURL: brokerProxyURL,
+		}); err != nil {
+			log.C(ctx).WithError(err).Errorf("error creating broker with name %s and URL %s", brokerProxyName, brokerProxyURL)
+			return
+		}
+		log.C(ctx).Infof("Successfully created SM proxy registration in platform for broker with name %s", brokerProxyName)
+	}
 }
 
 func shouldBeProxified(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {
