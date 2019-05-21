@@ -21,8 +21,6 @@ import (
 
 	"github.com/Peripli/service-manager/pkg/types"
 
-	"github.com/patrickmn/go-cache"
-
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 
 	"fmt"
@@ -60,8 +58,6 @@ const (
 
 	// Path for the Proxy OSB API
 	Path = APIPrefix + "/{" + BrokerPathParam + "}"
-
-	cacheCleanupInterval = 1 * time.Minute
 )
 
 // SMProxyBuilder type is an extension point that allows adding additional filters, plugins and
@@ -144,9 +140,8 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	if err != nil {
 		panic(err)
 	}
-	cache := cache.New(cfg.Reconcile.CacheExpiration, cacheCleanupInterval)
 	proxyPath := cfg.Reconcile.URL + APIPrefix
-	resyncer := reconcile.NewResyncer(cfg.Reconcile, platformClient, smClient, proxyPath, cache)
+	resyncer := reconcile.NewResyncer(cfg.Reconcile, platformClient, smClient, proxyPath)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
