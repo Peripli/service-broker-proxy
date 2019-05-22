@@ -19,11 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
-
-	"github.com/patrickmn/go-cache"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
@@ -92,8 +88,6 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 		fakePlatformClient.VisibilityReturns(fakePlatformVisibilitiesClient)
 
-		visibilityCache := cache.New(5*time.Minute, 10*time.Minute)
-
 		platformClient := struct {
 			*platformfakes.FakeCatalogFetcher
 			*platformfakes.FakeClient
@@ -103,7 +97,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeAppHost, visibilityCache),
+			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeAppHost),
 		}
 
 		smbroker1 = sm.Broker{

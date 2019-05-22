@@ -18,8 +18,6 @@ package reconcile_test
 
 import (
 	"context"
-	"time"
-
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
@@ -29,7 +27,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 )
 
@@ -43,8 +40,6 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
 		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
 		fakeVisibilityClient       *platformfakes.FakeVisibilityClient
-
-		visibilityCache *cache.Cache
 
 		reconciler *reconcile.Reconciler
 
@@ -167,14 +162,12 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
 
-		visibilityCache = cache.New(5*time.Minute, 10*time.Minute)
-
 		fakePlatformClient.BrokerReturns(fakePlatformBrokerClient)
 		fakePlatformClient.VisibilityReturns(fakeVisibilityClient)
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), fakePlatformClient, fakeSMClient, fakeAppHost, visibilityCache),
+			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), fakePlatformClient, fakeSMClient, fakeAppHost),
 		}
 
 		smPlan1 = &types.ServicePlan{
@@ -767,111 +760,5 @@ var _ = Describe("Reconcile visibilities", func() {
 		}
 
 	}, entries...)
-
-	Describe("Resync cache", func() {
-
-		setVisibilityClients := func() {
-			fakeSMClient.GetVisibilitiesReturns([]*types.Visibility{}, nil)
-			fakeSMClient.GetPlansReturns(stubGetSMPlans())
-
-			fakeVisibilityClient.GetVisibilitiesByBrokersReturns([]*platform.Visibility{}, nil)
-			fakeVisibilityClient.VisibilityScopeLabelKeyReturns("key")
-		}
-
-		setFakes := func() {
-			setFakeBrokersClients()
-			setVisibilityClients()
-			stubPlatformOpsToSucceed()
-		}
-
-		assertCallCounts := func(nonCachedCallsCounts, platformVisibilityCallCount int) {
-			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(nonCachedCallsCounts))
-			Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(nonCachedCallsCounts))
-			Expect(fakeVisibilityClient.GetVisibilitiesByBrokersCallCount()).To(Equal(platformVisibilityCallCount))
-			Expect(fakeSMClient.GetVisibilitiesCallCount()).To(Equal(nonCachedCallsCounts))
-		}
-
-		BeforeEach(func() {
-			setFakes()
-			reconciler.Resyncer.Resync(context.TODO())
-			assertCallCounts(1, 1)
-		})
-
-		Context("when visibility cache is invalid", func() {
-			It("should call platform", func() {
-				visibilityCache.Replace("platform_visibilities", nil, time.Minute)
-				reconciler.Resyncer.Resync(context.TODO())
-				assertCallCounts(2, 2)
-			})
-		})
-
-		Context("when visibility cache has expired", func() {
-			It("should call platform", func() {
-				visibilities, found := visibilityCache.Get("platform_visibilities")
-				Expect(found).To(BeTrue())
-				visibilityCache.Set("platform_visibilities", visibilities, time.Nanosecond)
-				time.Sleep(time.Nanosecond)
-				reconciler.Resyncer.Resync(context.TODO())
-				assertCallCounts(2, 2)
-			})
-		})
-
-		Context("when plan cache is invalid", func() {
-			It("should call platform", func() {
-				visibilityCache.Replace("sm_plans", nil, time.Minute)
-				reconciler.Resyncer.Resync(context.TODO())
-				assertCallCounts(2, 2)
-			})
-		})
-
-		Context("when plan cache has expired", func() {
-			It("should call platform", func() {
-				plans, found := visibilityCache.Get("sm_plans")
-				Expect(found).To(BeTrue())
-				visibilityCache.Set("sm_plans", plans, time.Nanosecond)
-				time.Sleep(time.Nanosecond)
-				reconciler.Resyncer.Resync(context.TODO())
-				assertCallCounts(2, 2)
-			})
-		})
-
-		Context("when there are no changes in SM plans", func() {
-			It("should use cache", func() {
-				reconciler.Resyncer.Resync(context.TODO())
-				assertCallCounts(2, 1)
-			})
-		})
-
-		Context("when there are changes in SM plans", func() {
-			Context("and plans are not the same count", func() {
-				It("should not use cache", func() {
-					fakeSMClient.GetServiceOfferingsByBrokerIDsReturns([]*types.ServiceOffering{
-						&smbroker1.ServiceOfferings[0],
-					}, nil)
-					fakeSMClient.GetPlansByServiceOfferingsReturns([]*types.ServicePlan{
-						smbroker1.ServiceOfferings[0].Plans[0],
-					}, nil)
-					reconciler.Resyncer.Resync(context.TODO())
-					assertCallCounts(2, 2)
-				})
-			})
-
-			Context("and plans are the same count but different", func() {
-				It("should not use cache", func() {
-					fakeSMClient.GetServiceOfferingsByBrokerIDsReturns([]*types.ServiceOffering{
-						&smbroker1.ServiceOfferings[0],
-						&smbroker1.ServiceOfferings[1],
-					}, nil)
-					fakeSMClient.GetPlansByServiceOfferingsReturns([]*types.ServicePlan{
-						smbroker1.ServiceOfferings[0].Plans[0],
-						smbroker1.ServiceOfferings[1].Plans[0],
-					}, nil)
-
-					reconciler.Resyncer.Resync(context.TODO())
-					assertCallCounts(2, 2)
-				})
-			})
-		})
-	})
 
 })
