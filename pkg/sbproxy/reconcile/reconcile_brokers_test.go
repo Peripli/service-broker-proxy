@@ -443,7 +443,8 @@ var _ = Describe("Reconcile brokers", func() {
 				}
 			},
 		}),
-		Entry("When broker with same name is in the platform, but with different ID in SM, it should change the URL", testCase{
+		Entry("when a new broker is created with the name of one in the platform it should delete it and create the new one", testCase{
+			// smBroker is registered in SM, but there was already proxy-smBroker1 in the platform (not from SM)
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 			},
@@ -489,6 +490,52 @@ var _ = Describe("Reconcile brokers", func() {
 						platformbroker2,
 					},
 					reconcileUpdateCalledFor: []platform.ServiceBroker{},
+				}
+			},
+		}),
+		Entry("When broker with same name is in the platform, but with different ID in SM, it should change the URL", testCase{
+			// proxy-smBroker2 was renamed to proxy-smBroker1, but there is already proxy-smBroker1 in the platform (not from SM)
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+				stubPlatformUpdateBroker()
+			},
+			platformBrokers: func() ([]platform.ServiceBroker, error) {
+				return []platform.ServiceBroker{
+					{
+						GUID:      "platformBrokerID1",
+						Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker2",
+						BrokerURL: fakeAppHost + "/" + smbroker1.ID,
+					},
+					{
+						GUID:      "platformBrokerID2",
+						Name:      reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						BrokerURL: smbroker2.BrokerURL,
+					},
+				}, nil
+			},
+			smBrokers: func() ([]sm.Broker, error) {
+				return []sm.Broker{
+					smbroker1,
+				}, nil
+			},
+			expectations: func() expectations {
+				return expectations{
+					reconcileDeleteCalledFor: []platform.ServiceBroker{
+						{
+							GUID:      "platformBrokerID2",
+							Name:      reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							BrokerURL: fakeAppHost + "/" + smbroker1.ID,
+						},
+					},
+					reconcileUpdateCalledFor: []platform.ServiceBroker{
+						{
+							GUID:      "platformBrokerID1",
+							Name:      reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							BrokerURL: fakeAppHost + "/" + smbroker1.ID,
+						},
+					},
+					reconcileCreateCalledFor:  []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{},
 				}
 			},
 		}),
