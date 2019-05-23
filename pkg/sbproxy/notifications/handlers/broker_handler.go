@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Peripli/service-manager-cli/pkg/errors"
+	"github.com/pkg/errors"
 
 	"github.com/Peripli/service-manager/storage/interceptors"
 
@@ -245,10 +245,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 func (bnh *BrokerResourceNotificationsHandler) unmarshalPayload(operationType types.OperationType, payload json.RawMessage) (brokerPayload, error) {
 	result := brokerPayload{}
 	if err := json.Unmarshal(payload, &result); err != nil {
-		return brokerPayload{}, errors.New("error unmarshaling broker create notification payload", err)
+		return brokerPayload{}, errors.Wrap(err, "error unmarshaling broker create notification payload")
 	}
 	if err := result.Validate(operationType); err != nil {
-		return brokerPayload{}, errors.New("error validating broker payload", err)
+		return brokerPayload{}, errors.Wrap(err, "error validating broker payload")
 	}
 	return result, nil
 }
