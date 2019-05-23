@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Peripli/service-manager-cli/pkg/errors"
+
 	"github.com/Peripli/service-manager/storage/interceptors"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -78,14 +80,9 @@ type BrokerResourceNotificationsHandler struct {
 func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
 	log.C(ctx).Debugf("Processing broker create notification with payload %s...", string(payload))
 
-	brokerPayload := brokerPayload{}
-	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
-		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
-		return
-	}
-
-	if err := brokerPayload.Validate(types.CREATED); err != nil {
-		log.C(ctx).WithError(err).Error("error validating broker payload")
+	brokerPayload, err := bnh.unmarshalPayload(types.CREATED, payload)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("could not extract broker payload")
 		return
 	}
 
@@ -136,14 +133,9 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
 	log.C(ctx).Debugf("Processing broker update notification with payload %s...", string(payload))
 
-	brokerPayload := brokerPayload{}
-	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
-		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
-		return
-	}
-
-	if err := brokerPayload.Validate(types.MODIFIED); err != nil {
-		log.C(ctx).WithError(err).Error("error validating broker payload")
+	brokerPayload, err := bnh.unmarshalPayload(types.MODIFIED, payload)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("could not extract broker payload")
 		return
 	}
 
@@ -210,14 +202,9 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
 	log.C(ctx).Debugf("Processing broker delete notification with payload %s...", string(payload))
 
-	brokerPayload := brokerPayload{}
-	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
-		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
-		return
-	}
-
-	if err := brokerPayload.Validate(types.DELETED); err != nil {
-		log.C(ctx).WithError(err).Error("error validating broker payload")
+	brokerPayload, err := bnh.unmarshalPayload(types.DELETED, payload)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("could not extract broker payload")
 		return
 	}
 
@@ -253,6 +240,17 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 		return
 	}
 	log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
+}
+
+func (bnh *BrokerResourceNotificationsHandler) unmarshalPayload(operationType types.OperationType, payload json.RawMessage) (brokerPayload, error) {
+	result := brokerPayload{}
+	if err := json.Unmarshal(payload, &result); err != nil {
+		return brokerPayload{}, errors.New("error unmarshaling broker create notification payload", err)
+	}
+	if err := result.Validate(operationType); err != nil {
+		return brokerPayload{}, errors.New("error validating broker payload", err)
+	}
+	return result, nil
 }
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.ServiceBroker) string {

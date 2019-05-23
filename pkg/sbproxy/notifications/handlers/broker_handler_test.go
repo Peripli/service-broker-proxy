@@ -483,7 +483,7 @@ var _ = Describe("Broker Handler", func() {
 				fakeBrokerClient.UpdateBrokerReturns(nil, nil)
 			})
 
-			FIt("Should update the broker name in the platform", func() {
+			It("Should update the broker name in the platform", func() {
 				var updateRequest *platform.UpdateServiceBrokerRequest
 				fakeBrokerClient.UpdateBrokerStub = func(_ context.Context, request *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 					updateRequest = request
