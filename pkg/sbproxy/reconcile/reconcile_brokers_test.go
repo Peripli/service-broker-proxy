@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -74,6 +75,10 @@ var _ = Describe("Reconcile brokers", func() {
 
 	stubPlatformUpdateBroker := func() {
 		fakePlatformBrokerClient.UpdateBrokerReturns(&platformBrokerProxy, nil)
+	}
+
+	brokerProxyName := func(brokerName, brokerID string) string {
+		return fmt.Sprintf("%s%s-%s", reconcile.DefaultProxyBrokerPrefix, brokerName, brokerID)
 	}
 
 	BeforeEach(func() {
@@ -168,13 +173,13 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker1",
+			Name:      brokerProxyName("smBroker1", "smBrokerID1"),
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker2",
+			Name:      brokerProxyName("smBroker2", "smBrokerID2"),
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -198,7 +203,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformBrokerProxy = platform.ServiceBroker{
 			GUID:      platformbrokerNonProxy.GUID,
-			Name:      reconcile.DefaultProxyBrokerPrefix + smbroker3.Name,
+			Name:      brokerProxyName(smbroker3.Name, smbroker3.ID),
 			BrokerURL: fakeAppHost + "/" + smbroker3.ID,
 		}
 	})
@@ -437,19 +442,20 @@ var _ = Describe("Reconcile brokers", func() {
 				}
 			},
 		}),
-		Entry("when a new broker is created with the name of one in the platform it should delete it and create the new one", testCase{
-			// smBroker is registered in SM, but there was already proxy-smBroker1 in the platform (not from SM)
+		Entry("when a broker is renamed in the platform it should rename it back", testCase{
+			// smBroker is registered in SM (as sm-smBroker-<id> in the platform), but it was renamed in the platform
 			stubs: func() {
 				stubPlatformOpsToSucceed()
+				stubPlatformUpdateBroker()
 			},
 			platformBrokers: func() ([]platform.ServiceBroker, error) {
 				return []platform.ServiceBroker{
 					{
-						Name:             reconcile.DefaultProxyBrokerPrefix + "smBroker1",
-						BrokerURL:        platformbrokerNonProxy.BrokerURL,
-						ServiceOfferings: platformbrokerNonProxy.ServiceOfferings,
-						GUID:             platformbrokerNonProxy.GUID,
-						Metadata:         platformbrokerNonProxy.Metadata,
+						Name:             brokerProxyName("smBroker1", smbroker2.ID), // the name of smBroker1 is changed in the platform
+						BrokerURL:        platformbroker1.BrokerURL,
+						ServiceOfferings: platformbroker1.ServiceOfferings,
+						GUID:             platformbroker1.GUID,
+						Metadata:         platformbroker1.Metadata,
 					},
 					platformbroker2,
 				}, nil
@@ -462,74 +468,20 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 			expectations: func() expectations {
 				return expectations{
-					reconcileCreateCalledFor: []platform.ServiceBroker{
+					reconcileCreateCalledFor: []platform.ServiceBroker{},
+					reconcileUpdateCalledFor: []platform.ServiceBroker{
 						{
-							Name:             reconcile.DefaultProxyBrokerPrefix + "smBroker1", // old broker just with the same name
-							BrokerURL:        fakeAppHost + "/" + smbroker1.ID,
-							ServiceOfferings: smbroker1.ServiceOfferings,
-							GUID:             smbroker1.ID,
-							Metadata:         smbroker1.Metadata,
+							Name:             brokerProxyName("smBroker1", smbroker1.ID), // the broker should be updated with the name of smBroker1
+							BrokerURL:        platformbroker1.BrokerURL,
+							ServiceOfferings: platformbroker1.ServiceOfferings,
+							GUID:             platformbroker1.GUID,
+							Metadata:         platformbroker1.Metadata,
 						},
 					},
-					reconcileDeleteCalledFor: []platform.ServiceBroker{
-						{
-							Name:             reconcile.DefaultProxyBrokerPrefix + "smBroker1",
-							BrokerURL:        platformbrokerNonProxy.BrokerURL,
-							ServiceOfferings: platformbrokerNonProxy.ServiceOfferings,
-							GUID:             platformbrokerNonProxy.GUID,
-							Metadata:         platformbrokerNonProxy.Metadata,
-						},
-					},
+					reconcileDeleteCalledFor: []platform.ServiceBroker{},
 					reconcileCatalogCalledFor: []platform.ServiceBroker{
 						platformbroker2,
 					},
-					reconcileUpdateCalledFor: []platform.ServiceBroker{},
-				}
-			},
-		}),
-		Entry("When broker with same name is in the platform, but with different ID in SM, it should change the URL", testCase{
-			// proxy-smBroker2 was renamed to proxy-smBroker1, but there is already proxy-smBroker1 in the platform (not from SM)
-			stubs: func() {
-				stubPlatformOpsToSucceed()
-				stubPlatformUpdateBroker()
-			},
-			platformBrokers: func() ([]platform.ServiceBroker, error) {
-				return []platform.ServiceBroker{
-					{
-						GUID:      "platformBrokerID1",
-						Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker2",
-						BrokerURL: fakeAppHost + "/" + smbroker1.ID,
-					},
-					{
-						GUID:      "platformBrokerID2",
-						Name:      reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
-						BrokerURL: smbroker2.BrokerURL,
-					},
-				}, nil
-			},
-			smBrokers: func() ([]sm.Broker, error) {
-				return []sm.Broker{
-					smbroker1,
-				}, nil
-			},
-			expectations: func() expectations {
-				return expectations{
-					reconcileDeleteCalledFor: []platform.ServiceBroker{
-						{
-							GUID:      "platformBrokerID2",
-							Name:      reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
-							BrokerURL: fakeAppHost + "/" + smbroker1.ID,
-						},
-					},
-					reconcileUpdateCalledFor: []platform.ServiceBroker{
-						{
-							GUID:      "platformBrokerID1",
-							Name:      reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
-							BrokerURL: fakeAppHost + "/" + smbroker1.ID,
-						},
-					},
-					reconcileCreateCalledFor:  []platform.ServiceBroker{},
-					reconcileCatalogCalledFor: []platform.ServiceBroker{},
 				}
 			},
 		}),

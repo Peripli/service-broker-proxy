@@ -95,7 +95,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 	}
 
 	v := visPayload.New
-	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerName
+	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
 
 	log.C(ctx).Infof("Attempting to enable access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
 
@@ -133,7 +133,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 	oldVisibilityPayload := visibilityPayload.Old
 	newVisibilityPayload := visibilityPayload.New
 
-	platformBrokerName := vnh.ProxyPrefix + oldVisibilityPayload.Additional.BrokerName
+	platformBrokerName := vnh.brokerProxyName(oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID)
 
 	labelsToAdd, labelsToRemove := LabelChangesToLabels(visibilityPayload.LabelChanges)
 
@@ -227,7 +227,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 	}
 
 	v := visibilityPayload.Old
-	platformBrokerName := vnh.ProxyPrefix + v.Additional.BrokerName
+	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
 
 	log.C(ctx).Infof("Attempting to disable access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
 
@@ -241,4 +241,8 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 	}
 	log.C(ctx).Infof("Successfully disabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
 
+}
+
+func (vnh *VisibilityResourceNotificationsHandler) brokerProxyName(brokerName, brokerID string) string {
+	return fmt.Sprintf("%s%s-%s", vnh.ProxyPrefix, brokerName, brokerID)
 }
