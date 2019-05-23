@@ -153,19 +153,23 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	brokerProxyNameAfter := bnh.brokerProxyName(brokerAfterUpdate.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
-	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyNameAfter)
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyNameAfter)
+	brokerToFind := brokerProxyNameAfter
+	if brokerProxyNameBefore != brokerProxyNameAfter {
+		brokerToFind = brokerProxyNameBefore
+	}
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToFind)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToFind)
 	if err != nil {
-		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerProxyNameAfter, err)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerToFind, err)
 		return
 	} else if existingBroker == nil {
-		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No update will be attempted", brokerProxyNameAfter)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No update will be attempted", brokerToFind)
 		return
 	}
 	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s.", existingBroker.Name, existingBroker.BrokerURL)
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerProxyNameAfter, existingBroker.BrokerURL)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", existingBroker.Name, existingBroker.BrokerURL)
 		return
 	}
 

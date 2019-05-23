@@ -470,16 +470,20 @@ var _ = Describe("Broker Handler", func() {
 			}
 		}`, smBrokerID, oldBrokerName, brokerURL, catalog, smBrokerID, newBrokerName, brokerURL, catalog)
 
-				fakeBrokerClient.GetBrokerByNameReturns(&platform.ServiceBroker{
-					GUID:      smBrokerID,
-					Name:      oldBrokerName,
-					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
-				}, nil)
-				fakeBrokerClient.UpdateBrokerReturns(nil, fmt.Errorf("broker with name %s already exists in the platform", newBrokerName))
-				fakeCatalogFetcher.FetchReturns(nil)
+				fakeBrokerClient.GetBrokerByNameStub = func(_ context.Context, name string) (*platform.ServiceBroker, error) {
+					if name != brokerProxyName(oldBrokerName, smBrokerID) {
+						return nil, fmt.Errorf("could not find broker with name %s", name)
+					}
+					return &platform.ServiceBroker{
+						GUID:      smBrokerID,
+						Name:      brokerProxyName(name, smBrokerID),
+						BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
+					}, nil
+				}
+				fakeBrokerClient.UpdateBrokerReturns(nil, nil)
 			})
 
-			It("Should update the broker name in the platform", func() {
+			FIt("Should update the broker name in the platform", func() {
 				var updateRequest *platform.UpdateServiceBrokerRequest
 				fakeBrokerClient.UpdateBrokerStub = func(_ context.Context, request *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 					updateRequest = request
@@ -490,7 +494,7 @@ var _ = Describe("Broker Handler", func() {
 					}, nil
 				}
 				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
-				Expect(*updateRequest).To(Equal(platform.UpdateServiceBrokerRequest{
+				Expect(updateRequest).To(Equal(&platform.UpdateServiceBrokerRequest{
 					GUID:      smBrokerID,
 					Name:      brokerProxyName(newBrokerName, smBrokerID),
 					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
