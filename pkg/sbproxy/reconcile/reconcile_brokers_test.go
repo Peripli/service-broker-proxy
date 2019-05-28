@@ -77,10 +77,6 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.UpdateBrokerReturns(&platformBrokerProxy, nil)
 	}
 
-	brokerProxyName := func(brokerName, brokerID string) string {
-		return fmt.Sprintf("%s%s-%s", reconcile.DefaultProxyBrokerPrefix, brokerName, brokerID)
-	}
-
 	BeforeEach(func() {
 		fakeSMClient = &smfakes.FakeClient{}
 		fakePlatformClient := &platformfakes.FakeClient{}

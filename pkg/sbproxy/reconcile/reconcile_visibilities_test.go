@@ -18,7 +18,6 @@ package reconcile_test
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
@@ -155,10 +154,6 @@ var _ = Describe("Reconcile visibilities", func() {
 			platformbroker2,
 			platformbrokerNonProxy,
 		}, nil)
-	}
-
-	brokerProxyName := func(brokerName, brokerID string) string {
-		return fmt.Sprintf("%s%s-%s", reconcile.DefaultProxyBrokerPrefix, brokerName, brokerID)
 	}
 
 	BeforeEach(func() {

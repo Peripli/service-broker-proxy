@@ -180,7 +180,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 		return
 	}
 
-	log.C(ctx).Infof("Refetching	catalog for broker with name %s...", brokerProxyNameAfter)
+	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
 	fetchCatalogRequest := &platform.ServiceBroker{
 		GUID:      existingBroker.GUID,
 		Name:      brokerProxyNameAfter,
