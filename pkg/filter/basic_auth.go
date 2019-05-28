@@ -26,8 +26,10 @@ import (
 	"github.com/Peripli/service-manager/pkg/web"
 )
 
-const BasicAuthnFilterName string = "BearerAuthnFilter"
+// BasicAuthnFilterName is the name of the Basic AuthenticationFilter
+const BasicAuthnFilterName string = "BasicAuthnFilter"
 
+// NewBasicAuthnFilter creates a new Basic Authentication Filter with inmemory authenticator
 func NewBasicAuthnFilter(user, password string) *filters.AuthenticationFilter {
 	return filters.NewAuthenticationFilter(&inmemoryBasicAuthenticator{
 		expectedUsername: user,
