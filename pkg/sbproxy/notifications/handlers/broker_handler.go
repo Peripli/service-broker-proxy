@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/Peripli/service-manager/storage/interceptors"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -78,14 +80,9 @@ type BrokerResourceNotificationsHandler struct {
 func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
 	log.C(ctx).Debugf("Processing broker create notification with payload %s...", string(payload))
 
-	brokerPayload := brokerPayload{}
-	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
-		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
-		return
-	}
-
-	if err := brokerPayload.Validate(types.CREATED); err != nil {
-		log.C(ctx).WithError(err).Error("error validating broker payload")
+	brokerPayload, err := bnh.unmarshalPayload(types.CREATED, payload)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("could not extract broker payload")
 		return
 	}
 
@@ -136,42 +133,57 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
 	log.C(ctx).Debugf("Processing broker update notification with payload %s...", string(payload))
 
-	brokerPayload := brokerPayload{}
-	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
-		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
+	brokerPayload, err := bnh.unmarshalPayload(types.MODIFIED, payload)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("could not extract broker payload")
 		return
 	}
 
-	if err := brokerPayload.Validate(types.MODIFIED); err != nil {
-		log.C(ctx).WithError(err).Error("error validating broker payload")
-		return
-	}
-
+	brokerBeforeUpdate := brokerPayload.Old
 	brokerAfterUpdate := brokerPayload.New
-	brokerProxyName := bnh.brokerProxyName(brokerAfterUpdate.Resource)
+	brokerProxyNameBefore := bnh.brokerProxyName(brokerBeforeUpdate.Resource)
+	brokerProxyNameAfter := bnh.brokerProxyName(brokerAfterUpdate.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
-	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
-
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
+	brokerToFind := brokerProxyNameAfter
+	if brokerProxyNameBefore != brokerProxyNameAfter {
+		brokerToFind = brokerProxyNameBefore
+	}
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToFind)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToFind)
 	if err != nil {
-		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerProxyName, err)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerToFind, err)
 		return
 	} else if existingBroker == nil {
-		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No update will be attempted", brokerProxyName)
+		log.C(ctx).Errorf("Could not find broker with name %s in the platform. No update will be attempted", brokerToFind)
 		return
 	}
+	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s.", existingBroker.Name, existingBroker.BrokerURL)
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", brokerProxyName, existingBroker.BrokerURL)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", existingBroker.Name, existingBroker.BrokerURL)
 		return
 	}
 
-	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s. Refetching catalog...", existingBroker.Name, existingBroker.BrokerURL)
+	if brokerProxyNameBefore != brokerProxyNameAfter {
+		log.C(ctx).Infof("Broker %s was renamed to %s. Triggering broker update...", brokerProxyNameBefore, brokerProxyNameAfter)
+		updateRequest := &platform.UpdateServiceBrokerRequest{
+			GUID:      existingBroker.GUID,
+			Name:      brokerProxyNameAfter,
+			BrokerURL: brokerProxyPath,
+		}
+		if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
+			log.C(ctx).WithError(err).Errorf("Could not update broker name from %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
+			return
+		}
+		log.C(ctx).Infof("Successfully renamed broker %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
+		return
+	}
 
+	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
 	fetchCatalogRequest := &platform.ServiceBroker{
 		GUID:      existingBroker.GUID,
-		Name:      brokerProxyName,
+		Name:      brokerProxyNameAfter,
 		BrokerURL: brokerProxyPath,
 	}
 	if bnh.CatalogFetcher != nil {
@@ -190,14 +202,9 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
 	log.C(ctx).Debugf("Processing broker delete notification with payload %s...", string(payload))
 
-	brokerPayload := brokerPayload{}
-	if err := json.Unmarshal(payload, &brokerPayload); err != nil {
-		log.C(ctx).WithError(err).Error("error unmarshaling broker create notification payload")
-		return
-	}
-
-	if err := brokerPayload.Validate(types.DELETED); err != nil {
-		log.C(ctx).WithError(err).Error("error validating broker payload")
+	brokerPayload, err := bnh.unmarshalPayload(types.DELETED, payload)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("could not extract broker payload")
 		return
 	}
 
@@ -235,12 +242,23 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 	log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
 }
 
+func (bnh *BrokerResourceNotificationsHandler) unmarshalPayload(operationType types.OperationType, payload json.RawMessage) (brokerPayload, error) {
+	result := brokerPayload{}
+	if err := json.Unmarshal(payload, &result); err != nil {
+		return brokerPayload{}, errors.Wrap(err, "error unmarshaling broker create notification payload")
+	}
+	if err := result.Validate(operationType); err != nil {
+		return brokerPayload{}, errors.Wrap(err, "error validating broker payload")
+	}
+	return result, nil
+}
+
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.ServiceBroker) string {
 	return bnh.ProxyPath + "/" + broker.GetID()
 }
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
-	return bnh.ProxyPrefix + broker.Name
+	return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, broker.Name, broker.ID)
 }
 
 func shouldBeProxified(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {

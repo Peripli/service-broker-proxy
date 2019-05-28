@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -168,13 +169,13 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker1",
+			Name:      brokerProxyName("smBroker1", "smBrokerID1"),
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker2",
+			Name:      brokerProxyName("smBroker2", "smBrokerID2"),
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -198,7 +199,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		platformBrokerProxy = platform.ServiceBroker{
 			GUID:      platformbrokerNonProxy.GUID,
-			Name:      reconcile.DefaultProxyBrokerPrefix + smbroker3.Name,
+			Name:      brokerProxyName(smbroker3.Name, smbroker3.ID),
 			BrokerURL: fakeAppHost + "/" + smbroker3.ID,
 		}
 	})
@@ -433,6 +434,49 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []platform.ServiceBroker{},
 					reconcileUpdateCalledFor: []platform.ServiceBroker{
 						platformBrokerProxy,
+					},
+				}
+			},
+		}),
+		Entry("when a broker is renamed in the platform it should rename it back", testCase{
+			// smBroker is registered in SM (as sm-smBroker-<id> in the platform), but it was renamed in the platform
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+				stubPlatformUpdateBroker()
+			},
+			platformBrokers: func() ([]platform.ServiceBroker, error) {
+				return []platform.ServiceBroker{
+					{
+						Name:             brokerProxyName("smBroker1", smbroker2.ID), // the name of smBroker1 is changed in the platform
+						BrokerURL:        platformbroker1.BrokerURL,
+						ServiceOfferings: platformbroker1.ServiceOfferings,
+						GUID:             platformbroker1.GUID,
+						Metadata:         platformbroker1.Metadata,
+					},
+					platformbroker2,
+				}, nil
+			},
+			smBrokers: func() ([]sm.Broker, error) {
+				return []sm.Broker{
+					smbroker1,
+					smbroker2,
+				}, nil
+			},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []platform.ServiceBroker{},
+					reconcileUpdateCalledFor: []platform.ServiceBroker{
+						{
+							Name:             brokerProxyName("smBroker1", smbroker1.ID), // the broker should be updated with the name of smBroker1
+							BrokerURL:        platformbroker1.BrokerURL,
+							ServiceOfferings: platformbroker1.ServiceOfferings,
+							GUID:             platformbroker1.GUID,
+							Metadata:         platformbroker1.Metadata,
+						},
+					},
+					reconcileDeleteCalledFor: []platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []platform.ServiceBroker{
+						platformbroker2,
 					},
 				}
 			},

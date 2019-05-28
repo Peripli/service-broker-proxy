@@ -221,7 +221,7 @@ var _ = Describe("Broker Handler", func() {
 
 				expectedUpdateBrokerRequest = &platform.UpdateServiceBrokerRequest{
 					GUID:      smBrokerID,
-					Name:      brokerHandler.ProxyPrefix + brokerName,
+					Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 				}
 
@@ -261,7 +261,7 @@ var _ = Describe("Broker Handler", func() {
 					fakeBrokerClient.GetBrokerByNameReturns(nil, nil)
 
 					expectedCreateBrokerRequest = &platform.CreateServiceBrokerRequest{
-						Name:      brokerHandler.ProxyPrefix + brokerName,
+						Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 						BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 					}
 
@@ -427,11 +427,82 @@ var _ = Describe("Broker Handler", func() {
 			})
 		})
 
+		Context("when the broker name is updated", func() {
+			oldBrokerName, newBrokerName := "old-broker", "new-broker"
+			BeforeEach(func() {
+				brokerNotificationPayload = fmt.Sprintf(`
+		{
+			"old": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"]
+					}
+				},
+				"additional": %s
+			},
+			"new": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"],
+						"key3": ["value5", "value6"]
+					}
+				},
+				"additional": %s
+			},
+			"label_changes": {
+				"op": "add",
+				"key": "key3",
+				"values": ["value5", "value6"]
+			}
+		}`, smBrokerID, oldBrokerName, brokerURL, catalog, smBrokerID, newBrokerName, brokerURL, catalog)
+
+				fakeBrokerClient.GetBrokerByNameStub = func(_ context.Context, name string) (*platform.ServiceBroker, error) {
+					if name != brokerProxyName(brokerHandler.ProxyPrefix, oldBrokerName, smBrokerID) {
+						return nil, fmt.Errorf("could not find broker with name %s", name)
+					}
+					return &platform.ServiceBroker{
+						GUID:      smBrokerID,
+						Name:      brokerProxyName(brokerHandler.ProxyPrefix, name, smBrokerID),
+						BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
+					}, nil
+				}
+				fakeBrokerClient.UpdateBrokerReturns(nil, nil)
+			})
+
+			It("Should update the broker name in the platform", func() {
+				var updateRequest *platform.UpdateServiceBrokerRequest
+				fakeBrokerClient.UpdateBrokerStub = func(_ context.Context, request *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+					updateRequest = request
+					return &platform.ServiceBroker{
+						Name:      request.Name,
+						BrokerURL: request.BrokerURL,
+						GUID:      request.GUID,
+					}, nil
+				}
+				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				Expect(updateRequest).To(Equal(&platform.UpdateServiceBrokerRequest{
+					GUID:      smBrokerID,
+					Name:      brokerProxyName(brokerHandler.ProxyPrefix, newBrokerName, smBrokerID),
+					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
+				}))
+			})
+		})
+
 		Context("when a proxy registration for the SM broker exists in the platform", func() {
 			BeforeEach(func() {
 				fakeBrokerClient.GetBrokerByNameReturns(&platform.ServiceBroker{
 					GUID:      smBrokerID,
-					Name:      brokerHandler.ProxyPrefix + smBrokerID,
+					Name:      brokerProxyName(brokerHandler.ProxyPrefix, smBrokerID, smBrokerID),
 					BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 				}, nil)
 
@@ -455,7 +526,7 @@ var _ = Describe("Broker Handler", func() {
 				BeforeEach(func() {
 					expectedUpdateBrokerRequest = &platform.ServiceBroker{
 						GUID:      smBrokerID,
-						Name:      brokerHandler.ProxyPrefix + brokerName,
+						Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 						BrokerURL: brokerHandler.ProxyPath + "/" + smBrokerID,
 					}
 
@@ -592,7 +663,7 @@ var _ = Describe("Broker Handler", func() {
 				BeforeEach(func() {
 					expectedDeleteBrokerRequest = &platform.DeleteServiceBrokerRequest{
 						GUID: smBrokerID,
-						Name: brokerHandler.ProxyPrefix + brokerName,
+						Name: brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 					}
 
 					fakeBrokerClient.DeleteBrokerReturns(nil)

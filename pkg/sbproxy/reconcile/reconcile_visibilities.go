@@ -18,11 +18,12 @@ package reconcile
 
 import (
 	"context"
+	"strings"
+	"sync"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/types"
-	"strings"
-	"sync"
 )
 
 // reconcileVisibilities handles the reconciliation of the service visibilities
@@ -127,7 +128,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 			if !found {
 				continue
 			}
-			converted := r.convertSMVisibility(visibility, smPlan, broker.Name)
+			converted := r.convertSMVisibility(visibility, smPlan, broker)
 			result = append(result, converted...)
 		}
 	}
@@ -136,7 +137,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 	return result, nil
 }
 
-func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerName string) []*platform.Visibility {
+func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, broker platform.ServiceBroker) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -144,7 +145,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.options.BrokerPrefix + brokerName,
+				PlatformBrokerName: r.brokerProxyName(&broker),
 				Labels:             map[string]string{},
 			},
 		}
@@ -156,7 +157,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.options.BrokerPrefix + brokerName,
+			PlatformBrokerName: r.brokerProxyName(&broker),
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}

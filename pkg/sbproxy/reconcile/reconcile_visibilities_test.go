@@ -18,6 +18,7 @@ package reconcile_test
 
 import (
 	"context"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
@@ -266,6 +267,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		smbroker1 = sm.Broker{
 			ID:        "smBrokerID1",
+			Name:      "smBroker1",
 			BrokerURL: "https://smBroker1.com",
 			ServiceOfferings: []types.ServiceOffering{
 				smService1,
@@ -275,6 +277,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		smbroker2 = sm.Broker{
 			ID:        "smBrokerID2",
+			Name:      "smBroker2",
 			BrokerURL: "https://smBroker2.com",
 			ServiceOfferings: []types.ServiceOffering{
 				smService3,
@@ -283,13 +286,13 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
-			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker1",
+			Name:      brokerProxyName(smbroker1.Name, smbroker1.ID),
 			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
-			Name:      reconcile.DefaultProxyBrokerPrefix + "smBroker2",
+			Name:      brokerProxyName(smbroker2.Name, smbroker2.ID),
 			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
 		}
 
@@ -353,12 +356,12 @@ var _ = Describe("Reconcile visibilities", func() {
 				return expectations{
 					enablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
 						},
 						{
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
 						},
@@ -374,12 +377,12 @@ var _ = Describe("Reconcile visibilities", func() {
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value0"},
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value1"},
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 				}, nil
 			},
@@ -411,12 +414,12 @@ var _ = Describe("Reconcile visibilities", func() {
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value2"},
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value3"},
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 				}, nil
 			},
@@ -440,24 +443,24 @@ var _ = Describe("Reconcile visibilities", func() {
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 					disablePlanVisibilityCalledFor: []*platform.Visibility{
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value2"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value3"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 				}
@@ -500,12 +503,12 @@ var _ = Describe("Reconcile visibilities", func() {
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 				}
@@ -521,12 +524,12 @@ var _ = Describe("Reconcile visibilities", func() {
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 						Labels:             map[string]string{"key": "value0"},
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 					{
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 						Labels:             map[string]string{"key": "value1"},
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 				}, nil
 			},
@@ -540,12 +543,12 @@ var _ = Describe("Reconcile visibilities", func() {
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{"key": "value0"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 						{
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:             map[string]string{"key": "value1"},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 				}
@@ -603,7 +606,7 @@ var _ = Describe("Reconcile visibilities", func() {
 							Public:             true,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 				}
@@ -616,7 +619,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					{
 						Public:             true,
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 				}, nil
 			},
@@ -635,7 +638,7 @@ var _ = Describe("Reconcile visibilities", func() {
 							Public:             true,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[0].CatalogID,
 							Labels:             map[string]string{},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 					disablePlanVisibilityCalledFor: []*platform.Visibility{
@@ -643,7 +646,7 @@ var _ = Describe("Reconcile visibilities", func() {
 							Public:             true,
 							CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
 							Labels:             map[string]string{},
-							PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+							PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 						},
 					},
 				}
@@ -656,7 +659,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					{
 						Public:             true,
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 				}, nil
 			},
@@ -680,7 +683,7 @@ var _ = Describe("Reconcile visibilities", func() {
 					{
 						Public:             true,
 						CatalogPlanID:      smbroker1.ServiceOfferings[0].Plans[1].CatalogID,
-						PlatformBrokerName: reconcile.DefaultProxyBrokerPrefix + smbroker1.Name,
+						PlatformBrokerName: brokerProxyName(smbroker1.Name, smbroker1.ID),
 					},
 				}, nil
 			},
@@ -694,6 +697,9 @@ var _ = Describe("Reconcile visibilities", func() {
 		}),
 
 		Entry("When visibilities from platform cannot be fetched - no reconcilation is done", testCase{
+			stubs: func() {
+
+			},
 			platformVisibilities: func() ([]*platform.Visibility, error) {
 				return nil, errors.New("Expected")
 			},
