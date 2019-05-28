@@ -169,6 +169,5 @@ func (c *fakeConsumer) Consume(ctx context.Context, notification *types.Notifica
 func (c *fakeConsumer) GetConsumedNotifications() []*types.Notification {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-
 	return c.consumedNotifications
 }

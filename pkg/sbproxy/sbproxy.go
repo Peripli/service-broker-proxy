@@ -129,7 +129,7 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
-			filter.NewBasicAuthFilter(cfg.Reconcile.Username, cfg.Reconcile.Password),
+			filter.NewBasicAuthnFilter(cfg.Reconcile.Username, cfg.Reconcile.Password),
 			secfilters.NewRequiredAuthnFilter(),
 		},
 		Registry: health.NewDefaultRegistry(),
@@ -193,8 +193,8 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 }
 
 func (smb *SMProxyBuilder) installHealth() {
-	if len(smb.HealthIndicators()) > 0 {
-		smb.RegisterControllers(healthcheck.NewController(smb.HealthIndicators(), smb.HealthAggregationPolicy()))
+	if len(smb.HealthIndicators) > 0 {
+		smb.RegisterControllers(healthcheck.NewController(smb.HealthIndicators, smb.HealthAggregationPolicy))
 	}
 }
 

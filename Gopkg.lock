@@ -2,13 +2,12 @@
 
 
 [[projects]]
-  digest = "1:77f3d893f008b2672385eb6bab23b43b8f93e448cd57c1c0c8f7cf5b9da27e94"
+  branch = "fixit-authnn"
+  digest = "1:2512bb1285287714914a2593c62026ad50c4c22c96b1646fdf4dda5d4a5402c2"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/filters",
-    "api/filters/authn/basic",
-    "api/filters/authn/oauth",
     "api/healthcheck",
     "api/info",
     "api/notifications",
@@ -23,8 +22,8 @@
     "pkg/security",
     "pkg/security/authenticators",
     "pkg/security/filters",
+    "pkg/security/filters/middlewares",
     "pkg/security/http",
-    "pkg/security/middlewares",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -41,8 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "0e392b47a0479c8bf36372d927c213098829b5d9"
-  version = "v0.3.1"
+  revision = "e4aa258e27d33374aea752d03a37bfe2bcfb2785"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -609,7 +607,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "cbcb750295291b33242907a04be40e80801d0cfc"
+  revision = "22d7a77e9e5f409e934ed268692e56707cd169e5"
 
 [[projects]]
   branch = "master"
@@ -625,26 +623,26 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "a4d6f7feada510cc50e69a37b484cb0fdc6b7876"
+  revision = "f3200d17e092c607f615320ecaad13d87ad9a2b3"
 
 [[projects]]
   branch = "master"
-  digest = "1:9927d6aceb89d188e21485f42a7a254e67e6fdcf4260aba375fe18e3c300dfb4"
+  digest = "1:8d1c112fb1679fa097e9a9255a786ee47383fa2549a3da71bcb1334a693ebcfe"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "UT"
-  revision = "9f3314589c9a9136388751d9adae6b0ed400978a"
+  revision = "aaccbc9213b0974828f81aaac109d194880e3014"
 
 [[projects]]
   branch = "master"
-  digest = "1:4fc43e824f7e546353de724c00507b1d9c0bab56344b10c2330a97f166a0fba7"
+  digest = "1:668e8c66b8895d69391429b0f64a72c35603c94f364c94d4e5fab5053d57a0b6"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "a5b02f93d862f065920dd6a40dddc66b60d0dec4"
+  revision = "adf421d2caf4ffcf74142ff5fb9ee323b21a819e"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -696,8 +694,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "54a98f90d1c46b7731eb8fb305d2a321c30ef610"
-  version = "v1.5.0"
+  revision = "4c25cacc810c02874000e4f7071286a8e96b2515"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -741,7 +739,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
-    "github.com/Peripli/service-manager/api/filters/authn/basic",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/notifications",
     "github.com/Peripli/service-manager/api/osb",
@@ -751,6 +748,7 @@
     "github.com/Peripli/service-manager/pkg/log",
     "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/filters",
+    "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
