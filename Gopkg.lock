@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:a019fe6be1b730304875f5013a853ae904888870facaa08c58c6139ab68f24b1"
+  branch = "master"
+  digest = "1:67059da287f7b8ca2f99fb3b06dfc125df3a03e57cbd9481e54e8c7f73374814"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -41,8 +42,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "8001819b022eb2879b1865c58435828951ba0b5c"
-  version = "v0.3.2"
+  revision = "50384d18358babeb3e6ba4b0abc39abdea6f78eb"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -617,26 +617,26 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "018c4d40a106a7ae83689758294fcd8d23850745"
+  revision = "f3200d17e092c607f615320ecaad13d87ad9a2b3"
 
 [[projects]]
   branch = "master"
-  digest = "1:9927d6aceb89d188e21485f42a7a254e67e6fdcf4260aba375fe18e3c300dfb4"
+  digest = "1:8d1c112fb1679fa097e9a9255a786ee47383fa2549a3da71bcb1334a693ebcfe"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "UT"
-  revision = "950ef44c6e079baf075030377d90bf0c7e4b7b7a"
+  revision = "aaccbc9213b0974828f81aaac109d194880e3014"
 
 [[projects]]
   branch = "master"
-  digest = "1:6ed9319f79a63e30779042ef237f81770df4091866e43f84a643257384b0aefc"
+  digest = "1:668e8c66b8895d69391429b0f64a72c35603c94f364c94d4e5fab5053d57a0b6"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "8097e1b27ff5e40620836729a9584e91b094b062"
+  revision = "5219a1e1c5f8dfaadf9d314b1289417a73674973"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
