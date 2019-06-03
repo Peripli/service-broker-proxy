@@ -2,8 +2,8 @@
 
 
 [[projects]]
-  branch = "fixit-authnn"
-  digest = "1:2512bb1285287714914a2593c62026ad50c4c22c96b1646fdf4dda5d4a5402c2"
+  branch = "master"
+  digest = "1:cbea414d5fac9bd2985e2e6289f5a4545de0357d56f2a2e412ca0d999792a8a4"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "e4aa258e27d33374aea752d03a37bfe2bcfb2785"
+  revision = "20c16bf996c23c7fd77fe687a0b71a056f9e92ff"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -252,7 +252,7 @@
   revision = "38398a30ed8516ffda617a04c822de09df8a3ec5"
 
 [[projects]]
-  digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
+  digest = "1:254c31ac21234c61cdcca10004f108779549f14dbf78b238a71d2de5630068b4"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -260,8 +260,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "b4b6d9e7f099f14b3a4a08f0664986cd4c85ebd6"
-  version = "v1.5.0"
+  revision = "2a8e997f9fe23bf2b2c9529c817f44ff724d2636"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -607,7 +607,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "22d7a77e9e5f409e934ed268692e56707cd169e5"
+  revision = "20be4c3c3ed52bfccdb2d59a412ee1a936d175a7"
 
 [[projects]]
   branch = "master"
@@ -638,11 +638,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:668e8c66b8895d69391429b0f64a72c35603c94f364c94d4e5fab5053d57a0b6"
+  digest = "1:8f5108406bc43c7669b0d67d282e40d05c9f268615fcaf8c1f0f76965aa3f09f"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "adf421d2caf4ffcf74142ff5fb9ee323b21a819e"
+  revision = "4c4f7f33c9ed00de01c4c741d2177abfcfe19307"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
