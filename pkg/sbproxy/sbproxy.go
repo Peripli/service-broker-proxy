@@ -36,7 +36,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Peripli/service-broker-proxy/pkg/osb"
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
@@ -115,13 +114,22 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 
 	api := &web.API{
 		Controllers: []web.Controller{
-			smosb.NewController(&osb.BrokerDetailsFetcher{
-				URL:      cfg.Sm.URL + cfg.Sm.OSBAPIPath,
-				Username: cfg.Sm.User,
-				Password: cfg.Sm.Password,
-			}, nil, &sm.SkipSSLTransport{
-				SkipSslValidation: cfg.Sm.SkipSSLValidation,
-			}),
+			&smosb.Controller{
+				BrokerFetcher: func(ctx context.Context, brokerID string) (*types.ServiceBroker, error) {
+					return &types.ServiceBroker{
+						Base: types.Base{
+							ID: brokerID,
+						},
+						BrokerURL: fmt.Sprintf("%s%s/%s", cfg.Sm.URL, cfg.Sm.OSBAPIPath, brokerID),
+						Credentials: &types.Credentials{
+							Basic: &types.Basic{
+								Username: cfg.Sm.User,
+								Password: cfg.Sm.Password,
+							},
+						},
+					}, nil
+				},
+			},
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},

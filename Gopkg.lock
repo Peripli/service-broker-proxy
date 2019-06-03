@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cbea414d5fac9bd2985e2e6289f5a4545de0357d56f2a2e412ca0d999792a8a4"
+  digest = "1:c465e0bbfa9a7add0dddde8da10fbf7440f8c299707d2c8aa8572d4f78158cdf"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "20c16bf996c23c7fd77fe687a0b71a056f9e92ff"
+  revision = "886884dd87ff3689c8a24dc49673e7fec243de2c"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -149,14 +149,6 @@
   pruneopts = "UT"
   revision = "93d53a5ae84d81945eedadfe8f6865530d61d51c"
   version = "v3.5.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
@@ -398,14 +390,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:8658f775ba5edb37ede96d8ec9eaecdfe06bc4aef1776152070185e6513dc0cc"
-  name = "github.com/pmorie/go-open-service-broker-client"
-  packages = ["v2"]
-  pruneopts = "UT"
-  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
-  version = "0.0.10"
-
-[[projects]]
   branch = "master"
   digest = "1:bd9efe4e0b0f768302a1e2f0c22458149278de533e521206e5ddc71848c269a0"
   name = "github.com/pquerna/cachecontrol"
@@ -615,7 +599,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "f3200d17e092c607f615320ecaad13d87ad9a2b3"
+  revision = "60506f45cf65977eb3a9c6e30f995f54a721c271"
 
 [[projects]]
   branch = "master"
