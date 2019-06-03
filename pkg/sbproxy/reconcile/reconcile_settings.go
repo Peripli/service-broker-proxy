@@ -18,8 +18,6 @@ package reconcile
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/pkg/errors"
 )
 
@@ -33,20 +31,15 @@ type Settings struct {
 	Password string `mapstructure:"password"`
 
 	BrokerPrefix string `mapstructure:"broker_prefix"`
-
-	VisibilityCache bool          `mapstructure:"visibility_cache"`
-	CacheExpiration time.Duration `mapstructure:"cache_expiration"`
 }
 
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		URL:             "",
-		Username:        "",
-		Password:        "",
-		BrokerPrefix:    DefaultProxyBrokerPrefix,
-		VisibilityCache: true,
-		CacheExpiration: 2 * time.Hour,
+		URL:          "",
+		Username:     "",
+		Password:     "",
+		BrokerPrefix: DefaultProxyBrokerPrefix,
 	}
 }
 
@@ -60,11 +53,6 @@ func (c *Settings) Validate() error {
 	}
 	if len(c.Password) == 0 {
 		return errors.New("validate settings: missing password")
-	}
-	if c.VisibilityCache {
-		if time.Minute > c.CacheExpiration {
-			return errors.New("validate settings: if cache is enabled, cache_expiration should be at least 1 minute")
-		}
 	}
 	return nil
 }

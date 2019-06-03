@@ -17,8 +17,6 @@
 package reconcile_test
 
 import (
-	"time"
-
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	. "github.com/onsi/ginkgo"
@@ -63,14 +61,6 @@ var _ = Describe("Reconcile", func() {
 				It("returns an error", func() {
 					settings := validSettings()
 					settings.Password = ""
-					Expect(settings.Validate()).Should(HaveOccurred())
-				})
-			})
-
-			Context("when CacheExpiration is less then 1 minute", func() {
-				It("returns an error", func() {
-					settings := validSettings()
-					settings.CacheExpiration = time.Second
 					Expect(settings.Validate()).Should(HaveOccurred())
 				})
 			})

@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Peripli/service-manager/test/testutil"
@@ -21,4 +22,8 @@ func VerifyErrorLogged(f func()) {
 	Expect(hook).ToNot(ContainSubstring("error"))
 	f()
 	Expect(hook).To(ContainSubstring("error"))
+}
+
+func brokerProxyName(prefix, brokerName, brokerID string) string {
+	return fmt.Sprintf("%s%s-%s", prefix, brokerName, brokerID)
 }

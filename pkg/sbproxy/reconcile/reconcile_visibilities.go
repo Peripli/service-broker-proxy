@@ -20,102 +20,25 @@ import (
 	"context"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-const (
-	platformVisibilityCacheKey = "platform_visibilities"
-	smPlansCacheKey            = "sm_plans"
-)
-
 // reconcileVisibilities handles the reconciliation of the service visibilities
 func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []platform.ServiceBroker, plans map[brokerPlanKey]*types.ServicePlan) {
-	var platformVisibilities []*platform.Visibility
-	visibilityCacheUsed := false
-	if r.options.VisibilityCache && r.areSMPlansSame(ctx, plans) {
-		log.C(ctx).Infof("Actual SM plans and cached SM plans are same. Attempting to pick up cached platform visibilities...")
-		platformVisibilities = r.getPlatformVisibilitiesFromCache(ctx)
-		visibilityCacheUsed = true
-	}
-
-	if platformVisibilities == nil {
-		log.C(ctx).Infof("Actual SM plans and cached SM plans are different. Invalidating cached platform visibilities and calling platform API to fetch actual platform visibilities...")
-		var err error
-		platformVisibilities, err = r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
-		if err != nil {
-			log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from platform")
-			return
-		}
+	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
+	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
+	if err != nil {
+		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from platform")
+		return
 	}
 
 	errorOccured := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
 	if errorOccured {
 		log.C(ctx).Error("Could not reconcile visibilities")
 	}
-
-	if r.options.VisibilityCache {
-		if errorOccured {
-			r.cache.Delete(platformVisibilityCacheKey)
-			r.cache.Delete(smPlansCacheKey)
-		} else {
-			r.updateVisibilityCache(ctx, visibilityCacheUsed, plans, smVisibilities)
-		}
-	}
-}
-
-func (r *resyncJob) updateVisibilityCache(ctx context.Context, visibilityCacheUsed bool, plansMap map[brokerPlanKey]*types.ServicePlan, visibilities []*platform.Visibility) {
-	log.C(ctx).Infof("Updating cache with the %d newly fetched SM plans as cached-SM-plans and expiration duration %s", len(plansMap), r.options.CacheExpiration)
-	r.cache.Set(smPlansCacheKey, plansMap, r.options.CacheExpiration)
-	visibilitiesExpiration := r.options.CacheExpiration
-	if visibilityCacheUsed {
-		_, expiration, found := r.cache.GetWithExpiration(platformVisibilityCacheKey)
-		if found {
-			visibilitiesExpiration = time.Until(expiration)
-		}
-	}
-
-	log.C(ctx).Infof("Updating cache with the %d newly fetched SM visibilities as cached-platform-visibilities and expiration duration %s", len(visibilities), visibilitiesExpiration)
-	r.cache.Set(platformVisibilityCacheKey, visibilities, visibilitiesExpiration)
-}
-
-// areSMPlansSame checks if there are new or deleted plans in SM.
-// Returns true if there are no new or deleted plans, false otherwise
-func (r *resyncJob) areSMPlansSame(ctx context.Context, plansMap map[brokerPlanKey]*types.ServicePlan) bool {
-	cachedPlans, isPresent := r.cache.Get(smPlansCacheKey)
-	if !isPresent {
-		return false
-	}
-	cachedPlansMap, ok := cachedPlans.(map[brokerPlanKey]*types.ServicePlan)
-	if !ok {
-		log.C(ctx).Error("Service Manager plans cache is in invalid state! Clearing...")
-		r.cache.Delete(smPlansCacheKey)
-		return false
-	}
-
-	for key := range plansMap {
-		if cachedPlansMap[key] == nil {
-			return false
-		}
-	}
-	return true
-}
-
-func (r *resyncJob) getPlatformVisibilitiesFromCache(ctx context.Context) []*platform.Visibility {
-	platformVisibilities, found := r.cache.Get(platformVisibilityCacheKey)
-	if !found {
-		return nil
-	}
-	if result, ok := platformVisibilities.([]*platform.Visibility); ok {
-		log.C(ctx).Infof("resyncJob fetched %d platform visibilities from cache", len(result))
-		return result
-	}
-	log.C(ctx).Error("Platform visibilities cache is in invalid state! Clearing...")
-	r.cache.Delete(platformVisibilityCacheKey)
-	return nil
 }
 
 func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Context, brokers []platform.ServiceBroker) ([]*platform.Visibility, error) {
@@ -205,7 +128,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 			if !found {
 				continue
 			}
-			converted := r.convertSMVisibility(visibility, smPlan, broker.Name)
+			converted := r.convertSMVisibility(visibility, smPlan, broker)
 			result = append(result, converted...)
 		}
 	}
@@ -214,7 +137,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 	return result, nil
 }
 
-func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, brokerName string) []*platform.Visibility {
+func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, broker platform.ServiceBroker) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -222,7 +145,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.options.BrokerPrefix + brokerName,
+				PlatformBrokerName: r.brokerProxyName(&broker),
 				Labels:             map[string]string{},
 			},
 		}
@@ -234,7 +157,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.options.BrokerPrefix + brokerName,
+			PlatformBrokerName: r.brokerProxyName(&broker),
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
