@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c465e0bbfa9a7add0dddde8da10fbf7440f8c299707d2c8aa8572d4f78158cdf"
+  digest = "1:ed6be0700a30755b058e1ba9f94fb52de71626dcf6d64a9d39c3fae02df93725"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -12,7 +12,6 @@
     "api/info",
     "api/notifications",
     "api/osb",
-    "cf",
     "config",
     "pkg/env",
     "pkg/env/envfakes",
@@ -40,7 +39,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "886884dd87ff3689c8a24dc49673e7fec243de2c"
+  revision = "1e3e10d3bcec6a6b536bd0769f5c5c0cd6d01346"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -252,8 +251,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "2a8e997f9fe23bf2b2c9529c817f44ff724d2636"
-  version = "v1.6.0"
+  revision = "54a28ff37c9e1f8cb09a41f220930e20adab649b"
+  version = "v1.6.1"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -610,7 +609,7 @@
     "internal",
   ]
   pruneopts = "UT"
-  revision = "aaccbc9213b0974828f81aaac109d194880e3014"
+  revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
 
 [[projects]]
   branch = "master"
