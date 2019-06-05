@@ -2,13 +2,12 @@
 
 
 [[projects]]
-  digest = "1:a019fe6be1b730304875f5013a853ae904888870facaa08c58c6139ab68f24b1"
+  branch = "master"
+  digest = "1:c465e0bbfa9a7add0dddde8da10fbf7440f8c299707d2c8aa8572d4f78158cdf"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/filters",
-    "api/filters/authn/basic",
-    "api/filters/authn/oauth",
     "api/healthcheck",
     "api/info",
     "api/notifications",
@@ -23,8 +22,8 @@
     "pkg/security",
     "pkg/security/authenticators",
     "pkg/security/filters",
+    "pkg/security/filters/middlewares",
     "pkg/security/http",
-    "pkg/security/middlewares",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -41,8 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "8001819b022eb2879b1865c58435828951ba0b5c"
-  version = "v0.3.2"
+  revision = "886884dd87ff3689c8a24dc49673e7fec243de2c"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -153,14 +151,6 @@
   version = "v3.5.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
-
-[[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -254,7 +244,7 @@
   revision = "38398a30ed8516ffda617a04c822de09df8a3ec5"
 
 [[projects]]
-  digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
+  digest = "1:254c31ac21234c61cdcca10004f108779549f14dbf78b238a71d2de5630068b4"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -262,8 +252,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "b4b6d9e7f099f14b3a4a08f0664986cd4c85ebd6"
-  version = "v1.5.0"
+  revision = "2a8e997f9fe23bf2b2c9529c817f44ff724d2636"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -398,14 +388,6 @@
   pruneopts = "UT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
-
-[[projects]]
-  digest = "1:8658f775ba5edb37ede96d8ec9eaecdfe06bc4aef1776152070185e6513dc0cc"
-  name = "github.com/pmorie/go-open-service-broker-client"
-  packages = ["v2"]
-  pruneopts = "UT"
-  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
-  version = "0.0.10"
 
 [[projects]]
   branch = "master"
@@ -601,7 +583,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "22d7a77e9e5f409e934ed268692e56707cd169e5"
+  revision = "20be4c3c3ed52bfccdb2d59a412ee1a936d175a7"
 
 [[projects]]
   branch = "master"
@@ -617,26 +599,26 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "018c4d40a106a7ae83689758294fcd8d23850745"
+  revision = "60506f45cf65977eb3a9c6e30f995f54a721c271"
 
 [[projects]]
   branch = "master"
-  digest = "1:9927d6aceb89d188e21485f42a7a254e67e6fdcf4260aba375fe18e3c300dfb4"
+  digest = "1:8d1c112fb1679fa097e9a9255a786ee47383fa2549a3da71bcb1334a693ebcfe"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "UT"
-  revision = "950ef44c6e079baf075030377d90bf0c7e4b7b7a"
+  revision = "aaccbc9213b0974828f81aaac109d194880e3014"
 
 [[projects]]
   branch = "master"
-  digest = "1:6ed9319f79a63e30779042ef237f81770df4091866e43f84a643257384b0aefc"
+  digest = "1:8f5108406bc43c7669b0d67d282e40d05c9f268615fcaf8c1f0f76965aa3f09f"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "8097e1b27ff5e40620836729a9584e91b094b062"
+  revision = "4c4f7f33c9ed00de01c4c741d2177abfcfe19307"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -733,7 +715,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
-    "github.com/Peripli/service-manager/api/filters/authn/basic",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/notifications",
     "github.com/Peripli/service-manager/api/osb",
@@ -743,6 +724,7 @@
     "github.com/Peripli/service-manager/pkg/log",
     "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/filters",
+    "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
