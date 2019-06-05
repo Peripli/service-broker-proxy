@@ -82,32 +82,23 @@ type SMProxy struct {
 }
 
 // DefaultEnv creates a default environment that can be used to boot up a Service Broker proxy
-func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) env.Environment {
+func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) (env.Environment, error) {
 	set := pflag.NewFlagSet("Configuration Flags", pflag.ExitOnError)
 
 	AddPFlags(set)
 	for _, addFlags := range additionalPFlags {
 		addFlags(set)
 	}
-	environment, err := env.New(set)
-	if err != nil {
-		panic(fmt.Errorf("error loading environment: %s", err))
-	}
-	return environment
+	return env.New(set)
 }
 
 // New creates service broker proxy that is configured from the provided environment and platform client.
-func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, platformClient platform.Client) *SMProxyBuilder {
-	cfg, err := NewSettings(env)
-	if err != nil {
-		panic(err)
+func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, platformClient platform.Client) (*SMProxyBuilder, error) {
+	if err := settings.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating settings: %s", err)
 	}
 
-	if err := cfg.Validate(); err != nil {
-		panic(err)
-	}
-
-	ctx = log.Configure(ctx, cfg.Log)
+	ctx = log.Configure(ctx, settings.Log)
 	log.AddHook(&logging.ErrorLocationHook{})
 
 	util.HandleInterrupts(ctx, cancel)
@@ -120,11 +111,11 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 						Base: types.Base{
 							ID: brokerID,
 						},
-						BrokerURL: fmt.Sprintf("%s%s/%s", cfg.Sm.URL, cfg.Sm.OSBAPIPath, brokerID),
+						BrokerURL: fmt.Sprintf("%s%s/%s", settings.Sm.URL, settings.Sm.OSBAPIPath, brokerID),
 						Credentials: &types.Credentials{
 							Basic: &types.Basic{
-								Username: cfg.Sm.User,
-								Password: cfg.Sm.Password,
+								Username: settings.Sm.User,
+								Password: settings.Sm.Password,
 							},
 						},
 					}, nil
@@ -133,34 +124,34 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
-			filter.NewBasicAuthnFilter(cfg.Reconcile.Username, cfg.Reconcile.Password),
+			filter.NewBasicAuthnFilter(settings.Reconcile.Username, settings.Reconcile.Password),
 			secfilters.NewRequiredAuthnFilter(),
 		},
 		Registry: health.NewDefaultRegistry(),
 	}
 
-	smClient, err := sm.NewClient(cfg.Sm)
+	smClient, err := sm.NewClient(settings.Sm)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("error create service manager client: %s", err)
 	}
 
-	notificationsProducer, err := notifications.NewProducer(cfg.Producer, cfg.Sm)
+	notificationsProducer, err := notifications.NewProducer(settings.Producer, settings.Sm)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("error creating notifications producer: %s", err)
 	}
-	proxyPath := cfg.Reconcile.URL + APIPrefix
-	resyncer := reconcile.NewResyncer(cfg.Reconcile, platformClient, smClient, proxyPath)
+	proxyPath := settings.Reconcile.URL + APIPrefix
+	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, proxyPath)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
 				BrokerClient:   platformClient.Broker(),
 				CatalogFetcher: platformClient.CatalogFetcher(),
-				ProxyPrefix:    cfg.Reconcile.BrokerPrefix,
+				ProxyPrefix:    settings.Reconcile.BrokerPrefix,
 				ProxyPath:      proxyPath,
 			},
 			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),
-				ProxyPrefix:      cfg.Reconcile.BrokerPrefix,
+				ProxyPrefix:      settings.Reconcile.BrokerPrefix,
 			},
 		},
 	}
@@ -172,11 +163,11 @@ func New(ctx context.Context, cancel context.CancelFunc, env env.Environment, pl
 	return &SMProxyBuilder{
 		API:                   api,
 		ctx:                   ctx,
-		cfg:                   cfg,
+		cfg:                   settings,
 		group:                 &group,
 		reconciler:            reconciler,
 		notificationsProducer: notificationsProducer,
-	}
+	}, nil
 }
 
 // Build builds the Service Manager
