@@ -58,7 +58,7 @@ func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Con
 func (r *resyncJob) brokerNames(brokers []platform.ServiceBroker) []string {
 	names := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		names = append(names, r.options.BrokerPrefix+broker.Name)
+		names = append(names, r.brokerProxyName(&broker))
 	}
 	return names
 }
