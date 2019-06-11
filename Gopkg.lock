@@ -3,29 +3,27 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:67059da287f7b8ca2f99fb3b06dfc125df3a03e57cbd9481e54e8c7f73374814"
+  digest = "1:c9f0a3a0416bc97524e2dc5fbf6bbc22c53f5d174c727fcbd210d8488951fd02"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/filters",
-    "api/filters/authn/basic",
-    "api/filters/authn/oauth",
     "api/healthcheck",
     "api/info",
     "api/notifications",
     "api/osb",
-    "cf",
     "config",
     "pkg/env",
     "pkg/env/envfakes",
+    "pkg/filters/labels",
     "pkg/health",
     "pkg/log",
     "pkg/query",
     "pkg/security",
     "pkg/security/authenticators",
     "pkg/security/filters",
+    "pkg/security/filters/middlewares",
     "pkg/security/http",
-    "pkg/security/middlewares",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -42,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "50384d18358babeb3e6ba4b0abc39abdea6f78eb"
+  revision = "7a2799b175af383f640e1c438f2336ef9bb2516f"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -153,14 +151,6 @@
   version = "v3.5.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
-
-[[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -254,7 +244,7 @@
   revision = "38398a30ed8516ffda617a04c822de09df8a3ec5"
 
 [[projects]]
-  digest = "1:aaa8e0e7e35d92e21daed3f241832cee73d15ca1cd3302ba3843159a959a7eac"
+  digest = "1:589fb1a525a9596f15cf90064ad57cfad5de59b3579e91f272f470ab49051647"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -262,8 +252,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "b4b6d9e7f099f14b3a4a08f0664986cd4c85ebd6"
-  version = "v1.5.0"
+  revision = "05d6922103c7275c684bd5df6608b25577b10521"
+  version = "v1.7.0"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -400,14 +390,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:8658f775ba5edb37ede96d8ec9eaecdfe06bc4aef1776152070185e6513dc0cc"
-  name = "github.com/pmorie/go-open-service-broker-client"
-  packages = ["v2"]
-  pruneopts = "UT"
-  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
-  version = "0.0.10"
-
-[[projects]]
   branch = "master"
   digest = "1:bd9efe4e0b0f768302a1e2f0c22458149278de533e521206e5ddc71848c269a0"
   name = "github.com/pquerna/cachecontrol"
@@ -505,12 +487,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   digest = "1:ddfe0a54e5f9b29536a6d7b2defa376f2cb2b6e4234d676d7ff214d5b097cb50"
   name = "github.com/tidwall/pretty"
   packages = ["."]
   pruneopts = "UT"
   revision = "1166b9ac2b65e46a43d8618d30d1554f4652d49b"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:b70c951ba6fdeecfbd50dabe95aa5e1b973866ae9abbece46ad60348112214f2"
@@ -601,7 +583,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "22d7a77e9e5f409e934ed268692e56707cd169e5"
+  revision = "5c40567a22f818bd14a1ea7245dad9f8ef0691aa"
 
 [[projects]]
   branch = "master"
@@ -617,7 +599,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "f3200d17e092c607f615320ecaad13d87ad9a2b3"
+  revision = "3f473d35a33aa6fdd203e306dc439b797820e3f1"
 
 [[projects]]
   branch = "master"
@@ -628,15 +610,15 @@
     "internal",
   ]
   pruneopts = "UT"
-  revision = "aaccbc9213b0974828f81aaac109d194880e3014"
+  revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
 
 [[projects]]
   branch = "master"
-  digest = "1:668e8c66b8895d69391429b0f64a72c35603c94f364c94d4e5fab5053d57a0b6"
+  digest = "1:010311506e3917b54487c35a4277e2709678a40c1587d82492c40b78b6a0a01d"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "5219a1e1c5f8dfaadf9d314b1289417a73674973"
+  revision = "93c9922d18aeb82498a065f07aec7ad7fa60dfb7"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -688,8 +670,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "4c25cacc810c02874000e4f7071286a8e96b2515"
-  version = "v1.6.0"
+  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
+  version = "v1.6.1"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -733,7 +715,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/Peripli/service-manager/api/filters",
-    "github.com/Peripli/service-manager/api/filters/authn/basic",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/notifications",
     "github.com/Peripli/service-manager/api/osb",
@@ -743,6 +724,7 @@
     "github.com/Peripli/service-manager/pkg/log",
     "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/filters",
+    "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",

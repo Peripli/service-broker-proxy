@@ -10,10 +10,6 @@
   non-go = true
 
 [[constraint]]
-  name = "github.com/robfig/cron"
-  branch = "master"
-
-[[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
 
@@ -24,10 +20,6 @@
 [[constraint]]
   name = "github.com/onsi/ginkgo"
   version = "1.7.0"
-
-[[constraint]]
-  name = "github.com/pmorie/go-open-service-broker-client"
-  version = "=0.0.10"
 
 [[constraint]]
   name = "github.com/gavv/httpexpect"
