@@ -24,6 +24,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var invalidRevisionStr = strconv.FormatInt(types.InvalidRevision, 10)
+
 func TestNotifications(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Notifications Suite")
@@ -245,7 +247,7 @@ var _ = Describe("Notifications", func() {
 
 		Context("When invalid last notification revision is sent", func() {
 			BeforeEach(func() {
-				server.lastNotificationRevision = "-1"
+				server.lastNotificationRevision = "-5"
 			})
 
 			It("returns error", func() {
@@ -469,7 +471,7 @@ type wsServer struct {
 func newWSServer() *wsServer {
 	s := &wsServer{
 		maxPingPeriod:            (100 * time.Millisecond).String(),
-		lastNotificationRevision: "0",
+		lastNotificationRevision: strconv.FormatInt(types.InvalidRevision, 10),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/notifications", s.handler)
@@ -508,7 +510,9 @@ func (s *wsServer) handler(w http.ResponseWriter, r *http.Request) {
 		WriteBufferSize: 1024,
 	}
 	header := http.Header{}
-	header.Set(smnotifications.LastKnownRevisionHeader, s.lastNotificationRevision)
+	if s.lastNotificationRevision != invalidRevisionStr {
+		header.Set(smnotifications.LastKnownRevisionHeader, s.lastNotificationRevision)
+	}
 	header.Set(smnotifications.MaxPingPeriodHeader, s.maxPingPeriod)
 	if s.statusCode != 0 {
 		w.WriteHeader(s.statusCode)

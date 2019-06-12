@@ -40,8 +40,6 @@ import (
 
 var errLastNotificationGone = errors.New("last notification revision no longer present in SM")
 
-const unknownRevision int64 = -1
-
 // Producer reads notifications coming from the websocket connection and regularly
 // triggers full resync
 type Producer struct {
@@ -127,6 +125,7 @@ func NewProducer(producerSettings *ProducerSettings, smSettings *sm.Settings) (*
 		url:              notificationsURL,
 		producerSettings: *producerSettings,
 		smSettings:       *smSettings,
+		lastNotificationRevision: types.InvalidRevision,
 	}, nil
 }
 
@@ -156,17 +155,17 @@ func (p *Producer) Start(ctx context.Context, group *sync.WaitGroup) <-chan *Mes
 func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.WaitGroup) {
 	defer group.Done()
 	resyncChan := make(chan struct{})
-	p.lastNotificationRevision = unknownRevision
+	p.lastNotificationRevision = types.InvalidRevision
 	go p.scheduleResync(ctx, resyncChan, messages)
 
 	for {
 		// Store the state of p.lastNotificationRevision as it will be changed in p.connect after reading headers
 		// We need the value that was set before establishing the connection to determine whether to resync
-		needResync := p.lastNotificationRevision == unknownRevision
+		needResync := p.lastNotificationRevision == types.InvalidRevision
 		if err := p.connect(ctx); err != nil {
 			log.C(ctx).WithError(err).Error("could not connect websocket")
 			if err == errLastNotificationGone { // skip reconnect delay
-				p.lastNotificationRevision = unknownRevision
+				p.lastNotificationRevision = types.InvalidRevision
 				continue
 			}
 		} else {
@@ -289,7 +288,7 @@ func (p *Producer) connect(ctx context.Context) error {
 	headers.Add("Authorization", auth)
 
 	connectURL := *p.url
-	if p.lastNotificationRevision != unknownRevision {
+	if p.lastNotificationRevision != types.InvalidRevision {
 		q := connectURL.Query()
 		q.Set(notifications.LastKnownRevisionQueryParam, strconv.FormatInt(p.lastNotificationRevision, 10))
 		connectURL.RawQuery = q.Encode()
@@ -328,16 +327,17 @@ func (p *Producer) connect(ctx context.Context) error {
 }
 
 func (p *Producer) readResponseHeaders(ctx context.Context, header http.Header) error {
-	if p.lastNotificationRevision == unknownRevision {
-		rev := header.Get(notifications.LastKnownRevisionHeader)
-		revision, err := strconv.ParseInt(rev, 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid last notification revision received (%s): %v", rev, err)
+	if p.lastNotificationRevision == types.InvalidRevision {
+		if revisionStr := header.Get(notifications.LastKnownRevisionHeader); revisionStr != "" {
+			revision, err := strconv.ParseInt(revisionStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid last notification revision received (%s): %v", revisionStr, err)
+			}
+			if revision <= 0 {
+				return fmt.Errorf("invalid last notification revision received (%d)", revision)
+			}
+			p.lastNotificationRevision = revision
 		}
-		if revision < 0 {
-			return fmt.Errorf("invalid last notification revision received (%d)", revision)
-		}
-		p.lastNotificationRevision = revision
 	}
 
 	maxPingPeriod, err := time.ParseDuration(header.Get(notifications.MaxPingPeriodHeader))
