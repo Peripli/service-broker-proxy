@@ -290,6 +290,7 @@ func (r *resyncJob) deleteVisibility(ctx context.Context, visibility *platform.V
 		CatalogPlanID: visibility.CatalogPlanID,
 		Labels:        mapToLabels(visibility.Labels),
 	}); err != nil {
+		logger.WithError(err).Errorf("resyncJob FAILED to delete visibility for catalog plan %s with labels %s", visibility.CatalogPlanID, visibility.Labels)
 		return err
 	}
 	logger.Infof("resyncJob SUCCESSFULLY deleted visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
