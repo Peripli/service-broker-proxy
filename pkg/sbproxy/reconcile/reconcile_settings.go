@@ -18,7 +18,6 @@ package reconcile
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 )
 
 // DefaultProxyBrokerPrefix prefix for brokers registered by the proxy
@@ -26,9 +25,10 @@ const DefaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
 type Settings struct {
-	URL      string `mapstructure:"url"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
+	MaxParallelRequests int    `mapstructure:"max_parallel_requests"`
+	URL                 string `mapstructure:"url"`
+	Username            string `mapstructure:"username"`
+	Password            string `mapstructure:"password"`
 
 	BrokerPrefix string `mapstructure:"broker_prefix"`
 }
@@ -36,10 +36,11 @@ type Settings struct {
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		URL:          "",
-		Username:     "",
-		Password:     "",
-		BrokerPrefix: DefaultProxyBrokerPrefix,
+		MaxParallelRequests: 20,
+		URL:                 "",
+		Username:            "",
+		Password:            "",
+		BrokerPrefix:        DefaultProxyBrokerPrefix,
 	}
 }
 
@@ -49,10 +50,14 @@ func (c *Settings) Validate() error {
 		return fmt.Errorf("validate settings: missing url")
 	}
 	if len(c.Username) == 0 {
-		return errors.New("validate settings: missing username")
+		return fmt.Errorf("validate settings: missing username")
 	}
 	if len(c.Password) == 0 {
-		return errors.New("validate settings: missing password")
+		return fmt.Errorf("validate settings: missing password")
 	}
+	if c.MaxParallelRequests <= 0 {
+		return fmt.Errorf("validate settings: max parallel requests must be positive number")
+	}
+
 	return nil
 }

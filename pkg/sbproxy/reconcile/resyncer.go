@@ -88,7 +88,7 @@ func (r *resyncJob) process(ctx context.Context) {
 	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(brokersFromPlatform))
 
 	r.reconcileBrokers(ctx, brokersFromPlatform, smBrokers)
-	r.reconcileVisibilities(ctx, smVisibilities, smBrokers, mappedPlans)
+	r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
 }
 
 func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []platform.ServiceBroker) (map[string][]*types.ServicePlan, error) {

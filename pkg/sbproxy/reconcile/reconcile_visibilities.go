@@ -27,7 +27,7 @@ import (
 )
 
 // reconcileVisibilities handles the reconciliation of the service visibilities
-func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []platform.ServiceBroker, plans map[brokerPlanKey]*types.ServicePlan) {
+func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []platform.ServiceBroker) {
 	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
 	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
 	if err != nil {
@@ -195,18 +195,21 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 }
 
 type visibilityProcessingState struct {
-	Mutex          sync.Mutex
 	Ctx            context.Context
+	Mutex          sync.Mutex
 	StopProcessing context.CancelFunc
-	WaitGroup      sync.WaitGroup
 	ErrorOccured   error
+
+	WaitGroupCounter chan struct{}
+	WaitGroup        sync.WaitGroup
 }
 
 func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilityProcessingState {
 	visibilitiesContext, cancel := context.WithCancel(ctx)
 	return &visibilityProcessingState{
-		Ctx:            visibilitiesContext,
-		StopProcessing: cancel,
+		Ctx:              visibilitiesContext,
+		StopProcessing:   cancel,
+		WaitGroupCounter: make(chan struct{}, r.options.MaxParallelRequests),
 	}
 }
 
@@ -216,7 +219,9 @@ func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[str
 	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
-		execAsync(state, visibility, r.deleteVisibility)
+		if err := execAsync(state, visibility, r.deleteVisibility); err != nil {
+			return err
+		}
 	}
 	return await(state)
 }
@@ -227,16 +232,28 @@ func (r *resyncJob) createVisibilities(ctx context.Context, visibilities []*plat
 	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
-		execAsync(state, visibility, r.createVisibility)
+		if err := execAsync(state, visibility, r.createVisibility); err != nil {
+			return err
+		}
 	}
 	return await(state)
 }
 
-func execAsync(state *visibilityProcessingState, visibility *platform.Visibility, f func(context.Context, *platform.Visibility) error) {
+func execAsync(state *visibilityProcessingState, visibility *platform.Visibility, f func(context.Context, *platform.Visibility) error) error {
+	select {
+	case <-state.Ctx.Done():
+		return state.Ctx.Err()
+	case state.WaitGroupCounter <- struct{}{}:
+		break
+	}
 	state.WaitGroup.Add(1)
 
 	go func() {
-		defer state.WaitGroup.Done()
+		defer func() {
+			<-state.WaitGroupCounter
+			state.WaitGroup.Done()
+		}()
+
 		err := f(state.Ctx, visibility)
 		if err == nil {
 			return
@@ -247,6 +264,8 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 			state.ErrorOccured = err
 		}
 	}()
+
+	return nil
 }
 
 func await(state *visibilityProcessingState) error {
