@@ -14,12 +14,12 @@ import (
 
 // NewResyncer returns a resyncer that reconciles the state of the proxy brokers and visibilities
 // in the platform to match the desired state provided by the Service Manager.
-func NewResyncer(settings *Settings, platformClient platform.Client, smClient sm.Client, proxyPath string) Resyncer {
+func NewResyncer(settings *Settings, platformClient platform.Client, smClient sm.Client, smPath string) Resyncer {
 	return &resyncJob{
 		options:        settings,
 		platformClient: platformClient,
 		smClient:       smClient,
-		proxyPath:      proxyPath,
+		smPath:         smPath,
 	}
 }
 
@@ -27,7 +27,7 @@ type resyncJob struct {
 	options        *Settings
 	platformClient platform.Client
 	smClient       sm.Client
-	proxyPath      string
+	smPath         string
 }
 
 // Resync reconciles the state of the proxy brokers and visibilities at the platform
