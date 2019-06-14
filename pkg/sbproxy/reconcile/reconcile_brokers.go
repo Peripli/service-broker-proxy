@@ -39,13 +39,14 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 		}
 		return "", false
 	})
+	orphanProxyBrokerMap := indexBrokers(existingBrokers, func(broker platform.ServiceBroker) (string, bool) {
+		return r.brokerProxyName(&broker), true
+	})
 
 	for _, desiredBroker := range desiredBrokers {
 		desiredBroker := desiredBroker
 		existingBroker, alreadyProxified := proxyBrokerIDMap[desiredBroker.GUID]
 		delete(proxyBrokerIDMap, desiredBroker.GUID)
-
-		platformBroker, shouldBeProxified := brokerKeyMap[getBrokerKey(desiredBroker)]
 
 		if alreadyProxified {
 			if existingBroker.Name != r.brokerProxyName(desiredBroker) { // broker name has been changed in the platform
@@ -54,6 +55,16 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 			}
 			r.fetchBrokerCatalog(ctx, existingBroker)
 		} else {
+			platformBroker, shouldBeProxified := brokerKeyMap[getBrokerKey(desiredBroker)]
+
+			if !shouldBeProxified {
+				platformBroker, shouldBeProxified = orphanProxyBrokerMap[r.brokerProxyName(&desiredBroker)]
+
+				if shouldBeProxified {
+					log.C(ctx).Debugf("Found orphan proxy broker with name %s which should be updated", platformBroker.Name)
+				}
+			}
+
 			if shouldBeProxified {
 				r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
 			} else {
