@@ -18,7 +18,10 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"sync"
+	"time"
 
 	"github.com/Peripli/service-manager/pkg/types"
 
@@ -52,6 +55,26 @@ func (r *Reconciler) Reconcile(ctx context.Context, messages <-chan *notificatio
 // Process resync and notification messages sequentially in one goroutine
 // to avoid concurrent changes in the platform
 func (r *Reconciler) process(ctx context.Context, messages <-chan *notifications.Message, group *sync.WaitGroup) {
+	for {
+		req, err := http.NewRequest("GET", "http://cfproxy.dev.cfdev.sh/v1/monitor/health", nil)
+		if err != nil {
+			fmt.Println(">>>>", err.Error())
+			continue
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			fmt.Println(">>>>", err.Error())
+			continue
+		}
+		if resp.StatusCode == http.StatusOK {
+			fmt.Println("Could not reach myself")
+			break
+		} else {
+			fmt.Println("Successfully called myself")
+		}
+		time.Sleep(time.Second)
+	}
+
 	defer group.Done()
 	for {
 		select {
