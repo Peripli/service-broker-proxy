@@ -2,6 +2,7 @@ package reconcile
 
 import (
 	"context"
+	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -28,6 +29,12 @@ type resyncJob struct {
 	platformClient platform.Client
 	smClient       sm.Client
 	proxyPath      string
+
+	mutex sync.Mutex
+	err   error
+
+	waitGroupLimit chan struct{}
+	waitGroup      sync.WaitGroup
 }
 
 // Resync reconciles the state of the proxy brokers and visibilities at the platform
@@ -80,18 +87,18 @@ func (r *resyncJob) process(ctx context.Context) {
 
 	// get all the registered brokers from the platform
 	logger.Info("resyncJob getting brokers from platform...")
-	brokersFromPlatform, err := r.platformClient.Broker().GetBrokers(ctx)
+	platformBrokers, err := r.platformClient.Broker().GetBrokers(ctx)
 	if err != nil {
 		logger.WithError(err).Error("an error occurred while obtaining brokers from Platform")
 		return
 	}
-	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(brokersFromPlatform))
+	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(platformBrokers))
 
-	r.reconcileBrokers(ctx, brokersFromPlatform, smBrokers)
+	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
 	r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
 }
 
-func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []platform.ServiceBroker) (map[string][]*types.ServicePlan, error) {
+func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string][]*types.ServicePlan, error) {
 	smOfferings, err := r.getSMServiceOfferingsByBrokers(ctx, smBrokers)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error occurred while obtaining service offerings from Service Manager")

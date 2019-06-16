@@ -27,7 +27,7 @@ import (
 )
 
 // reconcileVisibilities handles the reconciliation of the service visibilities
-func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []platform.ServiceBroker) {
+func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []*platform.ServiceBroker) {
 	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
 	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
 	if err != nil {
@@ -41,7 +41,7 @@ func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []
 	}
 }
 
-func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Context, brokers []platform.ServiceBroker) ([]*platform.Visibility, error) {
+func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Context, brokers []*platform.ServiceBroker) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from platform")
 
@@ -55,10 +55,10 @@ func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Con
 	return visibilities, nil
 }
 
-func (r *resyncJob) brokerNames(brokers []platform.ServiceBroker) []string {
+func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 	names := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		names = append(names, r.brokerProxyName(&broker))
+		names = append(names, r.brokerProxyName(broker))
 	}
 	return names
 }
@@ -83,7 +83,7 @@ func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerin
 	return result, nil
 }
 
-func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers []platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
+func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers []*platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
 	result := make(map[string][]*types.ServiceOffering)
 	brokerIDs := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
@@ -106,7 +106,7 @@ func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers 
 	return result, nil
 }
 
-func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []platform.ServiceBroker) ([]*platform.Visibility, error) {
+func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []*platform.ServiceBroker) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
 
@@ -137,7 +137,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 	return result, nil
 }
 
-func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, broker platform.ServiceBroker) []*platform.Visibility {
+func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, broker *platform.ServiceBroker) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 
 	if visibility.PlatformID == "" || scopeLabelKey == "" {
@@ -145,7 +145,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.brokerProxyName(&broker),
+				PlatformBrokerName: r.brokerProxyName(broker),
 				Labels:             map[string]string{},
 			},
 		}
@@ -157,7 +157,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.brokerProxyName(&broker),
+			PlatformBrokerName: r.brokerProxyName(broker),
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
@@ -195,28 +195,24 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 }
 
 type visibilityProcessingState struct {
-	Ctx            context.Context
-	Mutex          sync.Mutex
-	StopProcessing context.CancelFunc
-	ErrorOccured   error
+	Ctx           context.Context
+	Mutex         sync.Mutex
+	ErrorOccurred error
 
-	WaitGroupCounter chan struct{}
-	WaitGroup        sync.WaitGroup
+	WaitGroupLimit chan struct{}
+	WaitGroup      sync.WaitGroup
 }
 
 func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilityProcessingState {
-	visibilitiesContext, cancel := context.WithCancel(ctx)
 	return &visibilityProcessingState{
-		Ctx:              visibilitiesContext,
-		StopProcessing:   cancel,
-		WaitGroupCounter: make(chan struct{}, r.options.MaxParallelRequests),
+		Ctx:            ctx,
+		WaitGroupLimit: make(chan struct{}, r.options.MaxParallelRequests),
 	}
 }
 
 // deleteVisibilities deletes visibilities from platform. Returns true if error has occurred
 func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[string]*platform.Visibility) error {
 	state := r.newVisibilityProcessingState(ctx)
-	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
 		if err := execAsync(state, visibility, r.deleteVisibility); err != nil {
@@ -229,7 +225,6 @@ func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[str
 // createVisibilities creates visibilities from platform. Returns true if error has occurred
 func (r *resyncJob) createVisibilities(ctx context.Context, visibilities []*platform.Visibility) error {
 	state := r.newVisibilityProcessingState(ctx)
-	defer state.StopProcessing()
 
 	for _, visibility := range visibilities {
 		if err := execAsync(state, visibility, r.createVisibility); err != nil {
@@ -243,25 +238,23 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 	select {
 	case <-state.Ctx.Done():
 		return state.Ctx.Err()
-	case state.WaitGroupCounter <- struct{}{}:
+	case state.WaitGroupLimit <- struct{}{}:
 		break
 	}
 	state.WaitGroup.Add(1)
-
 	go func() {
 		defer func() {
-			<-state.WaitGroupCounter
+			<-state.WaitGroupLimit
 			state.WaitGroup.Done()
 		}()
 
 		err := f(state.Ctx, visibility)
-		if err == nil {
-			return
-		}
-		state.Mutex.Lock()
-		defer state.Mutex.Unlock()
-		if state.ErrorOccured == nil {
-			state.ErrorOccured = err
+		if err != nil {
+			state.Mutex.Lock()
+			defer state.Mutex.Unlock()
+			if state.ErrorOccurred == nil {
+				state.ErrorOccurred = err
+			}
 		}
 	}()
 
@@ -270,7 +263,7 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 
 func await(state *visibilityProcessingState) error {
 	state.WaitGroup.Wait()
-	return state.ErrorOccured
+	return state.ErrorOccurred
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans
