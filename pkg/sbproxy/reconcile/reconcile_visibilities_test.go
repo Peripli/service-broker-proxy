@@ -33,7 +33,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ = FDescribe("Reconcile visibilities", func() {
+var _ = Describe("Reconcile visibilities", func() {
 	const (
 		fakeAppHost         = "https://smproxy.com"
 		maxParallelRequests = 10
