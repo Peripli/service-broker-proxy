@@ -2,7 +2,8 @@
 
 
 [[projects]]
-  digest = "1:4917c1ec64ce53ffa0451b9ced5b9d4f8f6be72fcd52d8060e5b7f2818b07596"
+  branch = "master"
+  digest = "1:e295fc4e3319a8c4ed7df47fe2e9159be7fdc234909f1e5c90b4b34f09198efe"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -14,6 +15,7 @@
     "config",
     "pkg/env",
     "pkg/env/envfakes",
+    "pkg/filters/labels",
     "pkg/health",
     "pkg/log",
     "pkg/query",
@@ -38,8 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "f8777da7502b76e51ac5a5ba288eeba345050bd3"
-  version = "v0.3.3"
+  revision = "b0019ddc6c1b24aea339d3737ea1cfca13317dd6"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -251,8 +252,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "8756f2777357367e8b792ec60331ce0d40fb925e"
-  version = "v1.6.2"
+  revision = "05d6922103c7275c684bd5df6608b25577b10521"
+  version = "v1.7.0"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -582,7 +583,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "f99c8df09eb5bff426315721bfa5f16a99cad32c"
+  revision = "5c40567a22f818bd14a1ea7245dad9f8ef0691aa"
 
 [[projects]]
   branch = "master"
@@ -598,7 +599,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "60506f45cf65977eb3a9c6e30f995f54a721c271"
+  revision = "d28f0bde5980168871434b95cfc858db9f2a7a99"
 
 [[projects]]
   branch = "master"
@@ -613,11 +614,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8f5108406bc43c7669b0d67d282e40d05c9f268615fcaf8c1f0f76965aa3f09f"
+  digest = "1:249fd56fb36a223aee164e2dc35e3b3a1b92dd3873dfb60216280b9fb9d4a784"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "4c4f7f33c9ed00de01c4c741d2177abfcfe19307"
+  revision = "15dcb6c0061f497a3f66e3ea034b629c6dd4d99e"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -669,8 +670,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "4c25cacc810c02874000e4f7071286a8e96b2515"
-  version = "v1.6.0"
+  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
+  version = "v1.6.1"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
