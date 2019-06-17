@@ -139,15 +139,16 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 	if err != nil {
 		return nil, fmt.Errorf("error creating notifications producer: %s", err)
 	}
-	proxyPath := settings.Reconcile.URL + APIPrefix
-	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, proxyPath)
+	smPath := settings.Sm.URL + APIPrefix
+	proxyPathPattern := settings.Reconcile.URL + APIPrefix + "/%s"
+	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, smPath, proxyPathPattern)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
 				BrokerClient:   platformClient.Broker(),
 				CatalogFetcher: platformClient.CatalogFetcher(),
 				ProxyPrefix:    settings.Reconcile.BrokerPrefix,
-				ProxyPath:      proxyPath,
+				SMPath:         smPath,
 			},
 			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),

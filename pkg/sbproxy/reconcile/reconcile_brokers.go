@@ -29,36 +29,49 @@ import (
 )
 
 // reconcileBrokers attempts to reconcile the current brokers state in the platform (existingBrokers)
-// to match the desired broker state coming from the Service Manager (payloadBrokers).
-func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, payloadBrokers []*platform.ServiceBroker) {
+// to match the desired broker state coming from the Service Manager (desiredBrokers).
+func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desiredBrokers []*platform.ServiceBroker) {
 	brokerKeyMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		return getBrokerKey(broker), true
 	})
 	proxyBrokerIDMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
-		if strings.HasPrefix(broker.BrokerURL, r.proxyPath) {
-			return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:], true
+		if strings.HasPrefix(broker.BrokerURL, r.smPath) {
+			return brokerIDFromURL(broker.BrokerURL), true
+		}
+		return "", false
+	})
+	orphanProxyBrokerMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
+		if broker.BrokerURL == fmt.Sprintf(r.proxyPathPattern, brokerIDFromURL(broker.BrokerURL)) {
+			return broker.BrokerURL, true
 		}
 		return "", false
 	})
 
-	for _, payloadBroker := range payloadBrokers {
-		payloadBroker := payloadBroker
-		existingBroker, alreadyProxified := proxyBrokerIDMap[payloadBroker.GUID]
-		delete(proxyBrokerIDMap, payloadBroker.GUID)
-
-		platformBroker, shouldBeProxified := brokerKeyMap[getBrokerKey(payloadBroker)]
+	for _, desiredBroker := range desiredBrokers {
+		existingBroker, alreadyProxified := proxyBrokerIDMap[desiredBroker.GUID]
+		delete(proxyBrokerIDMap, desiredBroker.GUID)
 
 		if alreadyProxified {
-			if existingBroker.Name != r.brokerProxyName(payloadBroker) { // broker name has been changed in the platform
-				r.updateBrokerRegistration(ctx, existingBroker.GUID, payloadBroker)
+			if existingBroker.Name != r.brokerProxyName(desiredBroker) { // broker name has been changed in the platform
+				r.updateBrokerRegistration(ctx, existingBroker.GUID, desiredBroker)
 				continue
 			}
 			r.fetchBrokerCatalog(ctx, existingBroker)
 		} else {
+			platformBroker, shouldBeProxified := brokerKeyMap[getBrokerKey(desiredBroker)]
+
+			if !shouldBeProxified {
+				platformBroker, shouldBeProxified = orphanProxyBrokerMap[fmt.Sprintf(r.proxyPathPattern, desiredBroker.GUID)]
+
+				if shouldBeProxified {
+					log.C(ctx).Debugf("Found orphan proxy broker with name %s which should be updated", platformBroker.Name)
+				}
+			}
+
 			if shouldBeProxified {
-				r.updateBrokerRegistration(ctx, platformBroker.GUID, payloadBroker)
+				r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
 			} else {
-				r.createBrokerRegistration(ctx, payloadBroker)
+				r.createBrokerRegistration(ctx, desiredBroker)
 			}
 		}
 	}
@@ -109,7 +122,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, broker *platfo
 
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      r.brokerProxyName(broker),
-		BrokerURL: r.proxyPath + "/" + broker.GUID,
+		BrokerURL: r.smPath + "/" + broker.GUID,
 	}
 
 	if b, err := r.platformClient.Broker().CreateBroker(ctx, createRequest); err != nil {
@@ -126,7 +139,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUID str
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		GUID:      brokerGUID,
 		Name:      r.brokerProxyName(broker),
-		BrokerURL: r.proxyPath + "/" + broker.GUID,
+		BrokerURL: r.smPath + "/" + broker.GUID,
 	}
 
 	if b, err := r.platformClient.Broker().UpdateBroker(ctx, updateRequest); err != nil {
@@ -162,6 +175,10 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 		"broker_name": broker.Name,
 		"broker_url":  broker.BrokerURL,
 	}
+}
+
+func brokerIDFromURL(brokerURL string) string {
+	return brokerURL[strings.LastIndex(brokerURL, "/")+1:]
 }
 
 func getBrokerKey(broker *platform.ServiceBroker) string {
