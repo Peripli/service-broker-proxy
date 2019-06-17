@@ -40,7 +40,6 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 		return "", false
 	})
 	orphanProxyBrokerMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
-		//		if broker.BrokerURL == (r.proxyPath + sbproxy.APIPrefix + "/" + brokerIDFromURL(&broker)) {
 		if broker.BrokerURL == fmt.Sprint(r.proxyPathPattern, brokerIDFromURL(broker)) {
 			return r.brokerProxyName(broker), true
 		}
