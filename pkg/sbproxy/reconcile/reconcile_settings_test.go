@@ -32,7 +32,6 @@ func validSettings() *reconcile.Settings {
 }
 
 var _ = Describe("Reconcile", func() {
-
 	Describe("Settings", func() {
 		Describe("Validate", func() {
 			Context("when all properties are set correctly", func() {
@@ -61,6 +60,14 @@ var _ = Describe("Reconcile", func() {
 				It("returns an error", func() {
 					settings := validSettings()
 					settings.Password = ""
+					Expect(settings.Validate()).Should(HaveOccurred())
+				})
+			})
+
+			Context("when max parallel requests is zero", func() {
+				It("returns an error", func() {
+					settings := validSettings()
+					settings.MaxParallelRequests = 0
 					Expect(settings.Validate()).Should(HaveOccurred())
 				})
 			})
