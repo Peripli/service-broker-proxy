@@ -2,7 +2,6 @@ package reconcile
 
 import (
 	"context"
-	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -29,12 +28,6 @@ type resyncJob struct {
 	platformClient platform.Client
 	smClient       sm.Client
 	proxyPath      string
-
-	mutex sync.Mutex
-	err   error
-
-	waitGroupLimit chan struct{}
-	waitGroup      sync.WaitGroup
 }
 
 // Resync reconciles the state of the proxy brokers and visibilities at the platform
