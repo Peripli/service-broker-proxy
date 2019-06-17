@@ -19,7 +19,6 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
-
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -33,7 +32,6 @@ import (
 )
 
 var _ = Describe("Reconcile brokers", func() {
-	const fakeAppHost = "https://smproxy.com"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
@@ -98,7 +96,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeAppHost),
+			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smbroker1 = sm.Broker{
@@ -170,13 +168,13 @@ var _ = Describe("Reconcile brokers", func() {
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
 			Name:      brokerProxyName("smBroker1", "smBrokerID1"),
-			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
+			BrokerURL: fakeSMAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
 			Name:      brokerProxyName("smBroker2", "smBrokerID2"),
-			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
+			BrokerURL: fakeSMAppHost + "/" + smbroker2.ID,
 		}
 
 		platformbrokerNonProxy = platform.ServiceBroker{
@@ -200,7 +198,7 @@ var _ = Describe("Reconcile brokers", func() {
 		platformBrokerProxy = platform.ServiceBroker{
 			GUID:      platformbrokerNonProxy.GUID,
 			Name:      brokerProxyName(smbroker3.Name, smbroker3.ID),
-			BrokerURL: fakeAppHost + "/" + smbroker3.ID,
+			BrokerURL: fakeSMAppHost + "/" + smbroker3.ID,
 		}
 	})
 

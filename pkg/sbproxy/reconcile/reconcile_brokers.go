@@ -36,12 +36,16 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 	})
 	proxyBrokerIDMap := indexBrokers(existingBrokers, func(broker platform.ServiceBroker) (string, bool) {
 		if strings.HasPrefix(broker.BrokerURL, r.smPath) {
-			return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:], true
+			return brokerIDFromURL(&broker), true
 		}
 		return "", false
 	})
 	orphanProxyBrokerMap := indexBrokers(existingBrokers, func(broker platform.ServiceBroker) (string, bool) {
-		return r.brokerProxyName(&broker), true
+		//		if broker.BrokerURL == (r.proxyPath + sbproxy.APIPrefix + "/" + brokerIDFromURL(&broker)) {
+		if broker.BrokerURL == fmt.Sprint(r.proxyPathPattern, brokerIDFromURL(&broker)) {
+			return r.brokerProxyName(&broker), true
+		}
+		return "", false
 	})
 
 	for _, desiredBroker := range desiredBrokers {
@@ -174,6 +178,10 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 		"broker_name": broker.Name,
 		"broker_url":  broker.BrokerURL,
 	}
+}
+
+func brokerIDFromURL(broker *platform.ServiceBroker) string {
+	return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:]
 }
 
 func getBrokerKey(broker platform.ServiceBroker) string {

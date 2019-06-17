@@ -32,7 +32,6 @@ import (
 )
 
 var _ = Describe("Reconcile visibilities", func() {
-	const fakeAppHost = "https://smproxy.com"
 
 	var (
 		fakeSMClient *smfakes.FakeClient
@@ -168,7 +167,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), fakePlatformClient, fakeSMClient, fakeAppHost),
+			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), fakePlatformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smPlan1 = &types.ServicePlan{
@@ -287,13 +286,13 @@ var _ = Describe("Reconcile visibilities", func() {
 		platformbroker1 = platform.ServiceBroker{
 			GUID:      "platformBrokerID1",
 			Name:      brokerProxyName(smbroker1.Name, smbroker1.ID),
-			BrokerURL: fakeAppHost + "/" + smbroker1.ID,
+			BrokerURL: fakeSMAppHost + "/" + smbroker1.ID,
 		}
 
 		platformbroker2 = platform.ServiceBroker{
 			GUID:      "platformBrokerID2",
 			Name:      brokerProxyName(smbroker2.Name, smbroker2.ID),
-			BrokerURL: fakeAppHost + "/" + smbroker2.ID,
+			BrokerURL: fakeSMAppHost + "/" + smbroker2.ID,
 		}
 
 		platformbrokerNonProxy = platform.ServiceBroker{
