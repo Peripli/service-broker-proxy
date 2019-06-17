@@ -91,7 +91,7 @@ var _ = Describe("Sbproxy", func() {
 			var SMProxy *httpexpect.Expect
 
 			BeforeEach(func() {
-				fakeBrokerClient.GetBrokersReturns([]platform.ServiceBroker{}, nil)
+				fakeBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{}, nil)
 				env, err := DefaultEnv(func(set *pflag.FlagSet) {
 					set.Set("app.url", "http://localhost:8080")
 					set.Set("app.username", "admin")
