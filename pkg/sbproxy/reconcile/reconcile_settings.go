@@ -36,7 +36,7 @@ type Settings struct {
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		MaxParallelRequests: 20,
+		MaxParallelRequests: 5,
 		URL:                 "",
 		Username:            "",
 		Password:            "",
