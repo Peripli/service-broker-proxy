@@ -239,7 +239,6 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 	case <-state.Ctx.Done():
 		return state.Ctx.Err()
 	case state.WaitGroupLimit <- struct{}{}:
-		break
 	}
 	state.WaitGroup.Add(1)
 	go func() {

@@ -33,7 +33,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ = Describe("Reconcile visibilities", func() {
+var _ = FDescribe("Reconcile visibilities", func() {
 	const (
 		fakeAppHost         = "https://smproxy.com"
 		maxParallelRequests = 10
@@ -612,9 +612,69 @@ var _ = Describe("Reconcile visibilities", func() {
 			},
 		}),
 
+		Entry("When services from SM could not be fetched - should not reconcile", testCase{
+			stubs: func() {
+				fakeSMClient.GetServiceOfferingsByBrokerIDsCalls(func(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
+					return nil, fmt.Errorf("error")
+				})
+			},
+			platformVisibilities: func() []*platform.Visibility {
+				return []*platform.Visibility{
+					{
+						Public:             true,
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[1].CatalogID,
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+				}
+			},
+			smVisibilities: func() []*types.Visibility {
+				return []*types.Visibility{
+					{
+						ServicePlanID: smBrokers[0].Services[0].Plans[0].ID,
+					},
+				}
+			},
+			enablePlanVisibilityCalledFor: func() []*platform.Visibility {
+				return []*platform.Visibility{}
+			},
+			disablePlanVisibilityCalledFor: func() []*platform.Visibility {
+				return []*platform.Visibility{}
+			},
+		}),
+
 		Entry("When plans from SM could not be fetched - should not reconcile", testCase{
 			stubs: func() {
 				fakeSMClient.GetPlansByServiceOfferingsCalls(func(ctx context.Context, offerings []*types.ServiceOffering) ([]*types.ServicePlan, error) {
+					return nil, fmt.Errorf("error")
+				})
+			},
+			platformVisibilities: func() []*platform.Visibility {
+				return []*platform.Visibility{
+					{
+						Public:             true,
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[1].CatalogID,
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+				}
+			},
+			smVisibilities: func() []*types.Visibility {
+				return []*types.Visibility{
+					{
+						ServicePlanID: smBrokers[0].Services[0].Plans[0].ID,
+					},
+				}
+			},
+			enablePlanVisibilityCalledFor: func() []*platform.Visibility {
+				return []*platform.Visibility{}
+			},
+			disablePlanVisibilityCalledFor: func() []*platform.Visibility {
+				return []*platform.Visibility{}
+			},
+		}),
+
+		Entry("When visibilities from platform cannot be fetched - should not reconcile", testCase{
+			stubs: func() {
+				fakeVisibilityClient.GetVisibilitiesByBrokersCalls(func(ctx context.Context, brokerIDs []string) ([]*platform.Visibility, error) {
 					return nil, fmt.Errorf("error")
 				})
 			},
