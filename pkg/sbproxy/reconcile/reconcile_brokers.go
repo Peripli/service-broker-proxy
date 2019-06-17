@@ -35,13 +35,13 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 	})
 	proxyBrokerIDMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		if strings.HasPrefix(broker.BrokerURL, r.smPath) {
-			return brokerIDFromURL(broker), true
+			return brokerIDFromURL(broker.BrokerURL), true
 		}
 		return "", false
 	})
 	orphanProxyBrokerMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
-		if broker.BrokerURL == fmt.Sprintf(r.proxyPathPattern, brokerIDFromURL(broker)) {
-			return broker.Name, true
+		if broker.BrokerURL == fmt.Sprintf(r.proxyPathPattern, brokerIDFromURL(broker.BrokerURL)) {
+			return broker.BrokerURL, true
 		}
 		return "", false
 	})
@@ -61,7 +61,7 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 			platformBroker, shouldBeProxified := brokerKeyMap[getBrokerKey(desiredBroker)]
 
 			if !shouldBeProxified {
-				platformBroker, shouldBeProxified = orphanProxyBrokerMap[r.brokerProxyName(&desiredBroker)]
+				platformBroker, shouldBeProxified = orphanProxyBrokerMap[fmt.Sprintf(r.proxyPathPattern, desiredBroker.GUID)]
 
 				if shouldBeProxified {
 					log.C(ctx).Debugf("Found orphan proxy broker with name %s which should be updated", platformBroker.Name)
@@ -177,8 +177,8 @@ func logBroker(broker *platform.ServiceBroker) logrus.Fields {
 	}
 }
 
-func brokerIDFromURL(broker *platform.ServiceBroker) string {
-	return broker.BrokerURL[strings.LastIndex(broker.BrokerURL, "/")+1:]
+func brokerIDFromURL(brokerURL string) string {
+	return brokerURL[strings.LastIndex(brokerURL, "/")+1:]
 }
 
 func getBrokerKey(broker *platform.ServiceBroker) string {
