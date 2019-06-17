@@ -35,7 +35,6 @@ import (
 
 var _ = Describe("Reconcile visibilities", func() {
 	const (
-		fakeAppHost         = "https://smproxy.com"
 		maxParallelRequests = 10
 		scopeKey            = "key"
 	)
@@ -119,7 +118,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			result = append(result, &platform.ServiceBroker{
 				GUID:      "platformBrokerID1",
 				Name:      brokerProxyName(broker.Name, broker.ID),
-				BrokerURL: fakeAppHost + "/" + broker.ID,
+				BrokerURL: fakeSMAppHost + "/" + broker.ID,
 			})
 		}
 
@@ -223,7 +222,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		settings := reconcile.DefaultSettings()
 		settings.MaxParallelRequests = maxParallelRequests
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(settings, fakePlatformClient, fakeSMClient, fakeAppHost),
+			Resyncer: reconcile.NewResyncer(settings, fakePlatformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smBrokers = generateSMBrokers(2, 4, 100)
