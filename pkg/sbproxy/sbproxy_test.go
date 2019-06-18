@@ -94,8 +94,8 @@ var _ = Describe("Sbproxy", func() {
 				fakeBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{}, nil)
 				env, err := DefaultEnv(func(set *pflag.FlagSet) {
 					set.Set("app.url", "http://localhost:8080")
-					set.Set("app.username", "admin")
-					set.Set("app.password", "admin")
+					set.Set("app.name", "service-broker-proxy")
+					set.Set("app.domain", "domain.com")
 					set.Set("sm.user", "admin")
 					set.Set("sm.password", "admin")
 					set.Set("sm.url", "http://localhost:8080")

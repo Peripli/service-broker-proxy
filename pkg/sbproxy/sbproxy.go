@@ -139,8 +139,8 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 	if err != nil {
 		return nil, fmt.Errorf("error creating notifications producer: %s", err)
 	}
-	smPath := settings.Sm.URL + APIPrefix
-	proxyPathPattern := settings.Reconcile.URL + APIPrefix + "/%s"
+	smPath := settings.Reconcile.URL + APIPrefix
+	proxyPathPattern := "https://" + settings.Reconcile.AppName + "." + settings.Reconcile.Domain + APIPrefix + "/%s"
 	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, smPath, proxyPathPattern)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
