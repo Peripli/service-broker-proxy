@@ -26,8 +26,6 @@ import (
 func validSettings() *reconcile.Settings {
 	settings := reconcile.DefaultSettings()
 	settings.URL = "http://localhost:8080"
-	settings.Username = "user"
-	settings.Password = "password"
 	return settings
 }
 
@@ -44,22 +42,6 @@ var _ = Describe("Reconcile", func() {
 				It("returns an error", func() {
 					settings := validSettings()
 					settings.URL = ""
-					Expect(settings.Validate()).Should(HaveOccurred())
-				})
-			})
-
-			Context("when Username is missing", func() {
-				It("returns an error", func() {
-					settings := validSettings()
-					settings.Username = ""
-					Expect(settings.Validate()).Should(HaveOccurred())
-				})
-			})
-
-			Context("when Password is missing", func() {
-				It("returns an error", func() {
-					settings := validSettings()
-					settings.Password = ""
 					Expect(settings.Validate()).Should(HaveOccurred())
 				})
 			})

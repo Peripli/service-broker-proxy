@@ -124,7 +124,7 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
-			filter.NewBasicAuthnFilter(settings.Reconcile.Username, settings.Reconcile.Password),
+			filter.NewBasicAuthnFilter(settings.Sm.User, settings.Sm.Password),
 			secfilters.NewRequiredAuthnFilter(),
 		},
 		Registry: health.NewDefaultRegistry(),

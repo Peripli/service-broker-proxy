@@ -27,10 +27,7 @@ const DefaultProxyBrokerPrefix = "sm-"
 type Settings struct {
 	MaxParallelRequests int    `mapstructure:"max_parallel_requests"`
 	URL                 string `mapstructure:"url"`
-	Username            string `mapstructure:"username"`
-	Password            string `mapstructure:"password"`
-
-	BrokerPrefix string `mapstructure:"broker_prefix"`
+	BrokerPrefix        string `mapstructure:"broker_prefix"`
 }
 
 // DefaultSettings creates default proxy settings
@@ -38,8 +35,6 @@ func DefaultSettings() *Settings {
 	return &Settings{
 		MaxParallelRequests: 5,
 		URL:                 "",
-		Username:            "",
-		Password:            "",
 		BrokerPrefix:        DefaultProxyBrokerPrefix,
 	}
 }
@@ -48,12 +43,6 @@ func DefaultSettings() *Settings {
 func (c *Settings) Validate() error {
 	if c.URL == "" {
 		return fmt.Errorf("validate settings: missing url")
-	}
-	if len(c.Username) == 0 {
-		return fmt.Errorf("validate settings: missing username")
-	}
-	if len(c.Password) == 0 {
-		return fmt.Errorf("validate settings: missing password")
 	}
 	if c.MaxParallelRequests <= 0 {
 		return fmt.Errorf("validate settings: max parallel requests must be positive number")
