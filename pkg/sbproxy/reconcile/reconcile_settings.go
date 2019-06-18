@@ -25,8 +25,7 @@ const DefaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
 type Settings struct {
-	AppName             string `mapstructure:"name"`
-	Domain              string `mapstructure:"domain"`
+	LegacyURL           string `mapstructure:"legacy_url"`
 	MaxParallelRequests int    `mapstructure:"max_parallel_requests"`
 	URL                 string `mapstructure:"url"`
 	BrokerPrefix        string `mapstructure:"broker_prefix"`
@@ -35,8 +34,7 @@ type Settings struct {
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		AppName:             "",
-		Domain:              "",
+		LegacyURL:           "",
 		MaxParallelRequests: 5,
 		URL:                 "",
 		BrokerPrefix:        DefaultProxyBrokerPrefix,
@@ -45,11 +43,8 @@ func DefaultSettings() *Settings {
 
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
-	if c.AppName == "" {
-		return fmt.Errorf("validate settings: missing app name")
-	}
-	if c.Domain == "" {
-		return fmt.Errorf("validate settings: missing app domain")
+	if c.LegacyURL == "" {
+		return fmt.Errorf("validate settings: missing legacy url")
 	}
 	if c.URL == "" {
 		return fmt.Errorf("validate settings: missing url")

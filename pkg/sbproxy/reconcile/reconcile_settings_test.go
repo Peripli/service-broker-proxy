@@ -25,9 +25,8 @@ import (
 
 func validSettings() *reconcile.Settings {
 	settings := reconcile.DefaultSettings()
-	settings.AppName = "service-broker-proxy"
-	settings.Domain = "domain.com"
 	settings.URL = "http://localhost:8080"
+	settings.LegacyURL = "http://localhost:8080"
 	return settings
 }
 
@@ -40,18 +39,10 @@ var _ = Describe("Reconcile", func() {
 				})
 			})
 
-			Context("when app name is missing", func() {
+			Context("when LegacyURL is missing", func() {
 				It("returns an error", func() {
 					settings := validSettings()
-					settings.AppName = ""
-					Expect(settings.Validate()).Should(HaveOccurred())
-				})
-			})
-
-			Context("when app domain is missing", func() {
-				It("returns an error", func() {
-					settings := validSettings()
-					settings.Domain = ""
+					settings.LegacyURL = ""
 					Expect(settings.Validate()).Should(HaveOccurred())
 				})
 			})
