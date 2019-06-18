@@ -30,7 +30,7 @@ import (
 const (
 	fakeSMAppHost        = "https://sm.com"
 	fakeProxyAppHost     = "https://smproxy.com"
-	fakeProxyPathPattern = fakeProxyAppHost + sbproxy.APIPrefix + "/%"
+	fakeProxyPathPattern = fakeProxyAppHost + sbproxy.APIPrefix + "/%s"
 )
 
 func TestReconcile(t *testing.T) {
