@@ -17,6 +17,7 @@
 package sbproxy
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/Peripli/service-manager/pkg/types"
@@ -140,7 +141,10 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 		return nil, fmt.Errorf("error creating notifications producer: %s", err)
 	}
 	smPath := settings.Reconcile.URL + APIPrefix
-	proxyPathPattern := "https://" + settings.Reconcile.AppName + "." + settings.Reconcile.Domain + APIPrefix + "/%s"
+
+	protocol := strings.Split(settings.Reconcile.URL, "://")[0]
+	proxyPathPattern := protocol + "://" + settings.Reconcile.AppName + "." + settings.Reconcile.Domain + APIPrefix + "/%s"
+
 	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, smPath, proxyPathPattern)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
