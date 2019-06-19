@@ -54,6 +54,7 @@ var _ = Describe("Sbproxy", func() {
 			It("should panic", func() {
 				env, err := DefaultEnv(func(set *pflag.FlagSet) {
 					set.Set("app.url", "http://localhost:8080")
+					set.Set("app.legacy_url", "http://service-broker-proxy.domain.com")
 					set.Set("sm.user", "")
 					set.Set("sm.password", "admin")
 					set.Set("sm.url", "http://localhost:8080")
@@ -73,6 +74,7 @@ var _ = Describe("Sbproxy", func() {
 			It("should panic", func() {
 				env, err := DefaultEnv(func(set *pflag.FlagSet) {
 					set.Set("app.url", "http://localhost:8080")
+					set.Set("app.legacy_url", "http://service-broker-proxy.domain.com")
 					set.Set("sm.user", "")
 					set.Set("sm.password", "admin")
 					set.Set("sm.url", "http://localhost:8080")
@@ -94,8 +96,7 @@ var _ = Describe("Sbproxy", func() {
 				fakeBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{}, nil)
 				env, err := DefaultEnv(func(set *pflag.FlagSet) {
 					set.Set("app.url", "http://localhost:8080")
-					set.Set("app.username", "admin")
-					set.Set("app.password", "admin")
+					set.Set("app.legacy_url", "http://service-broker-proxy.domain.com")
 					set.Set("sm.user", "admin")
 					set.Set("sm.password", "admin")
 					set.Set("sm.url", "http://localhost:8080")

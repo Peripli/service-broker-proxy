@@ -25,35 +25,29 @@ const DefaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
 type Settings struct {
+	LegacyURL           string `mapstructure:"legacy_url"`
 	MaxParallelRequests int    `mapstructure:"max_parallel_requests"`
 	URL                 string `mapstructure:"url"`
-	Username            string `mapstructure:"username"`
-	Password            string `mapstructure:"password"`
-
-	BrokerPrefix string `mapstructure:"broker_prefix"`
+	BrokerPrefix        string `mapstructure:"broker_prefix"`
 }
 
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
+		LegacyURL:           "",
 		MaxParallelRequests: 5,
 		URL:                 "",
-		Username:            "",
-		Password:            "",
 		BrokerPrefix:        DefaultProxyBrokerPrefix,
 	}
 }
 
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
+	if c.LegacyURL == "" {
+		return fmt.Errorf("validate settings: missing legacy url")
+	}
 	if c.URL == "" {
 		return fmt.Errorf("validate settings: missing url")
-	}
-	if len(c.Username) == 0 {
-		return fmt.Errorf("validate settings: missing username")
-	}
-	if len(c.Password) == 0 {
-		return fmt.Errorf("validate settings: missing password")
 	}
 	if c.MaxParallelRequests <= 0 {
 		return fmt.Errorf("validate settings: max parallel requests must be positive number")
