@@ -19,6 +19,8 @@ package sbproxy
 import (
 	"sync"
 
+	"github.com/Peripli/service-manager/api/configuration"
+
 	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
@@ -82,14 +84,14 @@ type SMProxy struct {
 }
 
 // DefaultEnv creates a default environment that can be used to boot up a Service Broker proxy
-func DefaultEnv(additionalPFlags ...func(set *pflag.FlagSet)) (env.Environment, error) {
+func DefaultEnv(ctx context.Context, additionalPFlags ...func(set *pflag.FlagSet)) (env.Environment, error) {
 	set := pflag.NewFlagSet("Configuration Flags", pflag.ExitOnError)
 
 	AddPFlags(set)
 	for _, addFlags := range additionalPFlags {
 		addFlags(set)
 	}
-	return env.New(set)
+	return env.New(ctx, set)
 }
 
 // New creates service broker proxy that is configured from the provided environment and platform client.
@@ -121,6 +123,7 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 					}, nil
 				},
 			},
+			&configuration.Controller{},
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
