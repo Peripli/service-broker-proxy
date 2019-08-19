@@ -20,19 +20,16 @@ import (
 	"sync"
 
 	"github.com/Peripli/service-manager/api/configuration"
-
 	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 
 	"fmt"
 
-	"github.com/Peripli/service-broker-proxy/pkg/filter"
 	"github.com/Peripli/service-broker-proxy/pkg/logging"
 	"github.com/Peripli/service-manager/api/healthcheck"
 	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
-	secfilters "github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/util"
 
 	"context"
@@ -43,7 +40,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/api/filters"
-	smosb "github.com/Peripli/service-manager/api/osb"
 	"github.com/Peripli/service-manager/pkg/env"
 	"github.com/Peripli/service-manager/pkg/server"
 	"github.com/Peripli/service-manager/pkg/web"
@@ -91,6 +87,7 @@ func DefaultEnv(ctx context.Context, additionalPFlags ...func(set *pflag.FlagSet
 	for _, addFlags := range additionalPFlags {
 		addFlags(set)
 	}
+
 	return env.New(ctx, set)
 }
 
@@ -107,28 +104,10 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 
 	api := &web.API{
 		Controllers: []web.Controller{
-			&smosb.Controller{
-				BrokerFetcher: func(ctx context.Context, brokerID string) (*types.ServiceBroker, error) {
-					return &types.ServiceBroker{
-						Base: types.Base{
-							ID: brokerID,
-						},
-						BrokerURL: fmt.Sprintf("%s%s/%s", settings.Sm.URL, settings.Sm.OSBAPIPath, brokerID),
-						Credentials: &types.Credentials{
-							Basic: &types.Basic{
-								Username: settings.Sm.User,
-								Password: settings.Sm.Password,
-							},
-						},
-					}, nil
-				},
-			},
 			&configuration.Controller{},
 		},
 		Filters: []web.Filter{
 			&filters.Logging{},
-			filter.NewBasicAuthnFilter(settings.Sm.User, settings.Sm.Password),
-			secfilters.NewRequiredAuthnFilter(),
 		},
 		Registry: health.NewDefaultRegistry(),
 	}

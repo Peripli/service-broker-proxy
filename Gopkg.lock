@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "dynamic-logs"
-  digest = "1:257ae759a4f1f111dd372075031d4ea774aeb87a3916892e93c608278dbac561"
+  digest = "1:b6ffc7ce71e802e40e0dc87caec7be21032a14aa824458955ba3e57dab917317"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -41,7 +41,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "b255c45cd189252927db8035ae582dd0eee0033e"
+  revision = "fefb6d9cde69c386cfe37f5bebb7f6b3feb7df1b"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -719,7 +719,6 @@
     "github.com/Peripli/service-manager/api/filters",
     "github.com/Peripli/service-manager/api/healthcheck",
     "github.com/Peripli/service-manager/api/notifications",
-    "github.com/Peripli/service-manager/api/osb",
     "github.com/Peripli/service-manager/pkg/env",
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
