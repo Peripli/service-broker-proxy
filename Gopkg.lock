@@ -2,8 +2,8 @@
 
 
 [[projects]]
-  branch = "notification_corr_id"
-  digest = "1:1102ddc12c543696608f244c4a4d9116544dd22924f0e06e8653a776451107e0"
+  branch = "master"
+  digest = "1:4c25bc47b3e023e6248cb2683259a478fcd4234469652a3abe8335375e821264"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,7 +40,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "bfbcf7425db332d49c8ab9fcf1f61cb1e9678400"
+  revision = "8c2826aec7538936ceaf6975c9f56bbf32d19a7f"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -252,8 +252,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "53fd0299b54f91f5d91c50ee5f4d5e0393e45eb8"
-  version = "v1.7.5"
+  revision = "4030f0cdb60476e7065ab476972fcfd43670cd86"
+  version = "v1.7.6"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -316,7 +316,7 @@
   revision = "94ad747c51752e8dfa69cfd0335b8c76bf1ae592"
 
 [[projects]]
-  digest = "1:b013cb97ec8147b033199dfc5360d410130e1fc5d74dd6f08c4d777fe49b5c37"
+  digest = "1:bb964139623533b324969bf9c50bf30e5be0206f6d6e75f2f7c1c4b3c8407337"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -340,8 +340,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "eea6ad008b96acdaa524f5b409513bf062b500ad"
-  version = "v1.8.0"
+  revision = "7e8b50db0c6d0a15ac0eb015d4ca64e7e7e2c88c"
+  version = "v1.9.0"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -583,7 +583,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "4def268fd1a49955bfb3dda92fe3db4f924f2285"
+  revision = "60c769a6c58655dab1b9adac0d58967dd517cfba"
 
 [[projects]]
   branch = "master"
