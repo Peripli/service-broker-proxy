@@ -106,7 +106,7 @@ var _ = Describe("Notifications", func() {
 			producerCtx = log.Configure(ctx, &log.Settings{
 				Level:  "debug",
 				Format: "text",
-				Output: GinkgoWriter,
+				Output: "ginkgowriter",
 			})
 			log.AddHook(logInterceptor)
 			server = newWSServer()
