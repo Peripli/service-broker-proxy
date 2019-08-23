@@ -97,7 +97,12 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 		return nil, fmt.Errorf("error validating settings: %s", err)
 	}
 
-	ctx = log.Configure(ctx, settings.Log)
+	var err error
+	ctx, err = log.Configure(ctx, settings.Log)
+	if err != nil {
+		return nil, fmt.Errorf("error configuring logging: %s", err)
+	}
+
 	log.AddHook(&logging.ErrorLocationHook{})
 
 	util.HandleInterrupts(ctx, cancel)
