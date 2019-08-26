@@ -24,8 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "proxy-health"
-  digest = "1:7b5e81b687dd5e61e6cb486bbbbd053ebf50ac02534a534e4742ce8f2f875253"
+  branch = "master"
+  digest = "1:f7fcf0c648793cadfa25f4490505f2725c05b7887cac1acbe60e875d24fb240d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -62,7 +62,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "35917ef5f5cb53ecc877ae9222231b244b145534"
+  revision = "baaa4f02f6d7a3c1f2db9f6979b6299599c301d0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
