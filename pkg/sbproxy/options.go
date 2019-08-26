@@ -21,6 +21,7 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-manager/pkg/env"
+	"github.com/Peripli/service-manager/pkg/health"
 	"github.com/Peripli/service-manager/pkg/log"
 	"github.com/Peripli/service-manager/pkg/server"
 	"github.com/Peripli/service-manager/pkg/util"
@@ -34,6 +35,7 @@ type Settings struct {
 	Sm        *sm.Settings                    `mapstructure:"sm"`
 	Reconcile *reconcile.Settings             `mapstructure:"app"`
 	Producer  *notifications.ProducerSettings `mapstructure:"producer"`
+	Health    *health.Settings                `mapstructure:"health"`
 }
 
 // DefaultSettings returns default value for the proxy settings
