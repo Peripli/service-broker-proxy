@@ -46,6 +46,7 @@ func DefaultSettings() *Settings {
 		Sm:        sm.DefaultSettings(),
 		Reconcile: reconcile.DefaultSettings(),
 		Producer:  notifications.DefaultProducerSettings(),
+		Health:    health.DefaultSettings(),
 	}
 }
 
@@ -68,7 +69,7 @@ func AddPFlags(set *pflag.FlagSet) {
 
 // Validate validates that the configuration contains all mandatory properties
 func (c *Settings) Validate() error {
-	validatable := []util.InputValidator{c.Server, c.Log, c.Sm, c.Reconcile, c.Producer}
+	validatable := []util.InputValidator{c.Server, c.Log, c.Sm, c.Reconcile, c.Producer, c.Health}
 
 	for _, item := range validatable {
 		if err := item.Validate(); err != nil {
