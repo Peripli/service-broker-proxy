@@ -2,8 +2,29 @@
 
 
 [[projects]]
-  branch = "dynamic-logs"
-  digest = "1:2c06109a90fb7730e543377402871631f771c976fa8125606c2d8f678385e1c6"
+  digest = "1:12156f9d8523585d9d875a03c4b5c6c6374f7370716cd814aa6781732ac942c5"
+  name = "github.com/InVisionApp/go-health"
+  packages = [
+    ".",
+    "checkers",
+  ]
+  pruneopts = "UT"
+  revision = "06e1878ab5a8acf6e841861c6cbfcc4d3036add0"
+  version = "v2.1.0"
+
+[[projects]]
+  digest = "1:be2deb3cba3d2526b3692d80483f59df6462aabc875aace2db263f2664f30670"
+  name = "github.com/InVisionApp/go-logger"
+  packages = [
+    ".",
+    "shims/logrus",
+  ]
+  pruneopts = "UT"
+  revision = "c377c6c3f6a48a6366517e86f77bafea18454ff1"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:cb347e4c7135f11e1dfad1f48c407804d3987d27eee49d6972c686183277e2ec"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -41,7 +62,8 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "5885120131ddae9408868c4f30e730f7b095134d"
+  revision = "7b053988866947f624b7f66c6be43de287461e35"
+  version = "v0.5.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -184,12 +206,12 @@
   version = "v1.6.1"
 
 [[projects]]
-  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
+  digest = "1:e62657cca9badaa308d86e7716083e4c5933bb78e30a17743fc67f50be26f6f4"
   name = "github.com/gorilla/websocket"
   packages = ["."]
   pruneopts = "UT"
-  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
-  version = "v1.4.0"
+  revision = "c3e18be99d19e6b3e8f1559eea2c161a665c4b6b"
+  version = "v1.4.1"
 
 [[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
@@ -234,7 +256,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2c7f9e2e9c7729a1785f57f95e0bbfddc384f11073e8213994d11113210644a0"
+  digest = "1:a9f806e41fa14a1c88641efeecaffdb05f1728a4ed423c3233cdd4fd1f6d2801"
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
@@ -242,10 +264,10 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "38398a30ed8516ffda617a04c822de09df8a3ec5"
+  revision = "d7d95172beb5a538ff08c50a6e98aee6e7c41f40"
 
 [[projects]]
-  digest = "1:836838f1466d370fc7678c927e5b7473f38ba12c2e571f8eca957bd0a102c2db"
+  digest = "1:caa1da085cc12cd39d3ddb267434902f621050e1b46f7e9477b2b933df680193"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -253,8 +275,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "4030f0cdb60476e7065ab476972fcfd43670cd86"
-  version = "v1.7.6"
+  revision = "2c38f6d2dc5a6a21b6851f2414f4e10adf8e3eee"
+  version = "v1.8.1"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -600,7 +622,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "74dc4d7220e7acc4e100824340f3e66577424772"
+  revision = "ba9fcec4b297b415637633c5a6e8fa592e4a16c3"
 
 [[projects]]
   branch = "master"
@@ -619,7 +641,7 @@
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "fde4db37ae7ad8191b03d30d27f258b5291ae4e3"
+  revision = "c7b8b68b14567162c6602a7c5659ee0f26417c18"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
