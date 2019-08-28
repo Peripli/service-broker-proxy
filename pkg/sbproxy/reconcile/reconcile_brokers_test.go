@@ -20,8 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Peripli/service-manager/pkg/log"
-
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -527,64 +525,44 @@ var _ = Describe("Reconcile brokers", func() {
 
 		if err1 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(0))
-
 			Expect(len(fakePlatformCatalogFetcher.Invocations())).To(Equal(0))
-
 			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
-			ctx := fakeSMClient.GetBrokersArgsForCall(0)
-			Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
-
 			return
 		}
 
 		if err2 != nil {
 			Expect(len(fakePlatformBrokerClient.Invocations())).To(Equal(1))
-			ctx := fakePlatformBrokerClient.GetBrokersArgsForCall(0)
-			Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
-
 			Expect(len(fakePlatformCatalogFetcher.Invocations())).To(Equal(0))
-
 			Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
-			ctx = fakeSMClient.GetBrokersArgsForCall(0)
-			Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
-
 			return
 		}
 
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
-		ctx := fakeSMClient.GetBrokersArgsForCall(0)
-		Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
-
 		Expect(fakePlatformBrokerClient.GetBrokersCallCount()).To(Equal(1))
-		ctx = fakePlatformBrokerClient.GetBrokersArgsForCall(0)
-		Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 
 		expected := t.expectations()
 		Expect(fakePlatformBrokerClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreateCalledFor)))
 		for index, broker := range expected.reconcileCreateCalledFor {
-			ctx, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
+			_, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
 			Expect(request).To(Equal(&platform.CreateServiceBrokerRequest{
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
 			}))
-			Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 		}
 
 		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
 		for index, broker := range expected.reconcileCatalogCalledFor {
-			ctx, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
+			_, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
 			Expect(serviceBroker).To(Equal(broker))
-			Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 		}
 
 		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDeleteCalledFor)))
 		for index, broker := range expected.reconcileDeleteCalledFor {
-			ctx, request := fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)
+			_, request := fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)
 			Expect(request).To(Equal(&platform.DeleteServiceBrokerRequest{
 				GUID: broker.GUID,
 				Name: broker.Name,
 			}))
-			Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 		}
 
 		Expect(fakePlatformBrokerClient.UpdateBrokerCallCount()).To(Equal(len(expected.reconcileUpdateCalledFor)))
