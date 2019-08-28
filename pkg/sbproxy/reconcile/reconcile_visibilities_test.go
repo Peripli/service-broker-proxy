@@ -22,6 +22,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Peripli/service-manager/pkg/log"
+
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
@@ -792,13 +794,19 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		reconciler.Resyncer.Resync(context.TODO())
 
+		invocations := append([]map[string][][]interface{}{}, fakeSMClient.Invocations(), fakePlatformClient.Invocations(), fakePlatformCatalogFetcher.Invocations(), fakePlatformBrokerClient.Invocations(), fakeVisibilityClient.Invocations())
+		verifyInvocationsUseSameCorrelationID(invocations)
+
 		Expect(fakeSMClient.GetBrokersCallCount()).To(Equal(1))
+		ctx := fakeSMClient.GetBrokersArgsForCall(0)
+		Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 
 		if t.enablePlanVisibilityCalledFor != nil {
 			visibilities := t.enablePlanVisibilityCalledFor()
 			Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(len(visibilities)))
 			for index := range t.enablePlanVisibilityCalledFor() {
-				_, request := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
+				ctx, request := fakeVisibilityClient.EnableAccessForPlanArgsForCall(index)
+				Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 				checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, visibilities)
 			}
 		}
@@ -808,7 +816,8 @@ var _ = Describe("Reconcile visibilities", func() {
 			Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(len(visibilities)))
 
 			for index := range visibilities {
-				_, request := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
+				ctx, request := fakeVisibilityClient.DisableAccessForPlanArgsForCall(index)
+				Expect(log.CorrelationIDFromContext(ctx)).To(Not(BeEmpty()))
 				checkAccessArguments(request.Labels, request.CatalogPlanID, request.BrokerName, visibilities)
 			}
 		}
