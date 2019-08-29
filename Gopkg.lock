@@ -24,12 +24,10 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:cb347e4c7135f11e1dfad1f48c407804d3987d27eee49d6972c686183277e2ec"
+  digest = "1:f7fcf0c648793cadfa25f4490505f2725c05b7887cac1acbe60e875d24fb240d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
-    "api/configuration",
     "api/filters",
     "api/healthcheck",
     "api/info",
@@ -63,7 +61,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "7b053988866947f624b7f66c6be43de287461e35"
+  revision = "baaa4f02f6d7a3c1f2db9f6979b6299599c301d0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -331,12 +329,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
   digest = "1:96df5bdca983e4b8c62682af5b67100b187d582ac6db0968d8af52e84138d1e6"
   name = "github.com/onrik/logrus"
   packages = ["filename"]
   pruneopts = "UT"
   revision = "94ad747c51752e8dfa69cfd0335b8c76bf1ae592"
-  version = "v0.4.1"
 
 [[projects]]
   digest = "1:bb964139623533b324969bf9c50bf30e5be0206f6d6e75f2f7c1c4b3c8407337"
@@ -475,12 +473,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:11118bd196646c6515fea3d6c43f66162833c6ae4939bfb229b9956d91c6cf17"
+  digest = "1:59e7dceb53b4a1e57eb1eb0bf9951ff0c25912df7660004a789b62b4e8cdca3b"
   name = "github.com/spf13/viper"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b5bf975e5823809fb22c7644d008757f78a4259e"
-  version = "v1.4.0"
+  revision = "b5e8006cbee93ec955a89ab31e0e3ce3204f3736"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:99d32780e5238c2621fff621123997c3e3cca96db8be13179013aea77dfab551"
@@ -606,7 +604,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "60c769a6c58655dab1b9adac0d58967dd517cfba"
+  revision = "9756ffdc24725223350eb3266ffb92590d28f278"
 
 [[projects]]
   branch = "master"
@@ -622,7 +620,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "74dc4d7220e7acc4e100824340f3e66577424772"
+  revision = "ba9fcec4b297b415637633c5a6e8fa592e4a16c3"
 
 [[projects]]
   branch = "master"
@@ -693,8 +691,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
-  version = "v1.6.1"
+  revision = "5f2a59506353b8d5ba8cbbcd9f3c1f41f1eaf079"
+  version = "v1.6.2"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"

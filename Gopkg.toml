@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/Peripli/service-manager"
-  branch = "master"
+  revision = "baaa4f02f6d7a3c1f2db9f6979b6299599c301d0"
 
 # Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
