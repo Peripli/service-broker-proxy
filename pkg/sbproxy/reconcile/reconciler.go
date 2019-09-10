@@ -28,12 +28,12 @@ import (
 
 // Consumer provides functionality for consuming notifications
 type Consumer interface {
-	Consume(ctx context.Context, notification *types.Notification)
+	Consume(ctx context.Context, notification *types.Notification) *types.NotificationResult
 }
 
 // Resyncer provides functionality for triggering a resync on the platform
 type Resyncer interface {
-	Resync(ctx context.Context)
+	Resync(ctx context.Context, result chan<- *types.NotificationResult)
 }
 
 // Reconciler takes care of propagating broker and visibility changes to the platform.
@@ -44,14 +44,14 @@ type Reconciler struct {
 }
 
 // Reconcile listens for notification messages and either consumes the notification or triggers a resync
-func (r *Reconciler) Reconcile(ctx context.Context, messages <-chan *notifications.Message, group *sync.WaitGroup) {
+func (r *Reconciler) Reconcile(ctx context.Context, messages <-chan *notifications.Message, results chan<- *types.NotificationResult, group *sync.WaitGroup) {
 	group.Add(1)
-	go r.process(ctx, messages, group)
+	go r.process(ctx, messages, results, group)
 }
 
 // Process resync and notification messages sequentially in one goroutine
 // to avoid concurrent changes in the platform
-func (r *Reconciler) process(ctx context.Context, messages <-chan *notifications.Message, group *sync.WaitGroup) {
+func (r *Reconciler) process(ctx context.Context, messages <-chan *notifications.Message, results chan<- *types.NotificationResult, group *sync.WaitGroup) {
 	defer group.Done()
 	for {
 		select {
@@ -67,9 +67,10 @@ func (r *Reconciler) process(ctx context.Context, messages <-chan *notifications
 			if m.Resync {
 				// discard any pending change notifications as we will do a full resync
 				drain(messages)
-				r.Resyncer.Resync(ctx)
+				r.Resyncer.Resync(ctx, results)
 			} else {
-				r.Consumer.Consume(ctx, m.Notification)
+				notificationResult := r.Consumer.Consume(ctx, m.Notification)
+				results <- notificationResult
 			}
 		}
 	}

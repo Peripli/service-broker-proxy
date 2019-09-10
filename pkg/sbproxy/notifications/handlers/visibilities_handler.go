@@ -75,10 +75,10 @@ type VisibilityResourceNotificationsHandler struct {
 }
 
 // OnCreate creates visibilities from the specified notification payload by invoking the proper platform clients
-func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
+func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) error {
 	if vnh.VisibilityClient == nil {
 		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped")
-		return
+		return nil
 	}
 
 	log.C(ctx).Debugf("Processing visibility create notification with payload %s...", string(payload))
@@ -86,12 +86,12 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 	visPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
-		return
+		return fmt.Errorf("error unmarshaling visibility create notification payload: %v", err)
 	}
 
 	if err := visPayload.Validate(types.CREATED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating visibility payload")
-		return
+		return fmt.Errorf("error validating visibility payload: %v", err)
 	}
 
 	v := visPayload.New
@@ -105,16 +105,17 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 		Labels:        v.Resource.GetLabels(),
 	}); err != nil {
 		log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", v.Additional.ServicePlan.CatalogID, platformBrokerName)
-		return
+		return fmt.Errorf("error enabling access for plan %s in broker with name %s: %v", v.Additional.ServicePlan.CatalogID, platformBrokerName, err)
 	}
 	log.C(ctx).Infof("Successfully enabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
+	return nil
 }
 
 // OnUpdate modifies visibilities from the specified notification payload by invoking the proper platform clients
-func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
+func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) error {
 	if vnh.VisibilityClient == nil {
 		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped.")
-		return
+		return nil
 	}
 
 	log.C(ctx).Debugf("Processing visibility update notification with payload %s...", string(payload))
@@ -122,12 +123,12 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility create notification payload")
-		return
+		return fmt.Errorf("error unmarshaling visibility create notification payload: %v", err)
 	}
 
 	if err := visibilityPayload.Validate(types.MODIFIED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating visibility payload")
-		return
+		return fmt.Errorf("error validating visibility payload: %v", err)
 	}
 
 	oldVisibilityPayload := visibilityPayload.Old
@@ -146,7 +147,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 			Labels:        oldVisibilityPayload.Resource.GetLabels(),
 		}); err != nil {
 			log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
-			return
+			return fmt.Errorf("error disabling access for plan %s in broker with name %s: %v", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, err)
 		}
 		log.C(ctx).Infof("Successfully disabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", oldVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, oldVisibilityPayload.Resource.GetLabels())
 
@@ -158,18 +159,20 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 			Labels:        newVisibilityPayload.Resource.GetLabels(),
 		}); err != nil {
 			log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
-			return
+			return fmt.Errorf("error enabling access for plan %s in broker with name %s: %v", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, err)
 		}
 		log.C(ctx).Infof("Successfully enabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, newVisibilityPayload.Resource.GetLabels())
 	}
 
 	if err := vnh.enableServiceAccess(ctx, labelsToAdd, newVisibilityPayload, platformBrokerName); err != nil {
-		return
+		return err
 	}
 
 	if err := vnh.disableServiceAccess(ctx, labelsToRemove, newVisibilityPayload, platformBrokerName); err != nil {
-		return
+		return err
 	}
+
+	return nil
 }
 
 func (vnh *VisibilityResourceNotificationsHandler) disableServiceAccess(ctx context.Context, labelsToRemove types.Labels, newVisibilityPayload visibilityWithAdditionalDetails, platformBrokerName string) error {
@@ -182,7 +185,7 @@ func (vnh *VisibilityResourceNotificationsHandler) disableServiceAccess(ctx cont
 			Labels:        labelsToRemove,
 		}); err != nil {
 			log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
-			return err
+			return fmt.Errorf("error disabling access for plan %s in broker with name %s: %v", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, err)
 		}
 		log.C(ctx).Infof("Successfully disabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToRemove)
 	}
@@ -199,7 +202,7 @@ func (vnh *VisibilityResourceNotificationsHandler) enableServiceAccess(ctx conte
 			Labels:        labelsToAdd,
 		}); err != nil {
 			log.C(ctx).WithError(err).Errorf("error enabling access for plan %s in broker with name %s", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName)
-			return err
+			return fmt.Errorf("error enabling access for plan %s in broker with name %s: %v", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, err)
 		}
 		log.C(ctx).Infof("Successfully enabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", newVisibilityPayload.Additional.ServicePlan.CatalogID, platformBrokerName, labelsToAdd)
 	}
@@ -207,10 +210,10 @@ func (vnh *VisibilityResourceNotificationsHandler) enableServiceAccess(ctx conte
 }
 
 // OnDelete deletes visibilities from the provided notification payload by invoking the proper platform clients
-func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
+func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) error {
 	if vnh.VisibilityClient == nil {
 		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped")
-		return
+		return nil
 	}
 
 	log.C(ctx).Debugf("Processing visibility delete notification with payload %s...", string(payload))
@@ -218,12 +221,12 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 	visibilityPayload := visibilityPayload{}
 	if err := json.Unmarshal(payload, &visibilityPayload); err != nil {
 		log.C(ctx).WithError(err).Error("error unmarshaling visibility delete notification payload")
-		return
+		return fmt.Errorf("error unmarshaling visibility delete notification payload: %v", err)
 	}
 
 	if err := visibilityPayload.Validate(types.DELETED); err != nil {
 		log.C(ctx).WithError(err).Error("error validating visibility payload")
-		return
+		return fmt.Errorf("error validating visibility payload: %v", err)
 	}
 
 	v := visibilityPayload.Old
@@ -237,10 +240,10 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 		Labels:        v.Resource.GetLabels(),
 	}); err != nil {
 		log.C(ctx).WithError(err).Errorf("error disabling access for plan %s in broker with name %s", v.Additional.ServicePlan.CatalogID, platformBrokerName)
-		return
+		return fmt.Errorf("error disabling access for plan %s in broker with name %s: %v", v.Additional.ServicePlan.CatalogID, platformBrokerName, err)
 	}
 	log.C(ctx).Infof("Successfully disabled access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
-
+	return nil
 }
 
 func (vnh *VisibilityResourceNotificationsHandler) brokerProxyName(brokerName, brokerID string) string {

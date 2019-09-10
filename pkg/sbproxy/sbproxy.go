@@ -205,8 +205,8 @@ func (smb *SMProxyBuilder) installHealth() error {
 func (p *SMProxy) Run() {
 	defer waitWithTimeout(p.ctx, p.group, p.Server.Config.ShutdownTimeout)
 
-	messages := p.notificationsProducer.Start(p.ctx, p.group)
-	p.reconciler.Reconcile(p.ctx, messages, p.group)
+	messages, result := p.notificationsProducer.Start(p.ctx, p.group)
+	p.reconciler.Reconcile(p.ctx, messages, result, p.group)
 
 	log.C(p.ctx).Info("Running SBProxy...")
 	p.Server.Run(p.ctx, p.group)

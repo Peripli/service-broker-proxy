@@ -145,14 +145,15 @@ func buildNotificationsURL(baseURL, notificationsPath string) (*url.URL, error) 
 }
 
 // Start starts the producer in a new go-routine
-func (p *Producer) Start(ctx context.Context, group *sync.WaitGroup) <-chan *Message {
+func (p *Producer) Start(ctx context.Context, group *sync.WaitGroup) (<-chan *Message, chan<- *types.NotificationResult) {
 	group.Add(1)
 	messages := make(chan *Message, p.producerSettings.MessagesQueueSize)
-	go p.run(ctx, messages, group)
-	return messages
+	result := make(chan *types.NotificationResult, p.producerSettings.MessagesQueueSize)
+	go p.run(ctx, messages, result, group)
+	return messages, result
 }
 
-func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.WaitGroup) {
+func (p *Producer) run(ctx context.Context, messages chan<- *Message, result chan *types.NotificationResult, group *sync.WaitGroup) {
 	defer group.Done()
 	resyncChan := make(chan struct{})
 	p.lastNotificationRevision = types.InvalidRevision
@@ -182,7 +183,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 			done := make(chan struct{}, 2)
 			childContext, cancelChildrenFunc := context.WithCancel(ctx)
 			go p.readNotifications(childContext, messages, done)
-			go p.ping(childContext, done)
+			go p.writeLoop(childContext, result, done)
 
 			<-done
 			cancelChildrenFunc()
@@ -200,7 +201,7 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 	}
 }
 
-func (p *Producer) scheduleResync(ctx context.Context, resyncChan chan struct{}, messages chan *Message) {
+func (p *Producer) scheduleResync(ctx context.Context, resyncChan chan struct{}, messages chan<- *Message) {
 	timer := time.NewTimer(p.producerSettings.ResyncPeriod)
 	defer timer.Stop()
 
@@ -225,7 +226,7 @@ func (p *Producer) scheduleResync(ctx context.Context, resyncChan chan struct{},
 	}
 }
 
-func (p *Producer) readNotifications(ctx context.Context, messages chan *Message, done chan<- struct{}) {
+func (p *Producer) readNotifications(ctx context.Context, messages chan<- *Message, done chan<- struct{}) {
 	defer func() {
 		log.C(ctx).Debug("Exiting notification reader")
 		done <- struct{}{}
@@ -260,16 +261,26 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 	}
 }
 
-func (p *Producer) ping(ctx context.Context, done chan<- struct{}) {
+func (p *Producer) writeLoop(ctx context.Context, result <-chan *types.NotificationResult, done chan<- struct{}) {
 	defer func() {
-		log.C(ctx).Debug("Exiting pinger")
+		log.C(ctx).Debug("Exiting write loop")
 		done <- struct{}{}
 	}()
-	log.C(ctx).Debug("Starting pinger")
+	log.C(ctx).Debug("Starting write loop")
 	ticker := time.NewTicker(p.pingPeriod)
 	defer ticker.Stop()
 	for {
 		select {
+		case notificationResult, ok := <-result:
+			if !ok {
+				log.C(ctx).Info("Messages channel closed. Terminating reconciler.")
+				return
+			}
+			log.C(ctx).Debug("Sending notification result")
+			if err := p.conn.WriteJSON(notificationResult); err != nil {
+				log.C(ctx).WithError(err).Error("Could not write message on the websocket")
+				return
+			}
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
