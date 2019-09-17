@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:cb347e4c7135f11e1dfad1f48c407804d3987d27eee49d6972c686183277e2ec"
+  branch = "master"
+  digest = "1:5fdad5a6dd3737ef40680ef274e2011cc3dac0a984c4c008c98e926e4d153e5d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -62,8 +63,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "7b053988866947f624b7f66c6be43de287461e35"
-  version = "v0.5.0"
+  revision = "f479b10d3d8570afeef586a0aaab276de5084e43"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -275,8 +275,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "2c38f6d2dc5a6a21b6851f2414f4e10adf8e3eee"
-  version = "v1.8.1"
+  revision = "9342d2c87674fc9ed5324d5d77d5f11f328bc11b"
+  version = "v1.8.3"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -339,7 +339,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:bb964139623533b324969bf9c50bf30e5be0206f6d6e75f2f7c1c4b3c8407337"
+  digest = "1:0c84de0c9ef9924db2bc8ed3b18960ea4ee549c6b04d0b386c0e3043ccb11243"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -363,8 +363,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "7e8b50db0c6d0a15ac0eb015d4ca64e7e7e2c88c"
-  version = "v1.9.0"
+  revision = "974566c482abc93ffd3df6f4626e79076c7ed290"
+  version = "v1.10.1"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -547,11 +547,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d9464a87e24a9703fd6b9b27b3592559eb7f5886285d724cb0acd62d00a5ddbf"
+  digest = "1:87fe9bca786484cef53d52adeec7d1c52bc2bfbee75734eddeb75fc5c7023871"
   name = "github.com/xeipuuv/gojsonpointer"
   packages = ["."]
   pruneopts = "UT"
-  revision = "df4f5c81cb3b310899c091852a576ea7d178aedb"
+  revision = "02993c407bfbf5f6dae44c4f4b1cf6a39b5fc5bb"
 
 [[projects]]
   branch = "master"
@@ -606,7 +606,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "60c769a6c58655dab1b9adac0d58967dd517cfba"
+  revision = "227b76d455e791cb042b03e633e2f7fbcfdf74a5"
 
 [[projects]]
   branch = "master"
@@ -622,7 +622,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "ba9fcec4b297b415637633c5a6e8fa592e4a16c3"
+  revision = "c8589233b77dde5edd2205ba8a4fb5c9c2472556"
 
 [[projects]]
   branch = "master"
@@ -637,11 +637,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:47844666be86089349a441f5f0ece22f42a87a8cb8c9a31294c593f43209ad19"
+  digest = "1:ec9d9815894f067c7878330735b9e4dfa6dc61234d2ba136b60a1436d6b5ea94"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "c7b8b68b14567162c6602a7c5659ee0f26417c18"
+  revision = "b4ddaad3f8a36719f2b8bc6486c14cc468ca2bb5"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -693,8 +693,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
-  version = "v1.6.1"
+  revision = "5f2a59506353b8d5ba8cbbcd9f3c1f41f1eaf079"
+  version = "v1.6.2"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
