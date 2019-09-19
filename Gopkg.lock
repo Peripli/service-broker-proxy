@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:06c32e1bc77c2a47c004d4566ae934d131784ec0eb40f3bb7531ffb4fccc4426"
+  branch = "antlr_parser"
+  digest = "1:a51e3d599f5421ddb75f208501daa96b6afacc47527d008752302b2cd73a62a9"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -42,6 +43,7 @@
     "pkg/httpclient",
     "pkg/log",
     "pkg/query",
+    "pkg/query/parser",
     "pkg/security",
     "pkg/security/authenticators",
     "pkg/security/filters",
@@ -63,8 +65,12 @@
     "test/testutil",
   ]
   pruneopts = "NT"
+<<<<<<< HEAD
   revision = "7920247e060da10cb2f8ea7dced2f99823ae9c01"
   version = "v0.6.0"
+=======
+  revision = "5f850b569d699e5e07660c1f3e29eaca775dff47"
+>>>>>>> build
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -73,6 +79,14 @@
   pruneopts = "UT"
   revision = "5c4e22684113ffc2a77577c178189940925f9aef"
   version = "v1.5.1"
+
+[[projects]]
+  digest = "1:d04889482897652dedae6d8575b479c06fa3eb3c3abe248163b25d3df5fab43e"
+  name = "github.com/antlr/antlr4"
+  packages = ["runtime/Go/antlr"]
+  pruneopts = "UT"
+  revision = "be58ebffde8e29c154192c019608f0a5b8e6a064"
+  version = "4.7.2"
 
 [[projects]]
   digest = "1:d5fa6328bd281ac91e7b5d3f45b49f8ac36c30b6a530f633d91c6eaef50cd137"
@@ -276,8 +290,13 @@
     "zlib",
   ]
   pruneopts = "UT"
+<<<<<<< HEAD
   revision = "29f61c4f7dec01b2cc59c562f290fe1cc441eaef"
   version = "v1.8.5"
+=======
+  revision = "dbe23c5a61c1539a54e8a2927ca1a2e7bcc92caf"
+  version = "v1.8.4"
+>>>>>>> build
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -623,7 +642,11 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
+<<<<<<< HEAD
   revision = "72f939374954d0a1b2a1e27dcda950e2724dd5c1"
+=======
+  revision = "a8b05e9114ab0cb08faec337c959aed24b68bf50"
+>>>>>>> build
 
 [[projects]]
   branch = "master"
@@ -642,7 +665,11 @@
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
+<<<<<<< HEAD
   revision = "543471e840be449c53d44b32c7adf1261ad67e37"
+=======
+  revision = "0c1ff786ef13daa914a3351c5e6b0321aed5960e"
+>>>>>>> build
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
