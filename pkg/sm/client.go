@@ -158,7 +158,7 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 	for _, so := range sos {
 		soIDs += ",'" + so.ID + "'"
 	}
-	soIDs = soIDs[2:]
+	soIDs = soIDs[1:]
 
 	fieldQuery := fmt.Sprintf("service_offering_id in (%s)", soIDs)
 	params := map[string]string{
