@@ -96,7 +96,7 @@ func DefaultEnv(ctx context.Context, additionalPFlags ...func(set *pflag.FlagSet
 }
 
 // New creates service broker proxy that is configured from the provided environment and platform client.
-func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, platformClient platform.Client) (*SMProxyBuilder, error) {
+func New(ctx context.Context, cancel context.CancelFunc, environment env.Environment, settings *Settings, platformClient platform.Client) (*SMProxyBuilder, error) {
 	if err := settings.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating settings: %s", err)
 	}
@@ -128,7 +128,9 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 
 	api := &web.API{
 		Controllers: []web.Controller{
-			&configuration.Controller{},
+			&configuration.Controller{
+				Environment: environment,
+			},
 		},
 		Filters:  filters,
 		Registry: health.NewDefaultRegistry(),
