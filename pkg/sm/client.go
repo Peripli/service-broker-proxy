@@ -97,7 +97,7 @@ func NewClient(config *Settings) (*ServiceManagerClient, error) {
 func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.ServiceBroker, error) {
 	log.C(ctx).Debugf("Getting brokers for proxy from Service Manager at %s", c.host)
 
-	result := make([]*types.ServiceBroker,0,0)
+	result := make([]*types.ServiceBroker, 0)
 	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
@@ -110,7 +110,7 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.Service
 func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 
-	result := make([]*types.Visibility,0,0)
+	result := make([]*types.Visibility, 0)
 	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
@@ -123,7 +123,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePlan, error) {
 	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
 
-	result := make([]*types.ServicePlan,0,0)
+	result := make([]*types.ServicePlan, 0)
 	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
@@ -141,7 +141,7 @@ func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Contex
 		"fieldQuery": fieldQuery,
 	}
 
-	result := make([]*types.ServiceOffering,0,0)
+	result := make([]*types.ServiceOffering, 0)
 	err := c.call(ctx, fmt.Sprintf(APIServiceOfferings, c.host), params, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service offerings from Service Manager")
@@ -165,13 +165,13 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 		"fieldQuery": fieldQuery,
 	}
 
-	result := &[]*types.ServicePlan{}
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), params, result)
+	result := make([]*types.ServicePlan, 0)
+	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), params, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 func (c *ServiceManagerClient) call(ctx context.Context, smURL string, params map[string]string, list interface{}) error {
