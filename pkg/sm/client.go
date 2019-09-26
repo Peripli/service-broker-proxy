@@ -97,39 +97,39 @@ func NewClient(config *Settings) (*ServiceManagerClient, error) {
 func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.ServiceBroker, error) {
 	log.C(ctx).Debugf("Getting brokers for proxy from Service Manager at %s", c.host)
 
-	result := &[]*types.ServiceBroker{}
-	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), nil, result)
+	result := make([]*types.ServiceBroker,0,0)
+	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 // GetVisibilities returns plan visibilities from Service Manager
 func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 
-	result := &[]*types.Visibility{}
-	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, result)
+	result := make([]*types.Visibility,0,0)
+	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 // GetPlans returns plans from Service Manager
 func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePlan, error) {
 	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
 
-	result := &[]*types.ServicePlan{}
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, result)
+	result := make([]*types.ServicePlan,0,0)
+	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 // GetServiceOfferingsByBrokerIDs returns plans from Service Manager
@@ -141,13 +141,13 @@ func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Contex
 		"fieldQuery": fieldQuery,
 	}
 
-	result := &[]*types.ServiceOffering{}
+	result := make([]*types.ServiceOffering,0,0)
 	err := c.call(ctx, fmt.Sprintf(APIServiceOfferings, c.host), params, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service offerings from Service Manager")
 	}
 
-	return *result, nil
+	return result, nil
 }
 
 // GetPlansByServiceOfferings returns plans from Service Manager
