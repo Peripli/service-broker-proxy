@@ -175,14 +175,14 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 }
 
 func (c *ServiceManagerClient) call(ctx context.Context, smURL string, params map[string]string, list interface{}) error {
-	q := url.Values{}
+	fullURL, err := url.Parse(smURL)
+	if err != nil {
+		return err
+	}
+	q := fullURL.Query()
 	for k, v := range params {
-		q.Set(k, v)
+		q.Add(k,v)
 	}
-	query := q.Encode()
-	fullURL := smURL
-	if query != "" {
-		fullURL = fullURL + "?" + query
-	}
-	return util.ListAll(ctx, c.httpClient.Do, fullURL, list)
+	fullURL.RawQuery = q.Encode()
+	return util.ListAll(ctx, c.httpClient.Do, fullURL.String(), list)
 }

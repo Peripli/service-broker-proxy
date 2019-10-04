@@ -2,15 +2,15 @@
 
 
 [[projects]]
-  digest = "1:12156f9d8523585d9d875a03c4b5c6c6374f7370716cd814aa6781732ac942c5"
+  digest = "1:43ac38976d1da4ea8bbb37da4e6baca6127b1c19860104b7e84c28d112f3134c"
   name = "github.com/InVisionApp/go-health"
   packages = [
     ".",
     "checkers",
   ]
   pruneopts = "UT"
-  revision = "06e1878ab5a8acf6e841861c6cbfcc4d3036add0"
-  version = "v2.1.0"
+  revision = "a4a89dc763c320ee165018886368a202bdcffb87"
+  version = "v2.1.2"
 
 [[projects]]
   digest = "1:be2deb3cba3d2526b3692d80483f59df6462aabc875aace2db263f2664f30670"
@@ -24,8 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "paging-token"
-  digest = "1:e089a41684b19047a97b808fb888fb4856df556913b95b07162400a7e71d6e53"
+  branch = "paging-topic"
+  digest = "1:96868f7c9835801e8abfab425e02174e5cead3ffb180dcbb3f5ab92fa1efe71d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -63,7 +63,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "3ee5e490231c9598fee36a55e8dff18f1ad8cf0f"
+  revision = "26e942c4445630d44cd26298b1b54c7a9a271e90"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -275,8 +275,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "dbe23c5a61c1539a54e8a2927ca1a2e7bcc92caf"
-  version = "v1.8.4"
+  revision = "29f61c4f7dec01b2cc59c562f290fe1cc441eaef"
+  version = "v1.8.5"
 
 [[projects]]
   digest = "1:923c4d7194b42e054b2eb8a6c62824ac55e23ececc1c7e48d4da69c971c55954"
@@ -339,7 +339,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:0c84de0c9ef9924db2bc8ed3b18960ea4ee549c6b04d0b386c0e3043ccb11243"
+  digest = "1:264ad793409edc174dc6c54b8049835d182c634e0ffa700854dde98f6d23e67f"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -363,8 +363,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "974566c482abc93ffd3df6f4626e79076c7ed290"
-  version = "v1.10.1"
+  revision = "72b6ab036f78c4bf1a9748c3941dd7c3de54917a"
+  version = "v1.10.2"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -606,11 +606,11 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "9ee001bba392397c76f100a2d5b13afc86f167f1"
+  revision = "34f69633bfdcf9db92f698f8487115767eebef81"
 
 [[projects]]
   branch = "master"
-  digest = "1:f6e2a855d736113a66b672f84d411ec89f4d2a870faa37cf50d20f1a62278624"
+  digest = "1:79d53f788fe8dddfeb6dcece31eee1bc8cda60b6c8250819e8892bcccc123774"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -622,7 +622,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "c00fd9afed17cfdca9b3e1e3b8de7ef2b3f0347b"
+  revision = "d98b1b4438230571bd7fbc5aaa89843e92937bd3"
 
 [[projects]]
   branch = "master"
@@ -637,11 +637,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1b90e63244513e8514749f45da58e89350d35cb3e12416ce6ed95f41c2a1f177"
+  digest = "1:84ed4fd3f7c52941feec4832e385f61377a01b4c98a0f868f16f10c2469fc0fe"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "2837fb4f24fee082b8c39b1a6dc9e0ed9f3fbd4f"
+  revision = "c178f38b412c7b426e4e97be2e75d11ff7b8d4d4"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -693,8 +693,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "c71d63e301d75423acb410203c747cad31e9a5e7"
-  version = "v1.6.3"
+  revision = "bddb1f54ecfd64b1350fd2dd897fa11d426632bc"
+  version = "v1.6.4"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -726,12 +726,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
+  digest = "1:59f10c1537d2199d9115d946927fe31165959a95190849c82ff11e05803528b0"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
-  version = "v2.2.2"
+  revision = "f221b8435cfb71e54062f6c6e99e9ade30b124d5"
+  version = "v2.2.4"
 
 [solve-meta]
   analyzer-name = "dep"
