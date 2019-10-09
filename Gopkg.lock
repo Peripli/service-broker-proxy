@@ -24,7 +24,6 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   digest = "1:06c32e1bc77c2a47c004d4566ae934d131784ec0eb40f3bb7531ffb4fccc4426"
   name = "github.com/Peripli/service-manager"
   packages = [
@@ -65,6 +64,7 @@
   ]
   pruneopts = "NT"
   revision = "7920247e060da10cb2f8ea7dced2f99823ae9c01"
+  version = "v0.6.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
