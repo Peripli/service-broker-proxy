@@ -24,8 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "antlr_parser"
-  digest = "1:238d8933a0811440eae55adaaa0b3b864b6133cd2ca07413167e11181a56d0be"
+  branch = "master"
+  digest = "1:58b4d68208a4199c5672ce2f56dd0da10a45b6ed3e345d5079456f9232433073"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -65,7 +65,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "a9b5332e0c43eadc0a97c625ff4acf55fd8e1b97"
+  revision = "c49be11e03a29c1f0f04da412d7abf88972b4504"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -632,7 +632,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "da9a3fd4c5820e74b24a6cb7fb438dc9b0dd377c"
+  revision = "ec77196f6094c3492a8b61f2c11cf937f78992ae"
 
 [[projects]]
   branch = "master"
@@ -647,11 +647,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7c927f17d868be652a4cfe7de23e4292dea5b14d974a1d536e3b7cb7e79fd695"
+  digest = "1:70b2bf25c4ed23c61dae668e4151d87a7edc5965bc3ccfecd1b9fe5f1752092a"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "b09406accb4736d857a32bf9444cd7edae2ffa79"
+  revision = "3e7259c5e7c2076bb2728047a3df75adb1bad8e5"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
