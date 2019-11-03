@@ -222,7 +222,7 @@ var _ = Describe("Reconcile visibilities", func() {
 		settings := reconcile.DefaultSettings()
 		settings.MaxParallelRequests = maxParallelRequests
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(settings, fakePlatformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern, []string{}),
+			Resyncer: reconcile.NewResyncer(settings, fakePlatformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smBrokers = generateSMBrokers(2, 4, 100)

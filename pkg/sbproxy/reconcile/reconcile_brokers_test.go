@@ -100,7 +100,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern, []string{}),
+			Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smbroker1 = &types.ServiceBroker{
