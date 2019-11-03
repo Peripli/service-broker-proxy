@@ -62,7 +62,9 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 			platformBroker, shouldBeProxified := brokerKeyMap[getBrokerKey(desiredBroker)]
 
 			if shouldBeProxified {
-				r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
+				if r.options.TakeoverEnabled {
+					r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
+				}
 			} else {
 				r.createBrokerRegistration(ctx, desiredBroker)
 			}

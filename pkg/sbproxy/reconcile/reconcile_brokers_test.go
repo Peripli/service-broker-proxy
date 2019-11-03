@@ -207,6 +207,7 @@ var _ = Describe("Reconcile brokers", func() {
 		platformBrokers func() ([]*platform.ServiceBroker, error)
 		smBrokers       func() ([]*types.ServiceBroker, error)
 		brokerBlacklist func() []string
+		takeoverEnabled bool
 
 		expectations func() expectations
 	}
@@ -225,6 +226,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -247,6 +249,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -275,6 +278,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{
@@ -307,6 +311,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{},
@@ -335,6 +340,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{
@@ -363,6 +369,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{smbroker1.Name}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{
@@ -388,6 +395,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{smbroker1.Name, smbroker2.Name}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -414,6 +422,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{},
@@ -443,6 +452,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{},
@@ -472,6 +482,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{},
@@ -498,6 +509,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{},
@@ -525,6 +537,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -552,6 +565,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -580,6 +594,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{smbroker3.Name}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -604,9 +619,71 @@ var _ = Describe("Reconcile brokers", func() {
 					smbroker4,
 				}, nil
 			},
+			takeoverEnabled: true,
 			brokerBlacklist: func() []string {
 				return []string{smbroker3.Name, smbroker4.Name}
 			},
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					reconcileUpdateCalledFor:  []*platform.ServiceBroker{},
+				}
+			},
+		}),
+
+		Entry("When broker is registered in the platform and SM, but not yet proxified, and takeover is disabled it should not be proxified", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+				stubPlatformUpdateBroker(platformBrokerProxy)
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{
+					platformbrokerNonProxy,
+					platformbrokerNonProxy2,
+				}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					smbroker3,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled: false,
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					reconcileUpdateCalledFor:  []*platform.ServiceBroker{},
+				}
+			},
+		}),
+
+		Entry("When all brokers are registered in the platform and SM, but not yet proxified, and takeover is disabled they should not be proxified", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+				stubPlatformUpdateBroker(platformBrokerProxy)
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{
+					platformbrokerNonProxy,
+					platformbrokerNonProxy2,
+				}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					smbroker3,
+					smbroker4,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled: false,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
@@ -642,6 +719,7 @@ var _ = Describe("Reconcile brokers", func() {
 			brokerBlacklist: func() []string {
 				return []string{}
 			},
+			takeoverEnabled: true,
 			expectations: func() expectations {
 				return expectations{
 					reconcileCreateCalledFor: []*platform.ServiceBroker{},
@@ -670,6 +748,7 @@ var _ = Describe("Reconcile brokers", func() {
 		t.stubs()
 
 		reconcileSettings.BrokerBlacklist = t.brokerBlacklist()
+		reconcileSettings.TakeoverEnabled = t.takeoverEnabled
 		reconciler.Resyncer.Resync(context.TODO())
 
 		invocations := append([]map[string][][]interface{}{}, fakeSMClient.Invocations(), fakePlatformCatalogFetcher.Invocations(), fakePlatformBrokerClient.Invocations())
