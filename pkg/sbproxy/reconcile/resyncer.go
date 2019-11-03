@@ -14,13 +14,14 @@ import (
 
 // NewResyncer returns a resyncer that reconciles the state of the proxy brokers and visibilities
 // in the platform to match the desired state provided by the Service Manager.
-func NewResyncer(settings *Settings, platformClient platform.Client, smClient sm.Client, smPath, proxyPathPattern string) Resyncer {
+func NewResyncer(settings *Settings, platformClient platform.Client, smClient sm.Client, smPath, proxyPathPattern string, brokerBlacklist []string) Resyncer {
 	return &resyncJob{
 		options:          settings,
 		platformClient:   platformClient,
 		smClient:         smClient,
 		smPath:           smPath,
 		proxyPathPattern: proxyPathPattern,
+		brokerBlacklist:  brokerBlacklist,
 	}
 }
 
@@ -30,6 +31,7 @@ type resyncJob struct {
 	smClient         sm.Client
 	smPath           string
 	proxyPathPattern string
+	brokerBlacklist  []string
 }
 
 // Resync reconciles the state of the proxy brokers and visibilities at the platform
@@ -61,7 +63,7 @@ func (r *resyncJob) process(ctx context.Context) {
 		return
 	}
 
-	smBrokers, err := r.getBrokersFromSM(ctx)
+	smBrokers, err := r.getBrokersFromSM(ctx, r.brokerBlacklist)
 	if err != nil {
 		logger.WithError(err).Error("an error occurred while obtaining brokers from Service Manager")
 		return

@@ -19,6 +19,7 @@ package reconcile
 import (
 	"context"
 	"fmt"
+	"github.com/Peripli/service-manager/pkg/util/slice"
 	"strings"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -73,7 +74,7 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 	}
 }
 
-func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBroker, error) {
+func (r *resyncJob) getBrokersFromSM(ctx context.Context, brokerBlacklist []string) ([]*platform.ServiceBroker, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting brokers from Service Manager...")
 
@@ -84,6 +85,10 @@ func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBr
 
 	brokersFromSM := make([]*platform.ServiceBroker, 0, len(proxyBrokers))
 	for _, broker := range proxyBrokers {
+		if slice.StringsAnyEquals(brokerBlacklist, broker.Name) {
+			continue
+		}
+
 		brokerReg := &platform.ServiceBroker{
 			GUID:      broker.ID,
 			Name:      broker.Name,

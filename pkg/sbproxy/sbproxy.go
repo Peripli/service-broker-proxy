@@ -130,7 +130,7 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 	smPath := settings.Reconcile.URL + APIPrefix
 	proxyPathPattern := settings.Reconcile.LegacyURL + APIPrefix + "/%s"
 
-	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, smPath, proxyPathPattern)
+	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, smPath, proxyPathPattern, settings.Reconcile.BrokerBlacklist)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
