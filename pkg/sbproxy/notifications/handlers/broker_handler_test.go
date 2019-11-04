@@ -230,16 +230,40 @@ var _ = Describe("Broker Handler", func() {
 				fakeBrokerClient.UpdateBrokerReturns(nil, fmt.Errorf("error"))
 			})
 
-			It("invokes update broker with the correct arguments", func() {
-				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
-				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+			When("broker is not in broker blacklist", func() {
+				It("invokes update broker with the correct arguments", func() {
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
 
-				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(1))
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(1))
 
-				callCtx, callRequest := fakeBrokerClient.UpdateBrokerArgsForCall(0)
+					callCtx, callRequest := fakeBrokerClient.UpdateBrokerArgsForCall(0)
 
-				Expect(callCtx).To(Equal(ctx))
-				Expect(callRequest).To(Equal(expectedUpdateBrokerRequest))
+					Expect(callCtx).To(Equal(ctx))
+					Expect(callRequest).To(Equal(expectedUpdateBrokerRequest))
+				})
+			})
+
+			When("broker is in broker blacklist", func() {
+				It("doesn't invoke update broker", func() {
+					brokerHandler.BrokerBlacklist = []string{brokerName}
+
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+				})
+			})
+
+			When("broker takeover is disabled", func() {
+				It("invokes update broker with the correct arguments", func() {
+					brokerHandler.TakeoverEnabled = false
+
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+
+					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
+				})
 			})
 		})
 
