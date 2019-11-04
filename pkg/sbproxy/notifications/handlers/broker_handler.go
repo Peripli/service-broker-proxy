@@ -119,10 +119,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 		}
 		log.C(ctx).Infof("Successfully created SM proxy registration in platform for broker with name %s", brokerProxyName)
 	} else {
-		log.C(ctx).Infof("Successfully found broker in platform with name %s and URL %s. Checking if proxification is needed...", existingBroker.Name, existingBroker.BrokerURL)
-		if shouldBeProxified(existingBroker, brokerToCreate.Resource) {
+		log.C(ctx).Infof("Successfully found broker in platform with name %s and URL %s. Checking if takeover is needed...", existingBroker.Name, existingBroker.BrokerURL)
+		if shouldBeTakenOver(existingBroker, brokerToCreate.Resource) {
 			if !bnh.TakeoverEnabled {
-				log.C(ctx).Infof("Broker %s is eligible for proxification, but broker takeover is disabled. Skipping notification...", existingBroker.Name)
+				log.C(ctx).Infof("Broker %s is eligible for taking over, but broker takeover is disabled. Skipping notification...", existingBroker.Name)
 				return
 			}
 
@@ -132,13 +132,13 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 				BrokerURL: brokerProxyPath,
 			}
 
-			log.C(ctx).Infof("Proxifying platform broker with name %s and URL %s...", existingBroker.Name, existingBroker.BrokerURL)
+			log.C(ctx).Infof("Taking over platform broker with name %s and URL %s...", existingBroker.Name, existingBroker.BrokerURL)
 			if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
-				log.C(ctx).WithError(err).Errorf("error proxifying platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
+				log.C(ctx).WithError(err).Errorf("error taking over platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
 				return
 			}
 		} else {
-			log.C(ctx).Errorf("conflict error: existing platform broker with name %s and URL %s CANNOT be proxified to SM broker with URL %s. The URLs need to be the same", existingBroker.Name, existingBroker.BrokerURL, brokerToCreate.Resource.BrokerURL)
+			log.C(ctx).Errorf("conflict error: existing platform broker with name %s and URL %s CANNOT be taken over as SM broker with URL %s. The URLs need to be the same", existingBroker.Name, existingBroker.BrokerURL, brokerToCreate.Resource.BrokerURL)
 		}
 	}
 }
@@ -175,7 +175,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s.", existingBroker.Name, existingBroker.BrokerURL)
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No update will be attempted", existingBroker.Name, existingBroker.BrokerURL)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not taken over by SM. No update will be attempted", existingBroker.Name, existingBroker.BrokerURL)
 		return
 	}
 
@@ -238,7 +238,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 	}
 
 	if existingBroker.BrokerURL != brokerProxyPath {
-		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not proxified by SM. No deletion will be attempted", brokerProxyName, existingBroker.BrokerURL)
+		log.C(ctx).Errorf("Platform broker with name %s has an URL %s and is not taken over by SM. No deletion will be attempted", brokerProxyName, existingBroker.BrokerURL)
 		return
 	}
 
@@ -275,7 +275,7 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.Ser
 	return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, broker.Name, broker.ID)
 }
 
-func shouldBeProxified(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {
+func shouldBeTakenOver(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {
 	return brokerFromPlatform.BrokerURL == brokerFromSM.BrokerURL &&
 		brokerFromPlatform.Name == brokerFromSM.Name
 }

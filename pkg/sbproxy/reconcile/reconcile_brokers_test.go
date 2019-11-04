@@ -547,7 +547,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is registered in the platform and SM, but not yet proxified, it should be updated", testCase{
+		Entry("When broker is registered in the platform and SM, but not yet taken over, it should be updated", testCase{
 			stubs: func() {
 				stubPlatformUpdateBroker(platformBrokerProxy)
 			},
@@ -578,7 +578,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is registered in the platform and SM, but not yet proxified, but is also in the proxy broker blacklist it should be ignored", testCase{
+		Entry("When broker is registered in the platform and SM, but not yet taken over, but is also in the proxy broker blacklist it should be ignored", testCase{
 			stubs: func() {},
 			platformBrokers: func() ([]*platform.ServiceBroker, error) {
 				return []*platform.ServiceBroker{
@@ -605,7 +605,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When all brokers are registered in the platform and SM, but not yet proxified, but are also in the proxy broker blacklist they should be ignored", testCase{
+		Entry("When all brokers are registered in the platform and SM, but not yet taken over, but are also in the proxy broker blacklist they should be ignored", testCase{
 			stubs: func() {},
 			platformBrokers: func() ([]*platform.ServiceBroker, error) {
 				return []*platform.ServiceBroker{
@@ -633,7 +633,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is registered in the platform and SM, but not yet proxified, and takeover is disabled it should not be proxified", testCase{
+		Entry("When broker is registered in the platform and SM, but not yet taken over, and takeover is disabled it should not be taken over", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker(platformBrokerProxy)
@@ -663,7 +663,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When all brokers are registered in the platform and SM, but not yet proxified, and takeover is disabled they should not be proxified", testCase{
+		Entry("When all brokers are registered in the platform and SM, but not yet taken over, and takeover is disabled they should not be taken over", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker(platformBrokerProxy)
