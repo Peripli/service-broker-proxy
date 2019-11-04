@@ -134,10 +134,11 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
-				BrokerClient:   platformClient.Broker(),
-				CatalogFetcher: platformClient.CatalogFetcher(),
-				ProxyPrefix:    settings.Reconcile.BrokerPrefix,
-				SMPath:         smPath,
+				BrokerClient:    platformClient.Broker(),
+				CatalogFetcher:  platformClient.CatalogFetcher(),
+				ProxyPrefix:     settings.Reconcile.BrokerPrefix,
+				SMPath:          smPath,
+				BrokerBlacklist: settings.Reconcile.BrokerBlacklist,
 			},
 			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Peripli/service-manager/pkg/util/slice"
 
 	"github.com/pkg/errors"
 
@@ -74,6 +75,9 @@ type BrokerResourceNotificationsHandler struct {
 
 	ProxyPrefix string
 	SMPath      string
+
+	BrokerBlacklist []string
+	TakeoverEnabled bool
 }
 
 // OnCreate creates brokers from the specified notification payload by invoking the proper platform clients
@@ -89,6 +93,11 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	brokerToCreate := brokerPayload.New
 	brokerProxyPath := bnh.brokerProxyPath(brokerToCreate.Resource)
 	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
+
+	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToCreate.Resource.Name) {
+		log.C(ctx).Infof("Broker with name %s is part of broker blacklist. Skipping notification...", brokerToCreate.Resource.Name)
+		return
+	}
 
 	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToCreate.Resource.Name)
 
@@ -112,6 +121,11 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	} else {
 		log.C(ctx).Infof("Successfully found broker in platform with name %s and URL %s. Checking if proxification is needed...", existingBroker.Name, existingBroker.BrokerURL)
 		if shouldBeProxified(existingBroker, brokerToCreate.Resource) {
+			if !bnh.TakeoverEnabled {
+				log.C(ctx).Infof("Broker %s is eligible for proxification, but broker takeover is disabled. Skipping notification...", existingBroker.Name)
+				return
+			}
+
 			updateRequest := &platform.UpdateServiceBrokerRequest{
 				GUID:      existingBroker.GUID,
 				Name:      brokerProxyName,

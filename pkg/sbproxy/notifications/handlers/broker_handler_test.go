@@ -71,10 +71,12 @@ var _ = Describe("Broker Handler", func() {
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
 
 		brokerHandler = &handlers.BrokerResourceNotificationsHandler{
-			BrokerClient:   fakeBrokerClient,
-			CatalogFetcher: fakeCatalogFetcher,
-			ProxyPrefix:    "proxyPrefix",
-			SMPath:         "proxyPath",
+			BrokerClient:    fakeBrokerClient,
+			CatalogFetcher:  fakeCatalogFetcher,
+			ProxyPrefix:     "proxyPrefix",
+			SMPath:          "proxyPath",
+			BrokerBlacklist: []string{},
+			TakeoverEnabled: true,
 		}
 	})
 
