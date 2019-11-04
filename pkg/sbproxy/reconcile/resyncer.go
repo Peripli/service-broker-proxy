@@ -61,7 +61,7 @@ func (r *resyncJob) process(ctx context.Context) {
 		return
 	}
 
-	smBrokers, err := r.getBrokersFromSM(ctx, r.options.BrokerBlacklist)
+	smBrokers, err := r.getBrokersFromSM(ctx)
 	if err != nil {
 		logger.WithError(err).Error("an error occurred while obtaining brokers from Service Manager")
 		return

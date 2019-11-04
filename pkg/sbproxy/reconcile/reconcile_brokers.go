@@ -74,7 +74,7 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 	}
 }
 
-func (r *resyncJob) getBrokersFromSM(ctx context.Context, brokerBlacklist []string) ([]*platform.ServiceBroker, error) {
+func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBroker, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting brokers from Service Manager...")
 
@@ -85,7 +85,7 @@ func (r *resyncJob) getBrokersFromSM(ctx context.Context, brokerBlacklist []stri
 
 	brokersFromSM := make([]*platform.ServiceBroker, 0, len(proxyBrokers))
 	for _, broker := range proxyBrokers {
-		if slice.StringsAnyEquals(brokerBlacklist, broker.Name) {
+		if slice.StringsAnyEquals(r.options.BrokerBlacklist, broker.Name) {
 			continue
 		}
 
