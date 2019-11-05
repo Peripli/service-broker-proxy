@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:58b4d68208a4199c5672ce2f56dd0da10a45b6ed3e345d5079456f9232433073"
+  branch = "get-config-api"
+  digest = "1:96e3eb1e1a6f1bdeaeabdb4d2f0de101817a98d97aacdf3197f06beaf294602e"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -64,8 +65,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "c49be11e03a29c1f0f04da412d7abf88972b4504"
-  version = "v0.7.1"
+  revision = "727a684cd8b8dcf75e05271b29b360b53e56fd4c"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
