@@ -139,6 +139,7 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 				ProxyPrefix:     settings.Reconcile.BrokerPrefix,
 				SMPath:          smPath,
 				BrokerBlacklist: settings.Reconcile.BrokerBlacklist,
+				TakeoverEnabled: settings.Reconcile.TakeoverEnabled,
 			},
 			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),
