@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:58b4d68208a4199c5672ce2f56dd0da10a45b6ed3e345d5079456f9232433073"
+  digest = "1:37cf371e5c41ea876c963e14730a43c81b737d14b58791a27c6f0f404dd26db3"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -64,8 +64,8 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "c49be11e03a29c1f0f04da412d7abf88972b4504"
-  version = "v0.7.1"
+  revision = "27af564c846de652d952197c3f2e48708be09786"
+  version = "v0.7.4"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -608,7 +608,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "8986dd9e96cf0a6f74da406c005ba3df38527c04"
+  revision = "c7e5f84aec591254278750bee18f39e5dd19cdb5"
 
 [[projects]]
   branch = "master"
@@ -624,7 +624,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "0deb6923b6d97481cb43bc1043fe5b72a0143032"
+  revision = "a882066a44e04a21d46e51451c71e131344e830e"
 
 [[projects]]
   branch = "master"
@@ -639,11 +639,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:999c8e6b10ddb08bc4ea3a56d4e838194c4884eac6ecf90a9aa98ed8475fdf37"
+  digest = "1:824b4d14e35e35e821d3127319e51eb838f72434100750ad395db96d00b5a871"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "f43be2a4598cf3a47be9f94f0c28197ed9eae611"
+  revision = "c1f44814a5cd81a6d1cb589ef1e528bc5d305e07"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -728,12 +728,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:59f10c1537d2199d9115d946927fe31165959a95190849c82ff11e05803528b0"
+  digest = "1:f26a5d382387e03a40d1471dddfba85dfff9bf05352d7e42d37612677c4d3c5c"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f221b8435cfb71e54062f6c6e99e9ade30b124d5"
-  version = "v2.2.4"
+  revision = "f90ceb4f409096b60e2e9076b38b304b8246e5fa"
+  version = "v2.2.5"
 
 [solve-meta]
   analyzer-name = "dep"
