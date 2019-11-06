@@ -159,10 +159,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	brokerProxyNameAfter := bnh.brokerProxyName(brokerAfterUpdate.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
-	brokerToFind := brokerProxyNameAfter
-	if brokerProxyNameBefore != brokerProxyNameAfter {
-		brokerToFind = brokerProxyNameBefore
-	}
+	brokerToFind := determineBrokerNameToFind(brokerProxyNameBefore, brokerProxyNameAfter)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerBeforeUpdate.Resource.Name) {
 		log.C(ctx).Infof("Broker name %s for broker update notification is part of broker blacklist. Skipping notification...", brokerBeforeUpdate.Resource.Name)
@@ -289,4 +286,11 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.Ser
 func shouldBeTakenOver(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {
 	return brokerFromPlatform.BrokerURL == brokerFromSM.BrokerURL &&
 		brokerFromPlatform.Name == brokerFromSM.Name
+}
+
+func determineBrokerNameToFind(oldBrokerName, newBrokerName string) string {
+	if oldBrokerName != newBrokerName {
+		return oldBrokerName
+	}
+	return newBrokerName
 }
