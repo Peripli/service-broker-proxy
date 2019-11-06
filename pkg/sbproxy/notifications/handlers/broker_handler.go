@@ -95,7 +95,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToCreate.Resource.Name) {
-		log.C(ctx).Infof("Broker with name %s is part of broker blacklist. Skipping notification...", brokerToCreate.Resource.Name)
+		log.C(ctx).Infof("Broker name %s for broker create notification is part of broker blacklist. Skipping notification...", brokerToCreate.Resource.Name)
 		return
 	}
 
@@ -165,7 +165,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	}
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerBeforeUpdate.Resource.Name) {
-		log.C(ctx).Infof("Broker with name %s is part of broker blacklist. Skipping notification...", brokerBeforeUpdate.Resource.Name)
+		log.C(ctx).Infof("Broker name %s for broker update notification is part of broker blacklist. Skipping notification...", brokerBeforeUpdate.Resource.Name)
 		return
 	}
 
@@ -233,7 +233,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 	brokerProxyPath := bnh.brokerProxyPath(brokerToDelete.Resource)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToDelete.Resource.Name) {
-		log.C(ctx).Infof("Broker with name %s is part of broker blacklist. Skipping notification...", brokerToDelete.Resource.Name)
+		log.C(ctx).Infof("Broker name %s for broker delete notification is part of broker blacklist. Skipping notification...", brokerToDelete.Resource.Name)
 		return
 	}
 
