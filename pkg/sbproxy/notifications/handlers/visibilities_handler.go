@@ -240,6 +240,12 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 	}
 
 	v := visibilityPayload.Old
+
+	if slice.StringsAnyEquals(vnh.BrokerBlacklist, v.Additional.BrokerName) {
+		log.C(ctx).Infof("Broker name %s for the visibility create notification is part of broker blacklist. Skipping notification...", v.Additional.BrokerName)
+		return
+	}
+
 	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
 
 	log.C(ctx).Infof("Attempting to disable access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
