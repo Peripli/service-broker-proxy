@@ -144,6 +144,7 @@ func New(ctx context.Context, cancel context.CancelFunc, settings *Settings, pla
 			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),
 				ProxyPrefix:      settings.Reconcile.BrokerPrefix,
+				BrokerBlacklist:  settings.Reconcile.BrokerBlacklist,
 			},
 		},
 	}

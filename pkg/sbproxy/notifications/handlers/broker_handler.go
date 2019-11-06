@@ -163,6 +163,12 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	if brokerProxyNameBefore != brokerProxyNameAfter {
 		brokerToFind = brokerProxyNameBefore
 	}
+
+	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerBeforeUpdate.Resource.Name) {
+		log.C(ctx).Infof("Broker with name %s is part of broker blacklist. Skipping notification...", brokerBeforeUpdate.Resource.Name)
+		return
+	}
+
 	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToFind)
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToFind)
 	if err != nil {
@@ -225,6 +231,11 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 	brokerToDelete := brokerPayload.Old
 	brokerProxyName := bnh.brokerProxyName(brokerToDelete.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerToDelete.Resource)
+
+	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToDelete.Resource.Name) {
+		log.C(ctx).Infof("Broker with name %s is part of broker blacklist. Skipping notification...", brokerToDelete.Resource.Name)
+		return
+	}
 
 	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
 
