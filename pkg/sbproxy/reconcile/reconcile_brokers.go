@@ -90,10 +90,14 @@ func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBr
 		if slice.StringsAnyEquals(r.options.BrokerBlacklist, broker.Name) {
 			continue
 		}
+		platformBrokerName := broker.Name
+		if len(broker.Namespace) != 0 {
+			platformBrokerName = fmt.Sprintf("%s-%s", broker.Name, broker.Namespace)
+		}
 
 		brokerReg := &platform.ServiceBroker{
 			GUID:      broker.ID,
-			Name:      broker.Name,
+			Name:      platformBrokerName,
 			BrokerURL: broker.BrokerURL,
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)

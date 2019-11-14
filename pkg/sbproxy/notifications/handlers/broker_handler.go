@@ -280,10 +280,16 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.Ser
 }
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
-	return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, broker.Name, broker.ID)
+	if len(broker.Namespace) == 0 {
+		return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, broker.Name, broker.ID)
+	}
+	return fmt.Sprintf("%s%s-%s-%s", bnh.ProxyPrefix, broker.Name, broker.Namespace, broker.ID)
 }
 
 func shouldBeTakenOver(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {
+	if len(brokerFromSM.Namespace) != 0 {
+		return false
+	}
 	return brokerFromPlatform.BrokerURL == brokerFromSM.BrokerURL &&
 		brokerFromPlatform.Name == brokerFromSM.Name
 }
