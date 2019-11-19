@@ -103,7 +103,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
+	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID, v.Additional.BrokerNamespace)
 
 	log.C(ctx).Infof("Attempting to enable access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
 
@@ -146,7 +146,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := vnh.brokerProxyName(oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID)
+	platformBrokerName := vnh.brokerProxyName(oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID, oldVisibilityPayload.Additional.BrokerNamespace)
 
 	labelsToAdd, labelsToRemove := LabelChangesToLabels(visibilityPayload.LabelChanges)
 
@@ -246,7 +246,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
+	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID, v.Additional.BrokerNamespace)
 
 	log.C(ctx).Infof("Attempting to disable access for plan with catalog ID %s for platform broker with name %s and labels %v...", v.Additional.ServicePlan.CatalogID, platformBrokerName, v.Resource.GetLabels())
 
@@ -262,6 +262,9 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 
 }
 
-func (vnh *VisibilityResourceNotificationsHandler) brokerProxyName(brokerName, brokerID string) string {
-	return fmt.Sprintf("%s%s-%s", vnh.ProxyPrefix, brokerName, brokerID)
+func (vnh *VisibilityResourceNotificationsHandler) brokerProxyName(brokerName, brokerID, brokerNamespace string) string {
+	if len(brokerNamespace) == 0 {
+		return fmt.Sprintf("%s%s-%s", vnh.ProxyPrefix, brokerName, brokerID)
+	}
+	return fmt.Sprintf("%s%s-%s-%s", vnh.ProxyPrefix, brokerName, brokerNamespace, brokerID)
 }
