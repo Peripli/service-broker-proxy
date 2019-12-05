@@ -45,7 +45,7 @@ type TimestamppedError struct {
 }
 
 func (te TimestamppedError) Error() string {
-	return fmt.Sprintf("%v:%s", time.Now().Format(time.RFC3339Nano), te.Cause)
+	return fmt.Sprintf("%s-%s", time.Now().Format(time.RFC3339Nano), te.Cause)
 }
 
 // CompositeError consists of multiple errors and attaches timestamps to them
