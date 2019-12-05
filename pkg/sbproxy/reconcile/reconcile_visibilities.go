@@ -198,7 +198,7 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 type visibilityProcessingState struct {
 	Ctx           context.Context
 	Mutex         sync.Mutex
-	ErrorOccurred error
+	ErrorOccurred *CompositeError
 
 	WaitGroupLimit chan struct{}
 	WaitGroup      sync.WaitGroup
@@ -254,7 +254,7 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 			if state.ErrorOccurred == nil {
 				state.ErrorOccurred = &CompositeError{err}
 			} else {
-				state.ErrorOccurred.(*CompositeError).Add(err)
+				state.ErrorOccurred.Add(err)
 			}
 		}
 	}()
@@ -264,7 +264,11 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 
 func await(state *visibilityProcessingState) error {
 	state.WaitGroup.Wait()
-	return state.ErrorOccurred
+	if state.ErrorOccurred.Len() != 0 {
+		return state.ErrorOccurred
+	}
+
+	return nil
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans

@@ -49,6 +49,7 @@ func (te TimestamppedError) Error() string {
 // CompositeError consists of multiple errors and attaches timestamps to them
 type CompositeError []error
 
+// Error implements the error interface and returns a string representation of the composite error
 func (ce *CompositeError) Error() string {
 	errs := make([]string, 0, len(*ce))
 	for i := range *ce {
@@ -60,8 +61,17 @@ func (ce *CompositeError) Error() string {
 	return fmt.Sprintf("composite error: %v", strings.Join(errs, "; "))
 }
 
+// Add allows appending errors
 func (ce *CompositeError) Add(e error) {
 	*ce = append(*ce, TimestamppedError(e.Error()))
+}
+
+// Len returns the number of errors present in the composite error. If the composite error is nil, Len returns 0.
+func (ce *CompositeError) Len() int {
+	if ce == nil {
+		return 0
+	}
+	return len(*ce)
 }
 
 // Reconciler takes care of propagating broker and visibility changes to the platform.
