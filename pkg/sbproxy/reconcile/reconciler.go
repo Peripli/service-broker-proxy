@@ -54,7 +54,7 @@ func (ce *CompositeError) Error() string {
 	errs := make([]string, 0, len(*ce))
 	for i := range *ce {
 		if (*ce)[i] != nil {
-			errs = append(errs, fmt.Sprintf("[%s]", (*ce)[i].Error()))
+			errs = append(errs, (*ce)[i].Error())
 		}
 	}
 
