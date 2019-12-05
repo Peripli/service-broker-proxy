@@ -40,10 +40,12 @@ type Resyncer interface {
 }
 
 // TimestamppedError contains an error and a timestamp in time.RFC3339Nano format
-type TimestamppedError string
+type TimestamppedError struct {
+	Cause error
+}
 
 func (te TimestamppedError) Error() string {
-	return fmt.Sprintf("%v:%s", time.Now().Format(time.RFC3339Nano), string(te))
+	return fmt.Sprintf("%v:%s", time.Now().Format(time.RFC3339Nano), te.Cause)
 }
 
 // CompositeError consists of multiple errors and attaches timestamps to them
@@ -63,7 +65,7 @@ func (ce *CompositeError) Error() string {
 
 // Add allows appending errors
 func (ce *CompositeError) Add(e error) {
-	*ce = append(*ce, TimestamppedError(e.Error()))
+	*ce = append(*ce, TimestamppedError{e})
 }
 
 // Len returns the number of errors present in the composite error. If the composite error is nil, Len returns 0.
