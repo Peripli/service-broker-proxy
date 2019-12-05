@@ -18,7 +18,10 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/Peripli/service-manager/pkg/types"
 
@@ -34,6 +37,31 @@ type Consumer interface {
 // Resyncer provides functionality for triggering a resync on the platform
 type Resyncer interface {
 	Resync(ctx context.Context)
+}
+
+// TimestamppedError contains an error and a timestamp in time.RFC3339Nano format
+type TimestamppedError string
+
+func (te TimestamppedError) Error() string {
+	return fmt.Sprintf("%v:%v", time.Now().Format(time.RFC3339Nano), te)
+}
+
+// CompositeError consists of multiple errors and attaches timestamps to them
+type CompositeError []error
+
+func (ce *CompositeError) Error() string {
+	errs := make([]string, 0, len(*ce))
+	for i := range *ce {
+		if (*ce)[i] != nil {
+			errs = append(errs, fmt.Sprintf("[%s]", (*ce)[i].Error()))
+		}
+	}
+
+	return fmt.Sprintf("composite error: %v", strings.Join(errs, "; "))
+}
+
+func (ce *CompositeError) Add(e error) {
+	*ce = append(*ce, TimestamppedError(e.Error()))
 }
 
 // Reconciler takes care of propagating broker and visibility changes to the platform.
