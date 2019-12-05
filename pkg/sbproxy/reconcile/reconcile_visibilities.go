@@ -198,7 +198,7 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 type visibilityProcessingState struct {
 	Ctx           context.Context
 	Mutex         sync.Mutex
-	ErrorOccurred *CompositeError
+	ErrorOccurred error
 
 	WaitGroupLimit chan struct{}
 	WaitGroup      sync.WaitGroup
@@ -248,14 +248,13 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 			state.WaitGroup.Done()
 		}()
 
-		err := f(state.Ctx, visibility)
-		if err != nil {
+		if err := f(state.Ctx, visibility); err != nil {
 			state.Mutex.Lock()
 			defer state.Mutex.Unlock()
 			if state.ErrorOccurred == nil {
 				state.ErrorOccurred = &CompositeError{err}
 			} else {
-				state.ErrorOccurred.Add(err)
+				state.ErrorOccurred.(*CompositeError).Add(err)
 			}
 		}
 	}()
