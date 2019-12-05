@@ -43,7 +43,7 @@ type Resyncer interface {
 type TimestamppedError string
 
 func (te TimestamppedError) Error() string {
-	return fmt.Sprintf("%v:%v", time.Now().Format(time.RFC3339Nano), te)
+	return fmt.Sprintf("%v:%s", time.Now().Format(time.RFC3339Nano), te)
 }
 
 // CompositeError consists of multiple errors and attaches timestamps to them
