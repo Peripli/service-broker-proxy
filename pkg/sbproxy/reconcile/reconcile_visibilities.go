@@ -198,7 +198,7 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 type visibilityProcessingState struct {
 	Ctx           context.Context
 	Mutex         sync.Mutex
-	ErrorOccurred error
+	ErrorOccurred *CompositeError
 
 	WaitGroupLimit chan struct{}
 	WaitGroup      sync.WaitGroup
@@ -207,6 +207,7 @@ type visibilityProcessingState struct {
 func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilityProcessingState {
 	return &visibilityProcessingState{
 		Ctx:            ctx,
+		ErrorOccurred:  &CompositeError{},
 		WaitGroupLimit: make(chan struct{}, r.options.MaxParallelRequests),
 	}
 }
@@ -248,13 +249,10 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 			state.WaitGroup.Done()
 		}()
 
-		err := f(state.Ctx, visibility)
-		if err != nil {
+		if err := f(state.Ctx, visibility); err != nil {
 			state.Mutex.Lock()
 			defer state.Mutex.Unlock()
-			if state.ErrorOccurred == nil {
-				state.ErrorOccurred = err
-			}
+			state.ErrorOccurred.Add(err)
 		}
 	}()
 
@@ -263,7 +261,11 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 
 func await(state *visibilityProcessingState) error {
 	state.WaitGroup.Wait()
-	return state.ErrorOccurred
+	if state.ErrorOccurred.Len() != 0 {
+		return state.ErrorOccurred
+	}
+
+	return nil
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans

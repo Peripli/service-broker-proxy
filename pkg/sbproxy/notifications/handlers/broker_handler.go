@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/Peripli/service-manager/pkg/util/slice"
 
 	"github.com/pkg/errors"
