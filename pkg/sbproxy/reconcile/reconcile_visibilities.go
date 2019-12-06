@@ -207,6 +207,7 @@ type visibilityProcessingState struct {
 func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilityProcessingState {
 	return &visibilityProcessingState{
 		Ctx:            ctx,
+		ErrorOccurred:  &CompositeError{},
 		WaitGroupLimit: make(chan struct{}, r.options.MaxParallelRequests),
 	}
 }
@@ -251,11 +252,7 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 		if err := f(state.Ctx, visibility); err != nil {
 			state.Mutex.Lock()
 			defer state.Mutex.Unlock()
-			if state.ErrorOccurred == nil {
-				state.ErrorOccurred = &CompositeError{err}
-			} else {
-				state.ErrorOccurred.Add(err)
-			}
+			state.ErrorOccurred.Add(err)
 		}
 	}()
 

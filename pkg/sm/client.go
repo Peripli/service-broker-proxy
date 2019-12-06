@@ -181,7 +181,7 @@ func (c *ServiceManagerClient) call(ctx context.Context, smURL string, params ma
 	}
 	q := fullURL.Query()
 	for k, v := range params {
-		q.Add(k,v)
+		q.Add(k, v)
 	}
 	fullURL.RawQuery = q.Encode()
 	return util.ListAll(ctx, c.httpClient.Do, fullURL.String(), list)
