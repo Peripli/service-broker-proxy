@@ -19,7 +19,6 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
-
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -560,6 +559,74 @@ var _ = Describe("Reconcile brokers", func() {
 			smBrokers: func() ([]*types.ServiceBroker, error) {
 				return []*types.ServiceBroker{
 					smbroker3,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled: true,
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					reconcileUpdateCalledFor: []*platform.ServiceBroker{
+						platformBrokerProxy,
+					},
+				}
+			},
+		}),
+
+		Entry("When broker is registered in the platform with trailing slash and also in SM without trailing slash, but not yet taken over, it should be updated", testCase{
+			stubs: func() {
+				stubPlatformUpdateBroker(platformBrokerProxy)
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{
+					func() *platform.ServiceBroker {
+						platformbrokerNonProxy.BrokerURL += "/"
+						return platformbrokerNonProxy
+					}(),
+					platformbrokerNonProxy2,
+				}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					smbroker3,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled: true,
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor:  []*platform.ServiceBroker{},
+					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					reconcileUpdateCalledFor: []*platform.ServiceBroker{
+						platformBrokerProxy,
+					},
+				}
+			},
+		}),
+
+		Entry("When broker is registered in the platform without trailing slash and also in SM with trailing slash, but not yet taken over, it should be updated", testCase{
+			stubs: func() {
+				stubPlatformUpdateBroker(platformBrokerProxy)
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{
+					platformbrokerNonProxy,
+					platformbrokerNonProxy2,
+				}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					func() *types.ServiceBroker {
+						smbroker3.BrokerURL += "/"
+						return smbroker3
+					}(),
 				}, nil
 			},
 			brokerBlacklist: func() []string {
