@@ -181,7 +181,7 @@ func brokerIDFromURL(brokerURL string) string {
 }
 
 func getBrokerKey(broker *platform.ServiceBroker) string {
-	return fmt.Sprintf("name:%s|url:%s", broker.Name, broker.BrokerURL)
+	return fmt.Sprintf("name:%s|url:%s", broker.Name, strings.TrimRight(broker.BrokerURL, "/"))
 }
 
 func indexBrokers(brokers []*platform.ServiceBroker, indexingFunc func(broker *platform.ServiceBroker) (string, bool)) map[string]*platform.ServiceBroker {

@@ -285,8 +285,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "438db640fd672278e44bb9bec0b979358e7e9c76"
-  version = "v1.9.4"
+  revision = "17b3d80415252d99aa09c6717fea5f1f60a01ea5"
+  version = "v1.9.5"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -298,7 +298,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ee780c2838219eedc4146248ddf9b82bb6a4a344425ee1aeb9f0d6eb8435614d"
+  digest = "1:9ff22c26414baf7deaf74f2a788fe7b97666048bcbe346c52cfe823442abbdfb"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -306,7 +306,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "d7918e36bee0ef49ef3dd9a17e575de83b26aac6"
+  revision = "99274577be97ac9b1d95a2d61d566dc9b7cc6a54"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
@@ -341,7 +341,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:e8b90ccda83af6f29b677f8b01a0be6721ab974c9f57d2f13b6149e478dfb4ec"
+  digest = "1:ad7bc85a2256ae7246450290c96619db309d8d8f1918a3163e9af90ef1d7a077"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -365,8 +365,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "ce5d301e555bb672c693c099ba6ca5087b06c0b4"
-  version = "v1.10.3"
+  revision = "388ac7e50a3abf0798010091d5094171f4aefc0b"
+  version = "v1.11.0"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -426,12 +426,12 @@
   revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
 
 [[projects]]
-  digest = "1:d917313f309bda80d27274d53985bc65651f81a5b66b820749ac7f8ef061fd04"
+  digest = "1:d0d418e1c02e6fc00259ef09d0d4f5135fc6aedac356ff0a11f4e5ef0c447270"
   name = "github.com/sergi/go-diff"
   packages = ["diffmatchpatch"]
   pruneopts = "UT"
-  revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
-  version = "v1.0.0"
+  revision = "58c5cb1602ee9676b5d3590d782bedde80706fcc"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:fd61cf4ae1953d55df708acb6b91492d538f49c305b364a014049914495db426"
@@ -608,11 +608,11 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "86a70503ff7e82ffc18c7b0de83db35da4791e6a"
+  revision = "53104e6ec876ad4e22ad27cce588b01392043c1b"
 
 [[projects]]
   branch = "master"
-  digest = "1:9fdcc05f7efe89abba137579c84c5d827eb8be0c9a7acf0186201fe01899a670"
+  digest = "1:317bb86f606d3cdb6b282cea377e61ce50023b16bdc72d2edfb2ef0164f18364"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -624,7 +624,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "5ee1b9f4859acd2e99987ef94ec7a58427c53bef"
+  revision = "c0dbc17a35534bf2e581d7a942408dc936316da4"
 
 [[projects]]
   branch = "master"
@@ -639,11 +639,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4da420ceda5f68e8d748aa2169d0ed44ffadb1bbd6537cf778a49563104189b8"
+  digest = "1:21fdc4d02e91b37ce39866d3a949a4b54220f3acb839ccb0b3ae0497df638903"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "ce4227a45e2eb77e5c847278dcc6a626742e2945"
+  revision = "04cbcbbfeed8aa0b2b010b2ddab558e9f717fd3e"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -708,7 +708,7 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:8ebd7bc4892e673e8d3c6377c71e8c691b92c5e51cd3159efb8343b580213b70"
+  digest = "1:3c4aaca5a82adc021322f239e0cf3f46852bb0b18ae050d0feab2e9e4c527462"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -716,8 +716,8 @@
     "json",
   ]
   pruneopts = "UT"
-  revision = "8fd82ff1d52a5162ff23c0a48e2c64a1fa4a3f8f"
-  version = "v2.4.0"
+  revision = "4ef0f1b175ccd65472d154e1207c4d7b8102545f"
+  version = "v2.4.1"
 
 [[projects]]
   branch = "v1"
