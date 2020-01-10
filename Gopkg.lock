@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:1a3696fd43f7f643c9e3c80c695c8068c2d08d31ca9526fb265ba5186579e78c"
+  digest = "1:4e46a4a7bafe25046ac39ae44d85b8fbe81c68c9b834ef837e3eab0712b71c2d"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -34,7 +34,6 @@
     "api/info",
     "api/notifications",
     "api/osb",
-    "api/plugins",
     "config",
     "pkg/env",
     "pkg/env/envfakes",
@@ -64,8 +63,8 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "b6a3b7004a04a8bf0c46dacb61cfe9c9b15347e9"
-  version = "v0.9.0"
+  revision = "fb423b0c004b01e496344acd188dd20d2ff4119b"
+  version = "v0.9.6"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -277,7 +276,7 @@
   revision = "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
 
 [[projects]]
-  digest = "1:1a27a67993fd9ad63a5e04b49a9cacd32e4d3efdf44223749410c1e02bb53011"
+  digest = "1:60a4c716301192a7be42f363c41b2b1fab64ae80d9db4453c702b13b05ccddeb"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -285,8 +284,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "17b3d80415252d99aa09c6717fea5f1f60a01ea5"
-  version = "v1.9.5"
+  revision = "f61bac3a179b270c811148ce2a1f819dfc82825f"
+  version = "v1.9.7"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -608,7 +607,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "53104e6ec876ad4e22ad27cce588b01392043c1b"
+  revision = "61a87790db17894570dfb32dbaa0a4af9ce60cb4"
 
 [[projects]]
   branch = "master"
@@ -628,22 +627,22 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:55d36eb35766a3f105fa36cfb2faf053cc33c019108a6adee799c4e7d59d62b2"
+  digest = "1:911b45b658f5fab1a26259e2fd1085ab296f9d3e46117311d25f8dae51efe720"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "UT"
-  revision = "858c2ad4c8b6c5d10852cb89079f6ca1c7309787"
+  revision = "bf48bf16ab8d622ce64ec6ce98d2c98f916b6303"
 
 [[projects]]
   branch = "master"
-  digest = "1:21fdc4d02e91b37ce39866d3a949a4b54220f3acb839ccb0b3ae0497df638903"
+  digest = "1:e13350b7207ecc34977340d53522e0335dd36ed86ca7c346a36d2e88eb0fadfc"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "04cbcbbfeed8aa0b2b010b2ddab558e9f717fd3e"
+  revision = "548cf772de5052aa878ccb47cdeb7d262b75c8ec"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
