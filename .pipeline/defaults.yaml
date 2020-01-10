@@ -193,9 +193,7 @@ steps:
       containerBuildOptions: '--no-push --skip-tls-verify-pull'
       containerCommand: '/busybox/tail -f /dev/null'
       containerShell: '/busybox/sh'
-      #workaround for https://github.com/GoogleContainerTools/kaniko/issues/645
-      #dockerImage: 'gcr.io/kaniko-project/executor:debug-v0.9.0'
-      dockerImage: docker.wdf.sap.corp:50000/piper/kaniko:latest
+      dockerImage: 'gcr.io/kaniko-project/executor:debug'
       dockerOptions: "-u 0 --entrypoint=''"
   executeCheckmarxScan:
     checkmarxServerUrl: 'https://cx.wdf.sap.corp:443'
@@ -488,9 +486,9 @@ steps:
       buildDescriptorFile: './sbtDescriptor.json'
       dockerImage: 'docker.wdf.sap.corp:50000/piper/sbt'
   executeVulasScan:
-    serverUrl: 'https://vulas.c.eu-de-2.cloud.sap'
+    serverUrl: 'https://vulas.tools.sap'
     backendEndpoint: '/backend'
-    svmServerUrl: 'https://svmprodw8563e4f1.int.sap.hana.ondemand.com'
+    svmServerUrl: 'https://svmprodzdohvhnx0v.int.sap.eu2.hana.ondemand.com'
     svmEndpoint: '/SVM/services'
     svmExemptionFileName: 'vulas-exemptionsFromSvm.properties'
     space:
@@ -649,9 +647,6 @@ steps:
     customTlsCertificateLinks:
       - http://aia.pki.co.sap.com/aia/SAPNetCA_G2.crt
       - http://aia.pki.co.sap.com/aia/SAP%20Global%20Root%20CA.crt
-    #workaround for https://github.com/GoogleContainerTools/kaniko/issues/645
-    #dockerImage: 'gcr.io/kaniko-project/executor:debug-v0.9.0'
-    dockerImage: docker.wdf.sap.corp:50000/piper/kaniko:latest
   manageCloudFoundryEnvironment:
     cfCredentialsId: 'CF_CREDENTIAL'
     command: 'setup-environment -y ${config.environmentDescriptorFile}'
@@ -672,6 +667,7 @@ steps:
     xsSecurityFile: 'xs-security.json'
   mtaBuild:
     globalSettingsFile: 'https://nexusmil.wdf.sap.corp:8443/nexus/service/local/templates/settings/LeanDI/content'
+    mtaBuildTool: 'cloudMbt'
   publishCheckResults:
     archive: false
     aggregation:
@@ -1123,10 +1119,6 @@ steps:
       dockerCommand: 'mvn --batch-mode clean verify'
       dockerImage: 'docker.wdf.sap.corp:50000/piper/maven'
       dockerWorkspace: '/home/piper'
-    mta:
-      dockerCommand: 'java -jar /usr/lib/mta-cli/mta-cli.jar --build-target CF build'
-      dockerImage: 'docker.wdf.sap.corp:50000/piper/mta'
-      dockerWorkspace: '/home/piper'
     npm:
       dockerCommand: 'npm install && npm test'
       dockerImage: 'docker.wdf.sap.corp:50000/piper/node'
@@ -1135,4 +1127,3 @@ steps:
       dockerCommand: 'sbt clean assembly'
       dockerImage: 'docker.wdf.sap.corp:50000/piper/sbt'
       dockerWorkspace: '/home/piper'
-    useCloudMbt: false
