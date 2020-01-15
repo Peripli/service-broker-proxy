@@ -24,17 +24,19 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:4e46a4a7bafe25046ac39ae44d85b8fbe81c68c9b834ef837e3eab0712b71c2d"
+  digest = "1:7a3896631f9c21b6194a3b7eb05f21eb864fdaf1268cee76663a076d57fdec98"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/configuration",
+    "api/extensions/security",
     "api/filters",
     "api/healthcheck",
     "api/info",
     "api/notifications",
     "api/osb",
     "config",
+    "operations",
     "pkg/env",
     "pkg/env/envfakes",
     "pkg/health",
@@ -47,6 +49,8 @@
     "pkg/security/filters",
     "pkg/security/filters/middlewares",
     "pkg/security/http",
+    "pkg/security/http/authn",
+    "pkg/security/http/authz",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -63,8 +67,8 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "fb423b0c004b01e496344acd188dd20d2ff4119b"
-  version = "v0.9.6"
+  revision = "95dc15d855e8df20f05f652dee18d0450e6ab071"
+  version = "v0.9.8"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -297,7 +301,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9ff22c26414baf7deaf74f2a788fe7b97666048bcbe346c52cfe823442abbdfb"
+  digest = "1:cbc008e8b6866556c853447a1216480aeb10d12d7fd83058dfbb17fbe8f36355"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -305,7 +309,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "99274577be97ac9b1d95a2d61d566dc9b7cc6a54"
+  revision = "d6fd2025777896bf42bbb81fa748af573ad799f4"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
@@ -607,7 +611,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "61a87790db17894570dfb32dbaa0a4af9ce60cb4"
+  revision = "6d4e4cb37c7d6416dfea8472e751c7b6615267a6"
 
 [[projects]]
   branch = "master"
@@ -623,7 +627,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "c0dbc17a35534bf2e581d7a942408dc936316da4"
+  revision = "6afb5195e5aab057fda82e27171243402346b0ad"
 
 [[projects]]
   branch = "master"
@@ -642,7 +646,7 @@
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "548cf772de5052aa878ccb47cdeb7d262b75c8ec"
+  revision = "86b910548bc16777f40503131aa424ae0a092199"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
