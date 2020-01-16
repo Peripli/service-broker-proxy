@@ -25,6 +25,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/web"
 )
 
+// NewInMemoryAuthenticator builds new basic authenticator with in memory defined username and password
 func NewInMemoryAuthenticator(user, password string) httpsec.Authenticator {
 	return &inmemoryBasicAuthenticator{
 		expectedUsername: user,
