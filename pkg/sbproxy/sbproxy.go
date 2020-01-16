@@ -221,6 +221,7 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 	}
 }
 
+// Security returns the ready to use SecurityBuilder
 func (smb *SMProxyBuilder) Security() *osssm.SecurityBuilder {
 	return smb.securityBuilder.Reset()
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/web"
 )
 
-func NewInMemoryAuthenticator(user, password string) *inmemoryBasicAuthenticator {
+func NewInMemoryAuthenticator(user, password string) httpsec.Authenticator {
 	return &inmemoryBasicAuthenticator{
 		expectedUsername: user,
 		expectedPassword: password,
