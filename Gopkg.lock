@@ -25,7 +25,7 @@
 
 [[projects]]
   branch = "decouple_sec_builder"
-  digest = "1:5b72219fb35e60e74314cbcad0d12af5cf74c76b9b4468a27acb88ce86948f71"
+  digest = "1:eee706b9e420cce2225bd1b9c16b1ff162f6a438392617fdfbedfde3d0285a8e"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -68,7 +68,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "6e61004e6a0cf1ef676d35ca318a14e235c2fb82"
+  revision = "35ace2121236e26b5577d2c5bf21a387e3a82824"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"

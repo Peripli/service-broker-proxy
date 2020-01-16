@@ -114,19 +114,21 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 
 	util.HandleInterrupts(ctx, cancel)
 
+	securityBuilder, securityFilters := osssm.NewSecurityBuilder()
+	filters := []web.Filter{
+		&filters.Logging{},
+	}
+	filters = append(filters, securityFilters...)
 	api := &web.API{
 		Controllers: []web.Controller{
 			&configuration.Controller{
 				Environment: environment,
 			},
 		},
-		Filters: []web.Filter{
-			&filters.Logging{},
-		},
+		Filters:  filters,
 		Registry: health.NewDefaultRegistry(),
 	}
 
-	securityBuilder := osssm.GetSecurity(api, filters.LoggingFilterName)
 	authnSettings := settings.Authentication
 	if len(authnSettings.User) != 0 && len(authnSettings.Password) != 0 {
 		securityBuilder.
@@ -199,7 +201,9 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 
 // Build builds the Service Manager
 func (smb *SMProxyBuilder) Build() *SMProxy {
-	smb.securityBuilder.Build()
+	if smb.securityBuilder != nil {
+		smb.securityBuilder.Build()
+	}
 
 	if err := smb.installHealth(); err != nil {
 		log.C(smb.ctx).Panic(err)
@@ -218,7 +222,7 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 }
 
 func (smb *SMProxyBuilder) Security() *osssm.SecurityBuilder {
-	return smb.securityBuilder
+	return smb.securityBuilder.Reset()
 }
 
 func (smb *SMProxyBuilder) installHealth() error {
