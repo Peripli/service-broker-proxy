@@ -17,15 +17,17 @@
 package sbproxy
 
 import (
+	"net/http"
 	"sync"
-
-	filters2 "github.com/Peripli/service-manager/pkg/security/filters"
 
 	"github.com/Peripli/service-broker-proxy/pkg/authn"
 
+	osssm "github.com/Peripli/service-manager/pkg/sm"
+
+	"github.com/Peripli/service-manager/pkg/security/authenticators"
+
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 	"github.com/Peripli/service-manager/api/configuration"
-	secfilters "github.com/Peripli/service-manager/api/filters"
 	"github.com/Peripli/service-manager/pkg/types"
 
 	"fmt"
@@ -71,6 +73,7 @@ type SMProxyBuilder struct {
 	group                 *sync.WaitGroup
 	reconciler            *reconcile.Reconciler
 	notificationsProducer *notifications.Producer
+	securityBuilder       *osssm.SecurityBuilder
 }
 
 // SMProxy  struct
@@ -110,21 +113,6 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 	log.AddHook(&logging.ErrorLocationHook{})
 
 	util.HandleInterrupts(ctx, cancel)
-	filters := []web.Filter{
-		&filters.Logging{},
-	}
-	authnSettings := settings.Authentication
-	if len(authnSettings.User) != 0 && len(authnSettings.Password) != 0 {
-		filters = append(filters, authn.NewBasicAuthnFilter(authnSettings.User, authnSettings.Password))
-	}
-	if len(authnSettings.TokenIssuerURL) != 0 {
-		bearerAuthnFilter, err := secfilters.NewOIDCAuthnFilter(ctx, settings.Authentication.TokenIssuerURL, settings.Authentication.ClientID)
-		if err != nil {
-			return nil, err
-		}
-		filters = append(filters, bearerAuthnFilter)
-	}
-	filters = append(filters, filters2.NewRequiredAuthnFilter())
 
 	api := &web.API{
 		Controllers: []web.Controller{
@@ -132,8 +120,34 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 				Environment: environment,
 			},
 		},
-		Filters:  filters,
+		Filters: []web.Filter{
+			&filters.Logging{},
+		},
 		Registry: health.NewDefaultRegistry(),
+	}
+
+	securityBuilder := osssm.GetSecurity(api, filters.LoggingFilterName)
+	authnSettings := settings.Authentication
+	if len(authnSettings.User) != 0 && len(authnSettings.Password) != 0 {
+		securityBuilder.
+			Path(web.ConfigURL+"/**").
+			Method(http.MethodGet, http.MethodPut).
+			WithAuthentication(authn.NewInMemoryAuthenticator(authnSettings.User, authnSettings.Password)).Required()
+	}
+
+	if len(authnSettings.TokenIssuerURL) != 0 {
+		bearerAuthenticator, _, err := authenticators.NewOIDCAuthenticator(ctx, &authenticators.OIDCOptions{
+			IssuerURL: authnSettings.TokenIssuerURL,
+			ClientID:  authnSettings.ClientID,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		securityBuilder.
+			Path(web.ConfigURL+"/**").
+			Method(http.MethodGet, http.MethodPut).
+			WithAuthentication(bearerAuthenticator).Required()
 	}
 
 	smClient, err := sm.NewClient(settings.Sm)
@@ -179,11 +193,14 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 		group:                 &group,
 		reconciler:            reconciler,
 		notificationsProducer: notificationsProducer,
+		securityBuilder:       securityBuilder,
 	}, nil
 }
 
 // Build builds the Service Manager
 func (smb *SMProxyBuilder) Build() *SMProxy {
+	smb.securityBuilder.Build()
+
 	if err := smb.installHealth(); err != nil {
 		log.C(smb.ctx).Panic(err)
 	}
@@ -198,6 +215,10 @@ func (smb *SMProxyBuilder) Build() *SMProxy {
 		reconciler:            smb.reconciler,
 		notificationsProducer: smb.notificationsProducer,
 	}
+}
+
+func (smb *SMProxyBuilder) Security() *osssm.SecurityBuilder {
+	return smb.securityBuilder
 }
 
 func (smb *SMProxyBuilder) installHealth() error {
