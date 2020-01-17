@@ -24,17 +24,20 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:4e46a4a7bafe25046ac39ae44d85b8fbe81c68c9b834ef837e3eab0712b71c2d"
+  branch = "master"
+  digest = "1:887b74d95f740a1e61355aae3ba1327076e4caaaa9708162d2ed162869bd03a8"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/configuration",
+    "api/extensions/security",
     "api/filters",
     "api/healthcheck",
     "api/info",
     "api/notifications",
     "api/osb",
     "config",
+    "operations",
     "pkg/env",
     "pkg/env/envfakes",
     "pkg/health",
@@ -47,6 +50,8 @@
     "pkg/security/filters",
     "pkg/security/filters/middlewares",
     "pkg/security/http",
+    "pkg/security/http/authn",
+    "pkg/security/http/authz",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -63,8 +68,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "fb423b0c004b01e496344acd188dd20d2ff4119b"
-  version = "v0.9.6"
+  revision = "dbd93234e1e97f0e21bcc3af8b888f6b723b0363"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -183,6 +187,14 @@
   version = "v3.5.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+
+[[projects]]
   digest = "1:573ca21d3669500ff845bdebee890eb7fc7f0f50c59f2132f2a0c6b03d85086a"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -296,8 +308,16 @@
   version = "v1.0.2"
 
 [[projects]]
+  digest = "1:8658f775ba5edb37ede96d8ec9eaecdfe06bc4aef1776152070185e6513dc0cc"
+  name = "github.com/kubernetes-sigs/go-open-service-broker-client"
+  packages = ["v2"]
+  pruneopts = "UT"
+  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
+  version = "0.0.10"
+
+[[projects]]
   branch = "master"
-  digest = "1:9ff22c26414baf7deaf74f2a788fe7b97666048bcbe346c52cfe823442abbdfb"
+  digest = "1:cbc008e8b6866556c853447a1216480aeb10d12d7fd83058dfbb17fbe8f36355"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -305,7 +325,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "99274577be97ac9b1d95a2d61d566dc9b7cc6a54"
+  revision = "d6fd2025777896bf42bbb81fa748af573ad799f4"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
@@ -607,7 +627,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "61a87790db17894570dfb32dbaa0a4af9ce60cb4"
+  revision = "6d4e4cb37c7d6416dfea8472e751c7b6615267a6"
 
 [[projects]]
   branch = "master"
@@ -623,7 +643,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "c0dbc17a35534bf2e581d7a942408dc936316da4"
+  revision = "6afb5195e5aab057fda82e27171243402346b0ad"
 
 [[projects]]
   branch = "master"
@@ -642,7 +662,7 @@
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "548cf772de5052aa878ccb47cdeb7d262b75c8ec"
+  revision = "b77594299b429d05028403d72b68172959c7dad5"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -747,9 +767,10 @@
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
     "github.com/Peripli/service-manager/pkg/query",
-    "github.com/Peripli/service-manager/pkg/security/filters",
+    "github.com/Peripli/service-manager/pkg/security/authenticators",
     "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",
+    "github.com/Peripli/service-manager/pkg/sm",
     "github.com/Peripli/service-manager/pkg/types",
     "github.com/Peripli/service-manager/pkg/util",
     "github.com/Peripli/service-manager/pkg/util/slice",

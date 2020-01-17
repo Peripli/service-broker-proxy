@@ -22,19 +22,15 @@ import (
 
 	httpsec "github.com/Peripli/service-manager/pkg/security/http"
 
-	"github.com/Peripli/service-manager/pkg/security/filters"
 	"github.com/Peripli/service-manager/pkg/web"
 )
 
-// BasicAuthnFilterName is the name of the Basic AuthenticationFilter
-const BasicAuthnFilterName string = "BasicAuthnFilter"
-
-// NewBasicAuthnFilter creates a new Basic Authentication Filter with inmemory authenticator
-func NewBasicAuthnFilter(user, password string) *filters.AuthenticationFilter {
-	return filters.NewAuthenticationFilter(&inmemoryBasicAuthenticator{
+// NewInMemoryAuthenticator builds new basic authenticator with in memory defined username and password
+func NewInMemoryAuthenticator(user, password string) httpsec.Authenticator {
+	return &inmemoryBasicAuthenticator{
 		expectedUsername: user,
 		expectedPassword: password,
-	}, BasicAuthnFilterName, basicAuthnMatchers())
+	}
 }
 
 type inmemoryBasicAuthenticator struct {
@@ -55,14 +51,4 @@ func (a *inmemoryBasicAuthenticator) Authenticate(request *http.Request) (*web.U
 	return &web.UserContext{
 		Name: username,
 	}, httpsec.Allow, nil
-}
-
-func basicAuthnMatchers() []web.FilterMatcher {
-	return []web.FilterMatcher{
-		{
-			Matchers: []web.Matcher{
-				web.Path(web.ConfigURL + "/**"),
-			},
-		},
-	}
 }
