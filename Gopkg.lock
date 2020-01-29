@@ -24,22 +24,26 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:4e46a4a7bafe25046ac39ae44d85b8fbe81c68c9b834ef837e3eab0712b71c2d"
+  branch = "osb-interceptors"
+  digest = "1:743364b4ec8936ff823b6eb6320d2eb2b08ea9ae6d69822a635e784c219d213c"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/configuration",
+    "api/extensions/security",
     "api/filters",
     "api/healthcheck",
     "api/info",
     "api/notifications",
     "api/osb",
     "config",
+    "operations",
     "pkg/env",
     "pkg/env/envfakes",
     "pkg/health",
     "pkg/httpclient",
     "pkg/log",
+    "pkg/multitenancy",
     "pkg/query",
     "pkg/query/parser",
     "pkg/security",
@@ -47,6 +51,8 @@
     "pkg/security/filters",
     "pkg/security/filters/middlewares",
     "pkg/security/http",
+    "pkg/security/http/authn",
+    "pkg/security/http/authz",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -63,8 +69,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "fb423b0c004b01e496344acd188dd20d2ff4119b"
-  version = "v0.9.6"
+  revision = "fd1e7ab0ea41263260755fdce967bfb3f532679f"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -183,6 +188,14 @@
   version = "v3.5.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
+  name = "github.com/golang/glog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
+
+[[projects]]
   digest = "1:573ca21d3669500ff845bdebee890eb7fc7f0f50c59f2132f2a0c6b03d85086a"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
@@ -294,6 +307,14 @@
   pruneopts = "UT"
   revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
   version = "v1.0.2"
+
+[[projects]]
+  digest = "1:8658f775ba5edb37ede96d8ec9eaecdfe06bc4aef1776152070185e6513dc0cc"
+  name = "github.com/kubernetes-sigs/go-open-service-broker-client"
+  packages = ["v2"]
+  pruneopts = "UT"
+  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
+  version = "0.0.10"
 
 [[projects]]
   branch = "master"
