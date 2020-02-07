@@ -24,8 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "osb-interceptors"
-  digest = "1:7b71c6e88da25ad3fd4409597bd6084f72d3ccb6c87e2e6249fd48695366d189"
+  branch = "master-smaap"
+  digest = "1:774236499a2a9ddc240547e5eaaa2cc0f4dbff2575a76b1d8a3ccb3ba3e7581c"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -36,6 +36,7 @@
     "api/info",
     "api/notifications",
     "api/osb",
+    "api/profile",
     "config",
     "operations",
     "pkg/env",
@@ -69,7 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "18bc8a44fe6b0924440cdc148a1dc223781a48e3"
+  revision = "d42eeeaeb32de4e46a34f0bd4c7aaed0bd869581"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -361,7 +362,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:ad7bc85a2256ae7246450290c96619db309d8d8f1918a3163e9af90ef1d7a077"
+  digest = "1:13b913f297752cf0f236c0ab940d0ffaac64e5a97b7bb68c659a9f734bd32a89"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -385,8 +386,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "388ac7e50a3abf0798010091d5094171f4aefc0b"
-  version = "v1.11.0"
+  revision = "40598150331533e3cd497f21dcce387dae84b561"
+  version = "v1.12.0"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -532,12 +533,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:ddfe0a54e5f9b29536a6d7b2defa376f2cb2b6e4234d676d7ff214d5b097cb50"
+  digest = "1:f63bab79e68e805cdd9bf70daa09e8c430cfbddf29d14b567a92fb12581b9b95"
   name = "github.com/tidwall/pretty"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1166b9ac2b65e46a43d8618d30d1554f4652d49b"
-  version = "v1.0.0"
+  revision = "b2475501f89994f7ea30b3c94ba86b49079961fe"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:b70c951ba6fdeecfbd50dabe95aa5e1b973866ae9abbece46ad60348112214f2"
@@ -628,11 +629,11 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "69ecbb4d6d5dab05e49161c6e77ea40a030884e1"
+  revision = "a0c6ece9d31a0ebfbd3ddf2d290cfb1265ba47c7"
 
 [[projects]]
   branch = "master"
-  digest = "1:317bb86f606d3cdb6b282cea377e61ce50023b16bdc72d2edfb2ef0164f18364"
+  digest = "1:7217cd222c72ced17b355f472688cd619e80c8b2e811cbe8b68b739091721173"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -644,7 +645,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "6afb5195e5aab057fda82e27171243402346b0ad"
+  revision = "16171245cfb220d5317888b716d69c1fb4e7992b"
 
 [[projects]]
   branch = "master"
@@ -659,11 +660,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fea09edda033799f8e99ab9042bda910bf1e3bf088c03eaf2ba8aba3adbbc8bf"
+  digest = "1:72b7c210f8cfe1431d2f300fbf37f25e52aa77324b05ab6b698483054033803e"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "9fbb57f87de9ccfe3a99d4e3270ce8a926ebba4f"
+  revision = "d101bd2416d505c0448a6ce8a282482678040a89"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
