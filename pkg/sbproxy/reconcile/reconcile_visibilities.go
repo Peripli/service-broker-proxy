@@ -195,7 +195,7 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 	return false
 }
 
-type visibilityProcessingState struct {
+type processingState struct {
 	Ctx           context.Context
 	Mutex         sync.Mutex
 	ErrorOccurred *CompositeError
@@ -204,8 +204,8 @@ type visibilityProcessingState struct {
 	WaitGroup      sync.WaitGroup
 }
 
-func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilityProcessingState {
-	return &visibilityProcessingState{
+func (r *resyncJob) newProcessingState(ctx context.Context) *processingState {
+	return &processingState{
 		Ctx:            ctx,
 		ErrorOccurred:  &CompositeError{},
 		WaitGroupLimit: make(chan struct{}, r.options.MaxParallelRequests),
@@ -214,10 +214,12 @@ func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilit
 
 // deleteVisibilities deletes visibilities from platform. Returns true if error has occurred
 func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[string]*platform.Visibility) error {
-	state := r.newVisibilityProcessingState(ctx)
+	state := r.newProcessingState(ctx)
 
 	for _, visibility := range visibilities {
-		if err := execAsync(state, visibility, r.deleteVisibility); err != nil {
+		if err := execAsync(state, func(ctx context.Context) error {
+			return r.deleteVisibility(ctx, visibility)
+		}); err != nil {
 			return err
 		}
 	}
@@ -226,17 +228,19 @@ func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[str
 
 // createVisibilities creates visibilities from platform. Returns true if error has occurred
 func (r *resyncJob) createVisibilities(ctx context.Context, visibilities []*platform.Visibility) error {
-	state := r.newVisibilityProcessingState(ctx)
+	state := r.newProcessingState(ctx)
 
 	for _, visibility := range visibilities {
-		if err := execAsync(state, visibility, r.createVisibility); err != nil {
+		if err := execAsync(state, func(ctx context.Context) error {
+			return r.createVisibility(ctx, visibility)
+		}); err != nil {
 			return err
 		}
 	}
 	return await(state)
 }
 
-func execAsync(state *visibilityProcessingState, visibility *platform.Visibility, f func(context.Context, *platform.Visibility) error) error {
+func execAsync(state *processingState, f func(context.Context) error) error {
 	select {
 	case <-state.Ctx.Done():
 		return state.Ctx.Err()
@@ -249,7 +253,7 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 			state.WaitGroup.Done()
 		}()
 
-		if err := f(state.Ctx, visibility); err != nil {
+		if err := f(state.Ctx); err != nil {
 			state.Mutex.Lock()
 			defer state.Mutex.Unlock()
 			state.ErrorOccurred.Add(err)
@@ -259,7 +263,7 @@ func execAsync(state *visibilityProcessingState, visibility *platform.Visibility
 	return nil
 }
 
-func await(state *visibilityProcessingState) error {
+func await(state *processingState) error {
 	state.WaitGroup.Wait()
 	if state.ErrorOccurred.Len() != 0 {
 		return state.ErrorOccurred
