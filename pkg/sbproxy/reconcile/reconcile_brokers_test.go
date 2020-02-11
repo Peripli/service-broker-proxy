@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -840,39 +841,54 @@ var _ = Describe("Reconcile brokers", func() {
 
 		expected := t.expectations()
 		Expect(fakePlatformBrokerClient.CreateBrokerCallCount()).To(Equal(len(expected.reconcileCreateCalledFor)))
-		for index, broker := range expected.reconcileCreateCalledFor {
+		var calledCreateBrokerRequests []*platform.CreateServiceBrokerRequest
+		for index := range expected.reconcileCreateCalledFor {
 			_, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
-			Expect(request).To(Equal(&platform.CreateServiceBrokerRequest{
+			calledCreateBrokerRequests = append(calledCreateBrokerRequests, request)
+		}
+		for _, broker := range expected.reconcileCreateCalledFor {
+			Expect(calledCreateBrokerRequests).To(ContainElement(&platform.CreateServiceBrokerRequest{
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
 			}))
 		}
 
 		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
-		for index, broker := range expected.reconcileCatalogCalledFor {
+		var calledFetchCatalogBrokers []*platform.ServiceBroker
+		for index := range expected.reconcileCatalogCalledFor {
 			_, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
-			Expect(serviceBroker).To(Equal(broker))
+			calledFetchCatalogBrokers = append(calledFetchCatalogBrokers, serviceBroker)
+		}
+		for _, broker := range expected.reconcileCatalogCalledFor {
+			Expect(calledFetchCatalogBrokers).To(ContainElement(broker))
 		}
 
 		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDeleteCalledFor)))
-		for index, broker := range expected.reconcileDeleteCalledFor {
+		var calledDeleteBrokerRequests []*platform.DeleteServiceBrokerRequest
+		for index := range expected.reconcileDeleteCalledFor {
 			_, request := fakePlatformBrokerClient.DeleteBrokerArgsForCall(index)
-			Expect(request).To(Equal(&platform.DeleteServiceBrokerRequest{
+			calledDeleteBrokerRequests = append(calledDeleteBrokerRequests, request)
+		}
+		for _, broker := range expected.reconcileDeleteCalledFor {
+			Expect(calledDeleteBrokerRequests).To(ContainElement(&platform.DeleteServiceBrokerRequest{
 				GUID: broker.GUID,
 				Name: broker.Name,
 			}))
 		}
 
 		Expect(fakePlatformBrokerClient.UpdateBrokerCallCount()).To(Equal(len(expected.reconcileUpdateCalledFor)))
-		for index, broker := range expected.reconcileUpdateCalledFor {
+		var calledUpdateBrokerRequests []*platform.UpdateServiceBrokerRequest
+		for index := range expected.reconcileUpdateCalledFor {
 			_, request := fakePlatformBrokerClient.UpdateBrokerArgsForCall(index)
-			Expect(request).To(Equal(&platform.UpdateServiceBrokerRequest{
+			calledUpdateBrokerRequests = append(calledUpdateBrokerRequests, request)
+		}
+		for _, broker := range expected.reconcileUpdateCalledFor {
+			Expect(calledUpdateBrokerRequests).To(ContainElement(&platform.UpdateServiceBrokerRequest{
 				GUID:      broker.GUID,
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
 			}))
 		}
-
 	}, entries...)
 
 })
