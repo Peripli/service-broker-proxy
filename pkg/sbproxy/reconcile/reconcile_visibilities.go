@@ -217,6 +217,7 @@ func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[str
 	state := r.newProcessingState(ctx)
 
 	for _, visibility := range visibilities {
+		visibility := visibility
 		if err := execAsync(state, func(ctx context.Context) error {
 			return r.deleteVisibility(ctx, visibility)
 		}); err != nil {
@@ -231,6 +232,7 @@ func (r *resyncJob) createVisibilities(ctx context.Context, visibilities []*plat
 	state := r.newProcessingState(ctx)
 
 	for _, visibility := range visibilities {
+		visibility := visibility
 		if err := execAsync(state, func(ctx context.Context) error {
 			return r.createVisibility(ctx, visibility)
 		}); err != nil {
