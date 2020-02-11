@@ -52,7 +52,7 @@ steps:
     libraryContentRepository: 'iris'
     libraryContentOrganization: 'ProjectIRIS'
     useCaseVersion: ''
-    verbose: true
+    verbose: false
     ITPCaller:
       spcType: 'NZA'
       customerITPParameter: {}
@@ -193,7 +193,7 @@ steps:
       containerBuildOptions: '--no-push --skip-tls-verify-pull'
       containerCommand: '/busybox/tail -f /dev/null'
       containerShell: '/busybox/sh'
-      dockerImage: 'gcr.io/kaniko-project/executor:debug'
+      dockerImage: 'gcr.io/kaniko-project/executor:debug-v0.16.0'
       dockerOptions: "-u 0 --entrypoint=''"
   executeCheckmarxScan:
     checkmarxServerUrl: 'https://cx.wdf.sap.corp:443'
@@ -519,6 +519,7 @@ steps:
         - 'opensourceConfiguration'
         - 'tests'
         - 'checkmarx'
+    mvnCustomArgs: ''
     mvnSettingsFile: 'piper-settings.xml'
     pythonInstallCommand: '${pip} install --user --upgrade --index-url http://nexus.wdf.sap.corp:8081/nexus/content/groups/build.snapshots.pypi/simple/ --trusted-host nexus.wdf.sap.corp --no-cache-dir setuptools vulas-plugin-setuptools .'
     pythonSources: []
@@ -954,7 +955,7 @@ steps:
       sonar: ''
   stashFilesBeforeBuild:
     stashIncludes:
-      buildDescriptor: '**/pom.xml, **/.mvn/**, **/assembly.xml, **/.swagger-codegen-ignore, **/requirements.txt, **/dub.json, **/package*.json, **/npm-shrinkwrap.json, **/sbtDescriptor.json, **/setup.py, **/mta*.y*ml, **/.npmrc, .xmake.cfg, Dockerfile, .hadolint.yaml, **/VERSION, **/version.txt, **/Gopkg.*, **/build.sbt, **/project/*'
+      buildDescriptor: '**/pom.xml, **/.mvn/**, **/assembly.xml, **/.swagger-codegen-ignore, **/requirements.txt, **/dub.json, **/package*.json, **/npm-shrinkwrap.json, **/sbtDescriptor.json, **/setup.py, **/mta*.y*ml, **/.npmrc, .xmake.cfg, **/Dockerfile, .hadolint.yaml, **/VERSION, **/version.txt, **/Gopkg.*, **/build.sbt, **/project/*'
       deployDescriptor: '**/manifest*.y*ml, **/*.mtaext.y*ml, **/*.mtaext, **/xs-app.json, helm/**, **/*.y*ml, **/runtime.txt'
       git: '**/.git/**'
       opa5: '**/*.*'
@@ -979,7 +980,7 @@ steps:
       checkmarx: '**/*.mockserver.js, **/node_modules/**, **/*-preload.js'
   pipelineStashFilesBeforeBuild:
     stashIncludes:
-      buildDescriptor: '**/pom.xml, **/.mvn/**, **/assembly.xml, **/.swagger-codegen-ignore, **/requirements.txt, **/dub.json, **/package.json, **/sbtDescriptor.json, **/setup.py, **/mta*.y*ml, **/.npmrc, .xmake.cfg, Dockerfile, **/VERSION, **/version.txt, **/Gopkg.*, **/build.sbt, **/project/*, **/ui5.yaml, **/ui5.yml'
+      buildDescriptor: '**/pom.xml, **/.mvn/**, **/assembly.xml, **/.swagger-codegen-ignore, **/requirements.txt, **/dub.json, **/package.json, **/sbtDescriptor.json, **/setup.py, **/mta*.y*ml, **/.npmrc, .xmake.cfg, **/Dockerfile, **/VERSION, **/version.txt, **/Gopkg.*, **/build.sbt, **/project/*, **/ui5.yaml, **/ui5.yml'
       deployDescriptor: '**/manifest*.y*ml, **/*.mtaext.y*ml, **/*.mtaext, **/xs-app.json, helm/**, **/*.y*ml, **/runtime.txt'
       git: '.git/**'
       opa5: '**/*.*'
@@ -1112,6 +1113,7 @@ steps:
       ppms: 'executePPMSComplianceCheck'
       whitesource: 'whitesourceExecuteScan'
       checkmarx: 'executeCheckmarxScan'
+      osvm: 'executeOpenSourceDependencyScan'
     labelPrefix: 'pr_'
   sapPiperStagePRVoting:
     containerBuildOptions: ''
