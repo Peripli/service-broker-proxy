@@ -55,37 +55,9 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 		delete(proxyBrokerIDMap, desiredBroker.GUID)
 
 		if alreadyTakenOver {
-			if existingBroker.Name != r.brokerProxyName(desiredBroker) || !strings.HasPrefix(existingBroker.BrokerURL, r.smPath) { // broker name has been changed in the platform or broker proxy URL should be updated
-				if err := execAsync(state, func(ctx context.Context) error {
-					return r.updateBrokerRegistration(ctx, existingBroker.GUID, desiredBroker)
-				}); err != nil {
-					log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
-				}
-				continue
-			}
-			if err := execAsync(state, func(ctx context.Context) error {
-				return r.fetchBrokerCatalog(ctx, existingBroker)
-			}); err != nil {
-				log.C(ctx).WithError(err).Error("resyncJob - could not refetch broker catalog in platform")
-			}
+			r.resyncTakenOverBroker(ctx, state, desiredBroker, existingBroker)
 		} else {
-			platformBroker, shouldBeTakenOver := brokerKeyMap[getBrokerKey(desiredBroker)]
-
-			if shouldBeTakenOver {
-				if r.options.TakeoverEnabled {
-					if err := execAsync(state, func(ctx context.Context) error {
-						return r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
-					}); err != nil {
-						log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
-					}
-				}
-			} else {
-				if err := execAsync(state, func(ctx context.Context) error {
-					return r.createBrokerRegistration(ctx, desiredBroker)
-				}); err != nil {
-					log.C(ctx).WithError(err).Error("resyncJob - could not create broker registration in platform")
-				}
-			}
+			r.resyncNotTakenOverBroker(ctx, state, desiredBroker, brokerKeyMap)
 		}
 	}
 
@@ -98,6 +70,42 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 	}
 	if err := await(state); err != nil {
 		log.C(ctx).WithError(err).Error("resyncJob - could not reconcile brokers in platform")
+	}
+}
+
+func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, state *processingState, desiredBroker *platform.ServiceBroker, brokerKeyMap map[string]*platform.ServiceBroker) {
+	platformBroker, shouldBeTakenOver := brokerKeyMap[getBrokerKey(desiredBroker)]
+
+	if shouldBeTakenOver {
+		if r.options.TakeoverEnabled {
+			if err := execAsync(state, func(ctx context.Context) error {
+				return r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
+			}); err != nil {
+				log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
+			}
+		}
+	} else {
+		if err := execAsync(state, func(ctx context.Context) error {
+			return r.createBrokerRegistration(ctx, desiredBroker)
+		}); err != nil {
+			log.C(ctx).WithError(err).Error("resyncJob - could not create broker registration in platform")
+		}
+	}
+}
+
+func (r *resyncJob) resyncTakenOverBroker(ctx context.Context, state *processingState, desiredBroker *platform.ServiceBroker, existingBroker *platform.ServiceBroker) {
+	if existingBroker.Name != r.brokerProxyName(desiredBroker) || !strings.HasPrefix(existingBroker.BrokerURL, r.smPath) { // broker name has been changed in the platform or broker proxy URL should be updated
+		if err := execAsync(state, func(ctx context.Context) error {
+			return r.updateBrokerRegistration(ctx, existingBroker.GUID, desiredBroker)
+		}); err != nil {
+			log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
+		}
+	} else {
+		if err := execAsync(state, func(ctx context.Context) error {
+			return r.fetchBrokerCatalog(ctx, existingBroker)
+		}); err != nil {
+			log.C(ctx).WithError(err).Error("resyncJob - could not refetch broker catalog in platform")
+		}
 	}
 }
 
