@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// to match the desired broker state coming from the Service Manager (desiredBrokers).
+// to match the desired broker scheduler coming from the Service Manager (desiredBrokers).
 func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desiredBrokers []*platform.ServiceBroker) {
 	brokerKeyMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		return getBrokerKey(broker), true
@@ -48,44 +48,44 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 		return "", false
 	})
 
-	state := r.newProcessingState(ctx)
+	scheduler := NewScheduler(ctx, r.options.MaxParallelRequests)
 	for _, desiredBroker := range desiredBrokers {
 		desiredBroker := desiredBroker
 		existingBroker, alreadyTakenOver := proxyBrokerIDMap[desiredBroker.GUID]
 		delete(proxyBrokerIDMap, desiredBroker.GUID)
 
 		if alreadyTakenOver {
-			r.resyncTakenOverBroker(ctx, state, desiredBroker, existingBroker)
+			r.resyncTakenOverBroker(ctx, scheduler, desiredBroker, existingBroker)
 		} else {
-			r.resyncNotTakenOverBroker(ctx, state, desiredBroker, brokerKeyMap)
+			r.resyncNotTakenOverBroker(ctx, scheduler, desiredBroker, brokerKeyMap)
 		}
 	}
 
 	for _, existingBroker := range proxyBrokerIDMap {
-		if err := execAsync(state, func(ctx context.Context) error {
+		if err := scheduler.Schedule(func(ctx context.Context) error {
 			return r.deleteBrokerRegistration(ctx, existingBroker)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not delete broker registration from platform")
 		}
 	}
-	if err := await(state); err != nil {
+	if err := scheduler.Await(); err != nil {
 		log.C(ctx).WithError(err).Error("resyncJob - could not reconcile brokers in platform")
 	}
 }
 
-func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, state *processingState, desiredBroker *platform.ServiceBroker, brokerKeyMap map[string]*platform.ServiceBroker) {
+func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, scheduler *TaskScheduler, desiredBroker *platform.ServiceBroker, brokerKeyMap map[string]*platform.ServiceBroker) {
 	platformBroker, shouldBeTakenOver := brokerKeyMap[getBrokerKey(desiredBroker)]
 
 	if shouldBeTakenOver {
 		if r.options.TakeoverEnabled {
-			if err := execAsync(state, func(ctx context.Context) error {
+			if err := scheduler.Schedule(func(ctx context.Context) error {
 				return r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
 			}); err != nil {
 				log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
 			}
 		}
 	} else {
-		if err := execAsync(state, func(ctx context.Context) error {
+		if err := scheduler.Schedule(func(ctx context.Context) error {
 			return r.createBrokerRegistration(ctx, desiredBroker)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not create broker registration in platform")
@@ -93,15 +93,15 @@ func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, state *process
 	}
 }
 
-func (r *resyncJob) resyncTakenOverBroker(ctx context.Context, state *processingState, desiredBroker *platform.ServiceBroker, existingBroker *platform.ServiceBroker) {
+func (r *resyncJob) resyncTakenOverBroker(ctx context.Context, scheduler *TaskScheduler, desiredBroker *platform.ServiceBroker, existingBroker *platform.ServiceBroker) {
 	if existingBroker.Name != r.brokerProxyName(desiredBroker) || !strings.HasPrefix(existingBroker.BrokerURL, r.smPath) { // broker name has been changed in the platform or broker proxy URL should be updated
-		if err := execAsync(state, func(ctx context.Context) error {
+		if err := scheduler.Schedule(func(ctx context.Context) error {
 			return r.updateBrokerRegistration(ctx, existingBroker.GUID, desiredBroker)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
 		}
 	} else {
-		if err := execAsync(state, func(ctx context.Context) error {
+		if err := scheduler.Schedule(func(ctx context.Context) error {
 			return r.fetchBrokerCatalog(ctx, existingBroker)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not refetch broker catalog in platform")
