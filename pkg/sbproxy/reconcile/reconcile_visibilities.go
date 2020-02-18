@@ -66,7 +66,7 @@ func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
 	result := make(map[string][]*types.ServicePlan)
 	count := 0
-	log.C(ctx).Info("resyncJob getting service plans from platform")
+	log.C(ctx).Info("resyncJob getting service plans from Service Manager")
 	for brokerID, sos := range offerings {
 		if len(sos) == 0 {
 			continue
