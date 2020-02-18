@@ -213,7 +213,6 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	} else {
 		log.C(ctx).Warn("No catalog fetcher is provided. Cannot update broker catalog in the platform")
 	}
-
 }
 
 // OnDelete deletes brokers from the provided notification payload by invoking the proper platform clients
