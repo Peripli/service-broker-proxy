@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// to match the desired broker scheduler coming from the Service Manager (desiredBrokers).
+// to match the desired broker state coming from the Service Manager (desiredBrokers).
 func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desiredBrokers []*platform.ServiceBroker) {
 	brokerKeyMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		return getBrokerKey(broker), true
