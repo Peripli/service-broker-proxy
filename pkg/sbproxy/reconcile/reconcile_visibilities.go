@@ -19,7 +19,6 @@ package reconcile
 import (
 	"context"
 	"strings"
-	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-manager/pkg/log"
@@ -195,77 +194,34 @@ func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVi
 	return false
 }
 
-type visibilityProcessingState struct {
-	Ctx           context.Context
-	Mutex         sync.Mutex
-	ErrorOccurred *CompositeError
-
-	WaitGroupLimit chan struct{}
-	WaitGroup      sync.WaitGroup
-}
-
-func (r *resyncJob) newVisibilityProcessingState(ctx context.Context) *visibilityProcessingState {
-	return &visibilityProcessingState{
-		Ctx:            ctx,
-		ErrorOccurred:  &CompositeError{},
-		WaitGroupLimit: make(chan struct{}, r.options.MaxParallelRequests),
-	}
-}
-
 // deleteVisibilities deletes visibilities from platform. Returns true if error has occurred
 func (r *resyncJob) deleteVisibilities(ctx context.Context, visibilities map[string]*platform.Visibility) error {
-	state := r.newVisibilityProcessingState(ctx)
+	scheduler := NewScheduler(ctx, r.options.MaxParallelRequests)
 
 	for _, visibility := range visibilities {
-		if err := execAsync(state, visibility, r.deleteVisibility); err != nil {
+		visibility := visibility
+		if err := scheduler.Schedule(func(ctx context.Context) error {
+			return r.deleteVisibility(ctx, visibility)
+		}); err != nil {
 			return err
 		}
 	}
-	return await(state)
+	return scheduler.Await()
 }
 
 // createVisibilities creates visibilities from platform. Returns true if error has occurred
 func (r *resyncJob) createVisibilities(ctx context.Context, visibilities []*platform.Visibility) error {
-	state := r.newVisibilityProcessingState(ctx)
+	scheduler := NewScheduler(ctx, r.options.MaxParallelRequests)
 
 	for _, visibility := range visibilities {
-		if err := execAsync(state, visibility, r.createVisibility); err != nil {
+		visibility := visibility
+		if err := scheduler.Schedule(func(ctx context.Context) error {
+			return r.createVisibility(ctx, visibility)
+		}); err != nil {
 			return err
 		}
 	}
-	return await(state)
-}
-
-func execAsync(state *visibilityProcessingState, visibility *platform.Visibility, f func(context.Context, *platform.Visibility) error) error {
-	select {
-	case <-state.Ctx.Done():
-		return state.Ctx.Err()
-	case state.WaitGroupLimit <- struct{}{}:
-	}
-	state.WaitGroup.Add(1)
-	go func() {
-		defer func() {
-			<-state.WaitGroupLimit
-			state.WaitGroup.Done()
-		}()
-
-		if err := f(state.Ctx, visibility); err != nil {
-			state.Mutex.Lock()
-			defer state.Mutex.Unlock()
-			state.ErrorOccurred.Add(err)
-		}
-	}()
-
-	return nil
-}
-
-func await(state *visibilityProcessingState) error {
-	state.WaitGroup.Wait()
-	if state.ErrorOccurred.Len() != 0 {
-		return state.ErrorOccurred
-	}
-
-	return nil
+	return scheduler.Await()
 }
 
 // getVisibilityKey maps a generic visibility to a specific string. The string contains catalogID and scope for non-public plans
