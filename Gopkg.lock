@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:31a802b7fe1a482dbabe830bd0125033fd298a10da211e8051bd76ec8fa9e748"
+  branch = "credentials_api"
+  digest = "1:0a1b4e2fa90b1899755d1fe47567b7a2965e8bdb513c4febcf1ff437e9f7927f"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -69,8 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "4623a495d1d96fe95b3c73dc78749dc277d806db"
-  version = "v0.10.2"
+  revision = "db3defb4cfdddf1def7de629cc214b06067b81ae"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -621,9 +621,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5cdf4eb6946922ebe638b90e548e1a86085b778d9daf0889951b39f44e6bbe6c"
+  digest = "1:6d1e6b1279da86043098d6b35e4e84f5ace42c7a3a8936025a843619b02253ea"
   name = "golang.org/x/crypto"
   packages = [
+    "bcrypt",
+    "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519",
     "pbkdf2",
