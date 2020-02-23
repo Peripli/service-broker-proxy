@@ -234,10 +234,12 @@ func (c *ServiceManagerClient) credentialsCall(ctx context.Context, credentials 
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, reqMethod, fmt.Sprintf(APICredentials, c.host), bytes.NewBuffer(body))
+	req, err := http.NewRequest(reqMethod, fmt.Sprintf(APICredentials, c.host), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
+
+	req.Header.Add("Content-Type", "application/json")
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
