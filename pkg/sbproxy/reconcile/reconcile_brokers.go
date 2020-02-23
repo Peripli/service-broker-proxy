@@ -19,6 +19,8 @@ package reconcile
 import (
 	"context"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/util"
+	"github.com/Peripli/service-manager/pkg/types"
 	"strings"
 
 	"github.com/Peripli/service-manager/pkg/util/slice"
@@ -140,7 +142,31 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, broker *platform.Ser
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 		logger := log.C(ctx)
 		logger.WithFields(logBroker(broker)).Infof("resyncJob refetching catalog for broker...")
-		if err := f.Fetch(ctx, broker); err != nil {
+
+		username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
+		if err != nil {
+			return fmt.Errorf("could not generate broker platform credentials for broker (%s): %s", broker.Name, err)
+		}
+
+		credentials := &types.BrokerPlatformCredential{
+			Username:     username,
+			PasswordHash: passwordHash,
+			BrokerID:     broker.GUID,
+		}
+
+		if err := r.smClient.UpdateCredentials(ctx, credentials); err != nil {
+			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", broker.Name, err)
+		}
+
+		updateRequest := &platform.UpdateServiceBrokerRequest{
+			GUID:      broker.GUID,
+			Name:      broker.Name,
+			BrokerURL: broker.BrokerURL,
+			Username:  username,
+			Password:  password,
+		}
+
+		if err := f.Fetch(ctx, updateRequest); err != nil {
 			logger.WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
 			return err
 		}
@@ -153,9 +179,24 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, broker *platfo
 	logger := log.C(ctx)
 	logger.WithFields(logBroker(broker)).Info("resyncJob creating proxy for broker in platform...")
 
+	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
+	if err != nil {
+		return err
+	}
+
+	if err := r.smClient.RegisterCredentials(ctx, &types.BrokerPlatformCredential{
+		Username:     username,
+		PasswordHash: passwordHash,
+		BrokerID:     broker.GUID,
+	}); err != nil {
+		return err
+	}
+
 	createRequest := &platform.CreateServiceBrokerRequest{
 		Name:      r.brokerProxyName(broker),
 		BrokerURL: r.smPath + "/" + broker.GUID,
+		Username:  username,
+		Password:  password,
 	}
 	b, err := r.platformClient.Broker().CreateBroker(ctx, createRequest)
 	if err != nil {
@@ -171,10 +212,25 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUID str
 
 	logger.WithFields(logBroker(broker)).Info("resyncJob updating broker registration in platform...")
 
+	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
+	if err != nil {
+		return err
+	}
+
+	if err := r.smClient.UpdateCredentials(ctx, &types.BrokerPlatformCredential{
+		Username:     username,
+		PasswordHash: passwordHash,
+		BrokerID:     broker.GUID,
+	}); err != nil {
+		return err
+	}
+
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		GUID:      brokerGUID,
 		Name:      r.brokerProxyName(broker),
 		BrokerURL: r.smPath + "/" + broker.GUID,
+		Username:  username,
+		Password:  password,
 	}
 	b, err := r.platformClient.Broker().UpdateBroker(ctx, updateRequest)
 	if err != nil {
@@ -198,6 +254,13 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
 		return err
 	}
+
+	if err := r.smClient.DeleteCredentials(ctx, &types.BrokerPlatformCredential{
+		BrokerID: broker.GUID,
+	}); err != nil {
+		return err
+	}
+
 	logger.WithFields(logBroker(broker)).Infof("resyncJob SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 	return nil
 }

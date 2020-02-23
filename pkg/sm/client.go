@@ -17,6 +17,8 @@
 package sm
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -46,6 +48,9 @@ const (
 
 	// APIServiceOfferings is the SM API for obtaining service offerings
 	APIServiceOfferings = "%s" + web.ServiceOfferingsURL
+
+	// APICredentials is the SM API for managing broker platform credentials
+	APICredentials = "%s" + web.BrokerPlatformCredentialsURL
 )
 
 // Client provides the logic for calling into the Service Manager
@@ -56,6 +61,9 @@ type Client interface {
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 	GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error)
 	GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error)
+	RegisterCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error
+	UpdateCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error
+	DeleteCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error
 }
 
 // ServiceManagerClient allows consuming Service Manager APIs
@@ -174,6 +182,39 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 	return result, nil
 }
 
+func (c *ServiceManagerClient) RegisterCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
+	log.C(ctx).Debugf("Registering credentials in Service Manager at %s", c.host)
+
+	if err := c.credentialsCall(ctx, credentials, http.MethodPost, http.StatusCreated); err != nil {
+		return err
+	}
+
+	log.C(ctx).Debugf("Successfully registered credentials in Service Manager at %s", c.host)
+	return nil
+}
+
+func (c *ServiceManagerClient) UpdateCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
+	log.C(ctx).Debugf("Updating credentials in Service Manager at %s", c.host)
+
+	if err := c.credentialsCall(ctx, credentials, http.MethodPatch, http.StatusOK); err != nil {
+		return err
+	}
+
+	log.C(ctx).Debugf("Successfully updated credentials in Service Manager at %s", c.host)
+	return nil
+}
+
+func (c *ServiceManagerClient) DeleteCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
+	log.C(ctx).Debugf("Deleting credentials in Service Manager at %s", c.host)
+
+	if err := c.credentialsCall(ctx, credentials, http.MethodDelete, http.StatusOK); err != nil {
+		return err
+	}
+
+	log.C(ctx).Debugf("Successfully deleted credentials in Service Manager at %s", c.host)
+	return nil
+}
+
 func (c *ServiceManagerClient) call(ctx context.Context, smURL string, params map[string]string, list interface{}) error {
 	fullURL, err := url.Parse(smURL)
 	if err != nil {
@@ -185,4 +226,27 @@ func (c *ServiceManagerClient) call(ctx context.Context, smURL string, params ma
 	}
 	fullURL.RawQuery = q.Encode()
 	return util.ListAll(ctx, c.httpClient.Do, fullURL.String(), list)
+}
+
+func (c *ServiceManagerClient) credentialsCall(ctx context.Context, credentials *types.BrokerPlatformCredential, reqMethod string, respStatusCode int) error {
+	body, err := json.Marshal(credentials)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, reqMethod, fmt.Sprintf(APICredentials, c.host), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "error registering credentials in Service Manager")
+	}
+
+	if response.StatusCode != respStatusCode {
+		return fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
+	}
+
+	return nil
 }

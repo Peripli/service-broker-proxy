@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"github.com/Peripli/service-broker-proxy/pkg/util"
 
 	"github.com/Peripli/service-manager/pkg/util/slice"
 
@@ -71,6 +73,7 @@ func (bad brokerWithAdditionalDetails) Validate() error {
 
 // BrokerResourceNotificationsHandler handles notifications for brokers
 type BrokerResourceNotificationsHandler struct {
+	SMClient       sm.Client
 	BrokerClient   platform.BrokerClient
 	CatalogFetcher platform.CatalogFetcher
 
@@ -107,12 +110,31 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 		log.C(ctx).Debugf("Could not find platform broker in platform with name %s: %s", brokerToCreate.Resource.Name, err)
 	}
 
+	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
+	if err != nil {
+		log.C(ctx).Debugf("Could not generate broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
+		return
+	}
+
+	credentials := &types.BrokerPlatformCredential{
+		Username:     username,
+		PasswordHash: passwordHash,
+		BrokerID:     brokerToCreate.Resource.ID,
+	}
+
 	if existingBroker == nil {
 		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
+
+		if err := bnh.SMClient.RegisterCredentials(ctx, credentials); err != nil {
+			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
+			return
+		}
 
 		createRequest := &platform.CreateServiceBrokerRequest{
 			Name:      brokerProxyName,
 			BrokerURL: brokerProxyPath,
+			Username:  username,
+			Password:  password,
 		}
 		if _, err := bnh.BrokerClient.CreateBroker(ctx, createRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("error creating broker with name %s and URL %s", createRequest.Name, createRequest.BrokerURL)
@@ -127,10 +149,17 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 				return
 			}
 
+			if err := bnh.SMClient.UpdateCredentials(ctx, credentials); err != nil {
+				log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
+				return
+			}
+
 			updateRequest := &platform.UpdateServiceBrokerRequest{
 				GUID:      existingBroker.GUID,
 				Name:      brokerProxyName,
 				BrokerURL: brokerProxyPath,
+				Username:  username,
+				Password:  password,
 			}
 
 			log.C(ctx).Infof("Taking over platform broker with name %s and URL %s...", existingBroker.Name, existingBroker.BrokerURL)
@@ -183,13 +212,34 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 		return
 	}
 
+	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
+	if err != nil {
+		log.C(ctx).Debugf("Could not generate broker platform credentials for broker (%s): %s", brokerProxyNameAfter, err)
+		return
+	}
+
+	credentials := &types.BrokerPlatformCredential{
+		Username:     username,
+		PasswordHash: passwordHash,
+		BrokerID:     brokerAfterUpdate.Resource.ID,
+	}
+
+	updateRequest := &platform.UpdateServiceBrokerRequest{
+		GUID:      existingBroker.GUID,
+		Name:      brokerProxyNameAfter,
+		BrokerURL: brokerProxyPath,
+		Username:  username,
+		Password:  password,
+	}
+
 	if brokerProxyNameBefore != brokerProxyNameAfter {
 		log.C(ctx).Infof("Broker %s was renamed to %s. Triggering broker update...", brokerProxyNameBefore, brokerProxyNameAfter)
-		updateRequest := &platform.UpdateServiceBrokerRequest{
-			GUID:      existingBroker.GUID,
-			Name:      brokerProxyNameAfter,
-			BrokerURL: brokerProxyPath,
+
+		if err := bnh.SMClient.UpdateCredentials(ctx, credentials); err != nil {
+			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
+			return
 		}
+
 		if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("Could not update broker name from %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
 			return
@@ -199,14 +249,14 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	}
 
 	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
-	fetchCatalogRequest := &platform.ServiceBroker{
-		GUID:      existingBroker.GUID,
-		Name:      brokerProxyNameAfter,
-		BrokerURL: brokerProxyPath,
-	}
 	if bnh.CatalogFetcher != nil {
-		if err := bnh.CatalogFetcher.Fetch(ctx, fetchCatalogRequest); err != nil {
-			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", fetchCatalogRequest.GUID, brokerAfterUpdate.Resource.ID)
+		if err := bnh.SMClient.UpdateCredentials(ctx, credentials); err != nil {
+			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
+			return
+		}
+
+		if err := bnh.CatalogFetcher.Fetch(ctx, updateRequest); err != nil {
+			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", updateRequest.GUID, brokerAfterUpdate.Resource.ID)
 			return
 		}
 		log.C(ctx).Infof("Successfully refetched catalog for platform broker with name %s and URL %s", existingBroker.Name, existingBroker.BrokerURL)
@@ -261,6 +311,14 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 		log.C(ctx).WithError(err).Errorf("error deleting broker with id %s name %s", deleteRequest.GUID, deleteRequest.Name)
 		return
 	}
+
+	if err := bnh.SMClient.DeleteCredentials(ctx, &types.BrokerPlatformCredential{
+		BrokerID: brokerToDelete.Resource.ID,
+	}); err != nil {
+		log.C(ctx).Debugf("Could not delete broker platform credentials for broker (%s): %s", brokerToDelete.Resource.Name, err)
+		return
+	}
+
 	log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
 }
 

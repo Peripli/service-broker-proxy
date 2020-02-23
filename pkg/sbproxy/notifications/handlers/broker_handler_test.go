@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sm/smfakes"
 
 	"github.com/tidwall/sjson"
 
@@ -20,6 +21,7 @@ var _ = Describe("Broker Handler", func() {
 
 	var fakeCatalogFetcher *platformfakes.FakeCatalogFetcher
 	var fakeBrokerClient *platformfakes.FakeBrokerClient
+	var fakeSMClient *smfakes.FakeClient
 
 	var brokerHandler *handlers.BrokerResourceNotificationsHandler
 
@@ -67,10 +69,12 @@ var _ = Describe("Broker Handler", func() {
 			]
 		}`
 
+		fakeSMClient = &smfakes.FakeClient{}
 		fakeCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
 
 		brokerHandler = &handlers.BrokerResourceNotificationsHandler{
+			SMClient:        fakeSMClient,
 			BrokerClient:    fakeBrokerClient,
 			CatalogFetcher:  fakeCatalogFetcher,
 			ProxyPrefix:     "proxyPrefix",
