@@ -170,14 +170,18 @@ func (p *Producer) run(ctx context.Context, messages chan *Message, group *sync.
 			}
 		} else {
 			log.C(ctx).Info("Successfully established websocket connection")
-			if needResync {
-				log.C(ctx).Info("Last notification revision is gone. Triggering resync")
-				resyncChan <- struct{}{}
-			}
+
 			p.conn.SetPongHandler(func(string) error {
 				log.C(ctx).Debug("Received pong")
 				return p.conn.SetReadDeadline(time.Now().Add(p.readTimeout))
 			})
+
+			p.sendSinglePing(ctx)
+
+			if needResync {
+				log.C(ctx).Info("Last notification revision is gone. Triggering resync")
+				resyncChan <- struct{}{}
+			}
 
 			done := make(chan struct{}, 2)
 			childContext, cancelChildrenFunc := context.WithCancel(ctx)
@@ -273,12 +277,17 @@ func (p *Producer) ping(ctx context.Context, done chan<- struct{}) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			log.C(ctx).Debug("Sending ping")
-			if err := p.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.C(ctx).WithError(err).Error("Could not write message on the websocket")
-				return
-			}
+			p.sendSinglePing(ctx)
+			return
 		}
+	}
+}
+
+func (p *Producer) sendSinglePing(ctx context.Context) {
+	log.C(ctx).Debug("Sending ping")
+	if err := p.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+		log.C(ctx).WithError(err).Error("Could not write ping message on the websocket")
+		return
 	}
 }
 
