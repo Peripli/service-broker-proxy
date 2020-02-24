@@ -18,8 +18,6 @@ package authn
 
 import (
 	"fmt"
-	"net/http"
-
 	httpsec "github.com/Peripli/service-manager/pkg/security/http"
 
 	"github.com/Peripli/service-manager/pkg/web"
@@ -38,7 +36,7 @@ type inmemoryBasicAuthenticator struct {
 	expectedPassword string
 }
 
-func (a *inmemoryBasicAuthenticator) Authenticate(request *http.Request) (*web.UserContext, httpsec.Decision, error) {
+func (a *inmemoryBasicAuthenticator) Authenticate(request *web.Request) (*web.UserContext, httpsec.Decision, error) {
 	username, password, ok := request.BasicAuth()
 	if !ok {
 		return nil, httpsec.Abstain, nil
