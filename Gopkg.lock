@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "authenticator-req"
+  branch = "master"
   digest = "1:31a802b7fe1a482dbabe830bd0125033fd298a10da211e8051bd76ec8fa9e748"
   name = "github.com/Peripli/service-manager"
   packages = [
@@ -70,7 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "1af52a4f54a1fabad4195de6fcc4b8920b0cec44"
+  revision = "4623a495d1d96fe95b3c73dc78749dc277d806db"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -660,11 +660,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f4caa38f81f81dc7832d923b152eddd743c2f088ef0269bcd6cba53ce5851485"
+  digest = "1:578046baf093df15df2904bbb0fe06f3f2385bad59987532201007754aa7e1d5"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "cb0a6d8edb6c3528b01a0be84a5fe513dbf880a6"
+  revision = "d5e6a3e2c0ae16fc7480523ebcb7fd4dd3215489"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
