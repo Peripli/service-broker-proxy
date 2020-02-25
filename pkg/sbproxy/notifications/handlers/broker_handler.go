@@ -303,8 +303,8 @@ func determineBrokerNameToFind(oldBrokerName, newBrokerName string) string {
 }
 
 func (bnh *BrokerResourceNotificationsHandler) resetBrokerCache(ctx context.Context, oldBroker, newBroker *platform.ServiceBroker) {
-	cache := bnh.BrokerClient.(platform.Caching)
-	if cache == nil {
+	cache, ok := bnh.BrokerClient.(platform.Caching)
+	if !ok {
 		return
 	}
 
