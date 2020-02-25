@@ -209,9 +209,6 @@ steps:
     vulnerabilityThresholdMedium: 100
     vulnerabilityThresholdLow: 10
     vulnerabilityThresholdUnit: 'percentage'
-    validTypeScriptPresets:
-      '100131': 'SAP_Default_Typescript'
-      '100154': 'SAP_Default_TypeScript_JavaScript'
   executeDasterScan:
     oAuthGrantType: client_credentials
     oAuthSource: uaa.resource
