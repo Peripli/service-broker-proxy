@@ -154,7 +154,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, broker *platform.Ser
 			BrokerID:     broker.GUID,
 		}
 
-		if err := r.smClient.UpdateCredentials(ctx, credentials); err != nil {
+		if err := r.smClient.PutCredentials(ctx, credentials); err != nil {
 			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", broker.Name, err)
 		}
 
@@ -184,7 +184,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, broker *platfo
 		return err
 	}
 
-	if err := r.smClient.RegisterCredentials(ctx, &types.BrokerPlatformCredential{
+	if err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 		Username:     username,
 		PasswordHash: passwordHash,
 		BrokerID:     broker.GUID,
@@ -217,7 +217,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUID str
 		return err
 	}
 
-	if err := r.smClient.UpdateCredentials(ctx, &types.BrokerPlatformCredential{
+	if err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 		Username:     username,
 		PasswordHash: passwordHash,
 		BrokerID:     broker.GUID,
@@ -252,12 +252,6 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 
 	if err := r.platformClient.Broker().DeleteBroker(ctx, deleteRequest); err != nil {
 		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker deletion")
-		return err
-	}
-
-	if err := r.smClient.DeleteCredentials(ctx, &types.BrokerPlatformCredential{
-		BrokerID: broker.GUID,
-	}); err != nil {
 		return err
 	}
 

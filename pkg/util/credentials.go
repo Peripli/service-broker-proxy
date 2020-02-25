@@ -1,19 +1,18 @@
 package util
 
 import (
-	"crypto/rand"
-	"fmt"
+	"github.com/Peripli/service-manager/pkg/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
 //GenerateBrokerPlatformCredentials generates broker platform credentials
 func GenerateBrokerPlatformCredentials() (string, string, string, error) {
-	username, err := generateCredential()
+	username, err := util.GenerateCredential()
 	if err != nil {
 		return "", "", "", err
 	}
 
-	password, err := generateCredential()
+	password, err := util.GenerateCredential()
 	if err != nil {
 		return "", "", "", err
 	}
@@ -24,13 +23,4 @@ func GenerateBrokerPlatformCredentials() (string, string, string, error) {
 	}
 
 	return username, password, string(passwordHash), nil
-}
-
-func generateCredential() (string, error) {
-	newCredential := make([]byte, 32)
-	if _, err := rand.Read(newCredential); err != nil {
-		return "", fmt.Errorf("could not generate credential: %v", err)
-	}
-
-	return string(newCredential), nil
 }

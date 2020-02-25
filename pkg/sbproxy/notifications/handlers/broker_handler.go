@@ -125,7 +125,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 	if existingBroker == nil {
 		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
 
-		if err := bnh.SMClient.RegisterCredentials(ctx, credentials); err != nil {
+		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 			return
 		}
@@ -149,7 +149,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 				return
 			}
 
-			if err := bnh.SMClient.UpdateCredentials(ctx, credentials); err != nil {
+			if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 				log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 				return
 			}
@@ -235,7 +235,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 	if brokerProxyNameBefore != brokerProxyNameAfter {
 		log.C(ctx).Infof("Broker %s was renamed to %s. Triggering broker update...", brokerProxyNameBefore, brokerProxyNameAfter)
 
-		if err := bnh.SMClient.UpdateCredentials(ctx, credentials); err != nil {
+		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 			return
 		}
@@ -250,7 +250,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 
 	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
 	if bnh.CatalogFetcher != nil {
-		if err := bnh.SMClient.UpdateCredentials(ctx, credentials); err != nil {
+		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 			return
 		}
@@ -309,13 +309,6 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 
 	if err := bnh.BrokerClient.DeleteBroker(ctx, deleteRequest); err != nil {
 		log.C(ctx).WithError(err).Errorf("error deleting broker with id %s name %s", deleteRequest.GUID, deleteRequest.Name)
-		return
-	}
-
-	if err := bnh.SMClient.DeleteCredentials(ctx, &types.BrokerPlatformCredential{
-		BrokerID: brokerToDelete.Resource.ID,
-	}); err != nil {
-		log.C(ctx).Debugf("Could not delete broker platform credentials for broker (%s): %s", brokerToDelete.Resource.Name, err)
 		return
 	}
 

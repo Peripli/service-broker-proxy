@@ -34,6 +34,21 @@ var _ = Describe("Broker Handler", func() {
 
 	var err error
 
+	assertCreateBrokerRequest := func(actualReq, expectedReq *platform.CreateServiceBrokerRequest) {
+		Expect(actualReq.Name).To(Equal(expectedReq.Name))
+		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
+		Expect(actualReq.Username).ToNot(BeEmpty())
+		Expect(actualReq.Password).ToNot(BeEmpty())
+	}
+
+	assertUpdateBrokerRequest := func(actualReq, expectedReq *platform.UpdateServiceBrokerRequest) {
+		Expect(actualReq.GUID).To(Equal(expectedReq.GUID))
+		Expect(actualReq.Name).To(Equal(expectedReq.Name))
+		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
+		Expect(actualReq.Username).ToNot(BeEmpty())
+		Expect(actualReq.Password).ToNot(BeEmpty())
+	}
+
 	BeforeEach(func() {
 		ctx = context.TODO()
 
@@ -244,7 +259,7 @@ var _ = Describe("Broker Handler", func() {
 					callCtx, callRequest := fakeBrokerClient.UpdateBrokerArgsForCall(0)
 
 					Expect(callCtx).To(Equal(ctx))
-					Expect(callRequest).To(Equal(expectedUpdateBrokerRequest))
+					assertUpdateBrokerRequest(callRequest, expectedUpdateBrokerRequest)
 				})
 			})
 
@@ -308,7 +323,7 @@ var _ = Describe("Broker Handler", func() {
 					callCtx, callRequest := fakeBrokerClient.CreateBrokerArgsForCall(0)
 
 					Expect(callCtx).To(Equal(ctx))
-					Expect(callRequest).To(Equal(expectedCreateBrokerRequest))
+					assertCreateBrokerRequest(callRequest, expectedCreateBrokerRequest)
 				})
 			})
 		})
@@ -534,11 +549,12 @@ var _ = Describe("Broker Handler", func() {
 					}, nil
 				}
 				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
-				Expect(updateRequest).To(Equal(&platform.UpdateServiceBrokerRequest{
+				expectedReq := &platform.UpdateServiceBrokerRequest{
 					GUID:      smBrokerID,
 					Name:      brokerProxyName(brokerHandler.ProxyPrefix, newBrokerName, smBrokerID),
 					BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
-				}))
+				}
+				assertUpdateBrokerRequest(updateRequest, expectedReq)
 			})
 		})
 
@@ -565,10 +581,10 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			Context("when no error occurs", func() {
-				var expectedUpdateBrokerRequest *platform.ServiceBroker
+				var expectedUpdateBrokerRequest *platform.UpdateServiceBrokerRequest
 
 				BeforeEach(func() {
-					expectedUpdateBrokerRequest = &platform.ServiceBroker{
+					expectedUpdateBrokerRequest = &platform.UpdateServiceBrokerRequest{
 						GUID:      smBrokerID,
 						Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 						BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
@@ -587,7 +603,7 @@ var _ = Describe("Broker Handler", func() {
 					callCtx, callRequest := fakeCatalogFetcher.FetchArgsForCall(0)
 
 					Expect(callCtx).To(Equal(ctx))
-					Expect(callRequest).To(Equal(expectedUpdateBrokerRequest))
+					assertUpdateBrokerRequest(callRequest, expectedUpdateBrokerRequest)
 				})
 			})
 		})

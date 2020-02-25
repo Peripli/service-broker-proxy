@@ -10,18 +10,6 @@ import (
 )
 
 type FakeClient struct {
-	DeleteCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) error
-	deleteCredentialsMutex       sync.RWMutex
-	deleteCredentialsArgsForCall []struct {
-		arg1 context.Context
-		arg2 *types.BrokerPlatformCredential
-	}
-	deleteCredentialsReturns struct {
-		result1 error
-	}
-	deleteCredentialsReturnsOnCall map[int]struct {
-		result1 error
-	}
 	GetBrokersStub        func(context.Context) ([]*types.ServiceBroker, error)
 	getBrokersMutex       sync.RWMutex
 	getBrokersArgsForCall []struct {
@@ -89,93 +77,20 @@ type FakeClient struct {
 		result1 []*types.Visibility
 		result2 error
 	}
-	RegisterCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) error
-	registerCredentialsMutex       sync.RWMutex
-	registerCredentialsArgsForCall []struct {
+	PutCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) error
+	putCredentialsMutex       sync.RWMutex
+	putCredentialsArgsForCall []struct {
 		arg1 context.Context
 		arg2 *types.BrokerPlatformCredential
 	}
-	registerCredentialsReturns struct {
+	putCredentialsReturns struct {
 		result1 error
 	}
-	registerCredentialsReturnsOnCall map[int]struct {
-		result1 error
-	}
-	UpdateCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) error
-	updateCredentialsMutex       sync.RWMutex
-	updateCredentialsArgsForCall []struct {
-		arg1 context.Context
-		arg2 *types.BrokerPlatformCredential
-	}
-	updateCredentialsReturns struct {
-		result1 error
-	}
-	updateCredentialsReturnsOnCall map[int]struct {
+	putCredentialsReturnsOnCall map[int]struct {
 		result1 error
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeClient) DeleteCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) error {
-	fake.deleteCredentialsMutex.Lock()
-	ret, specificReturn := fake.deleteCredentialsReturnsOnCall[len(fake.deleteCredentialsArgsForCall)]
-	fake.deleteCredentialsArgsForCall = append(fake.deleteCredentialsArgsForCall, struct {
-		arg1 context.Context
-		arg2 *types.BrokerPlatformCredential
-	}{arg1, arg2})
-	fake.recordInvocation("DeleteCredentials", []interface{}{arg1, arg2})
-	fake.deleteCredentialsMutex.Unlock()
-	if fake.DeleteCredentialsStub != nil {
-		return fake.DeleteCredentialsStub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	fakeReturns := fake.deleteCredentialsReturns
-	return fakeReturns.result1
-}
-
-func (fake *FakeClient) DeleteCredentialsCallCount() int {
-	fake.deleteCredentialsMutex.RLock()
-	defer fake.deleteCredentialsMutex.RUnlock()
-	return len(fake.deleteCredentialsArgsForCall)
-}
-
-func (fake *FakeClient) DeleteCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) error) {
-	fake.deleteCredentialsMutex.Lock()
-	defer fake.deleteCredentialsMutex.Unlock()
-	fake.DeleteCredentialsStub = stub
-}
-
-func (fake *FakeClient) DeleteCredentialsArgsForCall(i int) (context.Context, *types.BrokerPlatformCredential) {
-	fake.deleteCredentialsMutex.RLock()
-	defer fake.deleteCredentialsMutex.RUnlock()
-	argsForCall := fake.deleteCredentialsArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *FakeClient) DeleteCredentialsReturns(result1 error) {
-	fake.deleteCredentialsMutex.Lock()
-	defer fake.deleteCredentialsMutex.Unlock()
-	fake.DeleteCredentialsStub = nil
-	fake.deleteCredentialsReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeClient) DeleteCredentialsReturnsOnCall(i int, result1 error) {
-	fake.deleteCredentialsMutex.Lock()
-	defer fake.deleteCredentialsMutex.Unlock()
-	fake.DeleteCredentialsStub = nil
-	if fake.deleteCredentialsReturnsOnCall == nil {
-		fake.deleteCredentialsReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.deleteCredentialsReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
 }
 
 func (fake *FakeClient) GetBrokers(arg1 context.Context) ([]*types.ServiceBroker, error) {
@@ -505,124 +420,63 @@ func (fake *FakeClient) GetVisibilitiesReturnsOnCall(i int, result1 []*types.Vis
 	}{result1, result2}
 }
 
-func (fake *FakeClient) RegisterCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) error {
-	fake.registerCredentialsMutex.Lock()
-	ret, specificReturn := fake.registerCredentialsReturnsOnCall[len(fake.registerCredentialsArgsForCall)]
-	fake.registerCredentialsArgsForCall = append(fake.registerCredentialsArgsForCall, struct {
+func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) error {
+	fake.putCredentialsMutex.Lock()
+	ret, specificReturn := fake.putCredentialsReturnsOnCall[len(fake.putCredentialsArgsForCall)]
+	fake.putCredentialsArgsForCall = append(fake.putCredentialsArgsForCall, struct {
 		arg1 context.Context
 		arg2 *types.BrokerPlatformCredential
 	}{arg1, arg2})
-	fake.recordInvocation("RegisterCredentials", []interface{}{arg1, arg2})
-	fake.registerCredentialsMutex.Unlock()
-	if fake.RegisterCredentialsStub != nil {
-		return fake.RegisterCredentialsStub(arg1, arg2)
+	fake.recordInvocation("PutCredentials", []interface{}{arg1, arg2})
+	fake.putCredentialsMutex.Unlock()
+	if fake.PutCredentialsStub != nil {
+		return fake.PutCredentialsStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.registerCredentialsReturns
+	fakeReturns := fake.putCredentialsReturns
 	return fakeReturns.result1
 }
 
-func (fake *FakeClient) RegisterCredentialsCallCount() int {
-	fake.registerCredentialsMutex.RLock()
-	defer fake.registerCredentialsMutex.RUnlock()
-	return len(fake.registerCredentialsArgsForCall)
+func (fake *FakeClient) PutCredentialsCallCount() int {
+	fake.putCredentialsMutex.RLock()
+	defer fake.putCredentialsMutex.RUnlock()
+	return len(fake.putCredentialsArgsForCall)
 }
 
-func (fake *FakeClient) RegisterCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) error) {
-	fake.registerCredentialsMutex.Lock()
-	defer fake.registerCredentialsMutex.Unlock()
-	fake.RegisterCredentialsStub = stub
+func (fake *FakeClient) PutCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) error) {
+	fake.putCredentialsMutex.Lock()
+	defer fake.putCredentialsMutex.Unlock()
+	fake.PutCredentialsStub = stub
 }
 
-func (fake *FakeClient) RegisterCredentialsArgsForCall(i int) (context.Context, *types.BrokerPlatformCredential) {
-	fake.registerCredentialsMutex.RLock()
-	defer fake.registerCredentialsMutex.RUnlock()
-	argsForCall := fake.registerCredentialsArgsForCall[i]
+func (fake *FakeClient) PutCredentialsArgsForCall(i int) (context.Context, *types.BrokerPlatformCredential) {
+	fake.putCredentialsMutex.RLock()
+	defer fake.putCredentialsMutex.RUnlock()
+	argsForCall := fake.putCredentialsArgsForCall[i]
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeClient) RegisterCredentialsReturns(result1 error) {
-	fake.registerCredentialsMutex.Lock()
-	defer fake.registerCredentialsMutex.Unlock()
-	fake.RegisterCredentialsStub = nil
-	fake.registerCredentialsReturns = struct {
+func (fake *FakeClient) PutCredentialsReturns(result1 error) {
+	fake.putCredentialsMutex.Lock()
+	defer fake.putCredentialsMutex.Unlock()
+	fake.PutCredentialsStub = nil
+	fake.putCredentialsReturns = struct {
 		result1 error
 	}{result1}
 }
 
-func (fake *FakeClient) RegisterCredentialsReturnsOnCall(i int, result1 error) {
-	fake.registerCredentialsMutex.Lock()
-	defer fake.registerCredentialsMutex.Unlock()
-	fake.RegisterCredentialsStub = nil
-	if fake.registerCredentialsReturnsOnCall == nil {
-		fake.registerCredentialsReturnsOnCall = make(map[int]struct {
+func (fake *FakeClient) PutCredentialsReturnsOnCall(i int, result1 error) {
+	fake.putCredentialsMutex.Lock()
+	defer fake.putCredentialsMutex.Unlock()
+	fake.PutCredentialsStub = nil
+	if fake.putCredentialsReturnsOnCall == nil {
+		fake.putCredentialsReturnsOnCall = make(map[int]struct {
 			result1 error
 		})
 	}
-	fake.registerCredentialsReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeClient) UpdateCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) error {
-	fake.updateCredentialsMutex.Lock()
-	ret, specificReturn := fake.updateCredentialsReturnsOnCall[len(fake.updateCredentialsArgsForCall)]
-	fake.updateCredentialsArgsForCall = append(fake.updateCredentialsArgsForCall, struct {
-		arg1 context.Context
-		arg2 *types.BrokerPlatformCredential
-	}{arg1, arg2})
-	fake.recordInvocation("UpdateCredentials", []interface{}{arg1, arg2})
-	fake.updateCredentialsMutex.Unlock()
-	if fake.UpdateCredentialsStub != nil {
-		return fake.UpdateCredentialsStub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	fakeReturns := fake.updateCredentialsReturns
-	return fakeReturns.result1
-}
-
-func (fake *FakeClient) UpdateCredentialsCallCount() int {
-	fake.updateCredentialsMutex.RLock()
-	defer fake.updateCredentialsMutex.RUnlock()
-	return len(fake.updateCredentialsArgsForCall)
-}
-
-func (fake *FakeClient) UpdateCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) error) {
-	fake.updateCredentialsMutex.Lock()
-	defer fake.updateCredentialsMutex.Unlock()
-	fake.UpdateCredentialsStub = stub
-}
-
-func (fake *FakeClient) UpdateCredentialsArgsForCall(i int) (context.Context, *types.BrokerPlatformCredential) {
-	fake.updateCredentialsMutex.RLock()
-	defer fake.updateCredentialsMutex.RUnlock()
-	argsForCall := fake.updateCredentialsArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *FakeClient) UpdateCredentialsReturns(result1 error) {
-	fake.updateCredentialsMutex.Lock()
-	defer fake.updateCredentialsMutex.Unlock()
-	fake.UpdateCredentialsStub = nil
-	fake.updateCredentialsReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeClient) UpdateCredentialsReturnsOnCall(i int, result1 error) {
-	fake.updateCredentialsMutex.Lock()
-	defer fake.updateCredentialsMutex.Unlock()
-	fake.UpdateCredentialsStub = nil
-	if fake.updateCredentialsReturnsOnCall == nil {
-		fake.updateCredentialsReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.updateCredentialsReturnsOnCall[i] = struct {
+	fake.putCredentialsReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
@@ -630,8 +484,6 @@ func (fake *FakeClient) UpdateCredentialsReturnsOnCall(i int, result1 error) {
 func (fake *FakeClient) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.deleteCredentialsMutex.RLock()
-	defer fake.deleteCredentialsMutex.RUnlock()
 	fake.getBrokersMutex.RLock()
 	defer fake.getBrokersMutex.RUnlock()
 	fake.getPlansMutex.RLock()
@@ -642,10 +494,8 @@ func (fake *FakeClient) Invocations() map[string][][]interface{} {
 	defer fake.getServiceOfferingsByBrokerIDsMutex.RUnlock()
 	fake.getVisibilitiesMutex.RLock()
 	defer fake.getVisibilitiesMutex.RUnlock()
-	fake.registerCredentialsMutex.RLock()
-	defer fake.registerCredentialsMutex.RUnlock()
-	fake.updateCredentialsMutex.RLock()
-	defer fake.updateCredentialsMutex.RUnlock()
+	fake.putCredentialsMutex.RLock()
+	defer fake.putCredentialsMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
