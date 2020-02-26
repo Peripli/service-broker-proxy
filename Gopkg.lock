@@ -25,7 +25,7 @@
 
 [[projects]]
   branch = "credentials_api"
-  digest = "1:06a3070ba85ea8554dff89949a73b15e20ed4619a72fc6ea045f342279cfdbb6"
+  digest = "1:a43f784352cdfe14ca57f1c2fe2c8d27a1c1f6f57d8fb38fa2989ab5ed680cd9"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -70,7 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "2547c2a989ba7018668650d2add39697f2e6a706"
+  revision = "38f772b5373cc53921256d5df26b9e441372dd11"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -635,7 +635,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7217cd222c72ced17b355f472688cd619e80c8b2e811cbe8b68b739091721173"
+  digest = "1:865e8f0cedca9141920b5d7a5b9f41d90fc14324c82506d452cf9cab669a44a7"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -647,7 +647,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "5a598a2470a0279bd28bab287167dc1ef0813153"
+  revision = "0de0cce0169b09b364e001f108dc0399ea8630b3"
 
 [[projects]]
   branch = "master"

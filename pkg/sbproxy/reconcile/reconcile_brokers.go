@@ -104,7 +104,7 @@ func (r *resyncJob) resyncTakenOverBroker(ctx context.Context, scheduler *TaskSc
 		}
 	} else {
 		if err := scheduler.Schedule(func(ctx context.Context) error {
-			return r.fetchBrokerCatalog(ctx, existingBroker)
+			return r.fetchBrokerCatalog(ctx, existingBroker.GUID, desiredBroker)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not refetch broker catalog in platform")
 		}
@@ -138,46 +138,46 @@ func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBr
 	return brokersFromSM, nil
 }
 
-func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, broker *platform.ServiceBroker) error {
+func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform string, brokerInSM *platform.ServiceBroker) error {
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 		logger := log.C(ctx)
-		logger.WithFields(logBroker(broker)).Infof("resyncJob refetching catalog for broker...")
+		logger.WithFields(logBroker(brokerInSM)).Infof("resyncJob refetching catalog for broker...")
 
 		username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
 		if err != nil {
-			return fmt.Errorf("could not generate broker platform credentials for broker (%s): %s", broker.Name, err)
+			return fmt.Errorf("could not generate broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
 		}
 
 		credentials := &types.BrokerPlatformCredential{
 			Username:     username,
 			PasswordHash: passwordHash,
-			BrokerID:     broker.GUID,
+			BrokerID:     brokerInSM.GUID,
 		}
 
 		if err := r.smClient.PutCredentials(ctx, credentials); err != nil {
-			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", broker.Name, err)
+			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
 		}
 
 		updateRequest := &platform.UpdateServiceBrokerRequest{
-			GUID:      broker.GUID,
-			Name:      broker.Name,
-			BrokerURL: broker.BrokerURL,
+			GUID:      brokerGUIDInPlatform,
+			Name:      r.brokerProxyName(brokerInSM),
+			BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 			Username:  username,
 			Password:  password,
 		}
 
 		if err := f.Fetch(ctx, updateRequest); err != nil {
-			logger.WithFields(logBroker(broker)).WithError(err).Error("Error during fetching catalog...")
+			logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during fetching catalog...")
 			return err
 		}
-		logger.WithFields(logBroker(broker)).Info("resyncJob SUCCESSFULLY refetched catalog for broker")
+		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob SUCCESSFULLY refetched catalog for broker")
 	}
 	return nil
 }
 
-func (r *resyncJob) createBrokerRegistration(ctx context.Context, broker *platform.ServiceBroker) error {
+func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *platform.ServiceBroker) error {
 	logger := log.C(ctx)
-	logger.WithFields(logBroker(broker)).Info("resyncJob creating proxy for broker in platform...")
+	logger.WithFields(logBroker(brokerInSM)).Info("resyncJob creating proxy for broker in platform...")
 
 	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
 	if err != nil {
@@ -187,30 +187,30 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, broker *platfo
 	if err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 		Username:     username,
 		PasswordHash: passwordHash,
-		BrokerID:     broker.GUID,
+		BrokerID:     brokerInSM.GUID,
 	}); err != nil {
 		return err
 	}
 
 	createRequest := &platform.CreateServiceBrokerRequest{
-		Name:      r.brokerProxyName(broker),
-		BrokerURL: r.smPath + "/" + broker.GUID,
+		Name:      r.brokerProxyName(brokerInSM),
+		BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 		Username:  username,
 		Password:  password,
 	}
 	b, err := r.platformClient.Broker().CreateBroker(ctx, createRequest)
 	if err != nil {
-		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker creation")
+		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker creation")
 		return err
 	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	return nil
 }
 
-func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUID string, broker *platform.ServiceBroker) error {
+func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPlatform string, brokerInSM *platform.ServiceBroker) error {
 	logger := log.C(ctx)
 
-	logger.WithFields(logBroker(broker)).Info("resyncJob updating broker registration in platform...")
+	logger.WithFields(logBroker(brokerInSM)).Info("resyncJob updating broker registration in platform...")
 
 	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
 	if err != nil {
@@ -220,21 +220,21 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUID str
 	if err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 		Username:     username,
 		PasswordHash: passwordHash,
-		BrokerID:     broker.GUID,
+		BrokerID:     brokerInSM.GUID,
 	}); err != nil {
 		return err
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
-		GUID:      brokerGUID,
-		Name:      r.brokerProxyName(broker),
-		BrokerURL: r.smPath + "/" + broker.GUID,
+		GUID:      brokerGUIDInPlatform,
+		Name:      r.brokerProxyName(brokerInSM),
+		BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 		Username:  username,
 		Password:  password,
 	}
 	b, err := r.platformClient.Broker().UpdateBroker(ctx, updateRequest)
 	if err != nil {
-		logger.WithFields(logBroker(broker)).WithError(err).Error("Error during broker update")
+		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker update")
 		return err
 	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob SUCCESSFULLY updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
