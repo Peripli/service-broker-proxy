@@ -17,6 +17,7 @@
 package authn
 
 import (
+	"github.com/Peripli/service-manager/pkg/web"
 	"net/http"
 
 	httpsec "github.com/Peripli/service-manager/pkg/security/http"
@@ -52,7 +53,7 @@ var _ = Describe("Basic Authentication wrapper", func() {
 		func(expectedDecision httpsec.Decision, expectsError bool, username, password string) {
 
 			request := newRequest(username, password)
-			_, decision, err := basic.Authenticate(request)
+			_, decision, err := basic.Authenticate(&web.Request{Request: request})
 			if expectsError {
 				Expect(err).To(HaveOccurred())
 				Expect(decision).To(Equal(expectedDecision))

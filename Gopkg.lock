@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:375f6f69e64f143bf4b36c76267525b0856ea2ddb0c77dd6e820c40bd38fe3e9"
+  digest = "1:31a802b7fe1a482dbabe830bd0125033fd298a10da211e8051bd76ec8fa9e748"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -69,8 +69,8 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "fe1b4ba4cd5f95f18c277d3067f7accb682f4743"
-  version = "v0.10.0"
+  revision = "4623a495d1d96fe95b3c73dc78749dc277d806db"
+  version = "v0.10.2"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -290,7 +290,7 @@
   revision = "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
 
 [[projects]]
-  digest = "1:1d965d8955ca44e9c963e24fdf0517033ca1820b6643ec546106dc2040ed54a0"
+  digest = "1:da22f8cea639e4c5a5df6a1604fe33396ee2cea130b8214ba67cb6ad236b87ff"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -298,8 +298,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "b9d5dc7bd435c628cb0c658ce7f556409007ea71"
-  version = "v1.10.0"
+  revision = "2a5ec94050832300f2c49529dbab4b3774cbc30a"
+  version = "v1.10.1"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -506,15 +506,15 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:99d32780e5238c2621fff621123997c3e3cca96db8be13179013aea77dfab551"
+  digest = "1:49b1087f45b1e49687da2f8eb49d9e07919d4bad3813344251c722141dcb31d6"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
     "require",
   ]
   pruneopts = "UT"
-  revision = "221dbe5ed46703ee255b1da0dec05086f5035f62"
-  version = "v1.4.0"
+  revision = "3ebf1ddaeb260c4b1ae502a01c7844fa8c1fa0e9"
+  version = "v1.5.1"
 
 [[projects]]
   digest = "1:13503b1b68ee704913caf452f02968fa313a9934e67d951ed0d39ca8e230d5e0"
@@ -629,7 +629,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "86ce3cb696783b739e41e834e2eead3e1b4aa3fb"
+  revision = "2aa609cf4a9d7d1126360de73b55b6002f9e052a"
 
 [[projects]]
   branch = "master"
@@ -645,7 +645,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "16171245cfb220d5317888b716d69c1fb4e7992b"
+  revision = "5a598a2470a0279bd28bab287167dc1ef0813153"
 
 [[projects]]
   branch = "master"
@@ -660,11 +660,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:72b7c210f8cfe1431d2f300fbf37f25e52aa77324b05ab6b698483054033803e"
+  digest = "1:578046baf093df15df2904bbb0fe06f3f2385bad59987532201007754aa7e1d5"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "d101bd2416d505c0448a6ce8a282482678040a89"
+  revision = "d5e6a3e2c0ae16fc7480523ebcb7fd4dd3215489"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
