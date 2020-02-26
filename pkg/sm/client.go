@@ -98,7 +98,9 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.Service
 	log.C(ctx).Debugf("Getting brokers for proxy from Service Manager at %s", c.host)
 
 	result := make([]*types.ServiceBroker, 0)
-	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), nil, &result)
+	err := c.call(ctx, fmt.Sprintf(APIInternalBrokers, c.host), map[string]string{
+		"fieldQuery": "ready eq true",
+	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
 	}
@@ -111,7 +113,9 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.host)
 
 	result := make([]*types.Visibility, 0)
-	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), nil, &result)
+	err := c.call(ctx, fmt.Sprintf(APIVisibilities, c.host), map[string]string{
+		"fieldQuery": "ready eq true",
+	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
 	}
@@ -124,7 +128,9 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
 
 	result := make([]*types.ServicePlan, 0)
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), nil, &result)
+	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), map[string]string{
+		"fieldQuery": "ready eq true",
+	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
@@ -136,7 +142,7 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
 	log.C(ctx).Debugf("Getting service offerings from Service Manager at %s", c.host)
 
-	fieldQuery := fmt.Sprintf("broker_id in ('%s')", strings.Join(brokerIDs, "','"))
+	fieldQuery := fmt.Sprintf("broker_id in ('%s') and ready eq true", strings.Join(brokerIDs, "','"))
 	params := map[string]string{
 		"fieldQuery": fieldQuery,
 	}
@@ -160,7 +166,7 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 	}
 	soIDs = soIDs[1:]
 
-	fieldQuery := fmt.Sprintf("service_offering_id in (%s)", soIDs)
+	fieldQuery := fmt.Sprintf("service_offering_id in (%s) and ready eq true", soIDs)
 	params := map[string]string{
 		"fieldQuery": fieldQuery,
 	}
