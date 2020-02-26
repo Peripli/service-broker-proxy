@@ -136,10 +136,12 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 			}
 
 			log.C(ctx).Infof("Taking over platform broker with name %s and URL %s...", existingBroker.Name, existingBroker.BrokerURL)
-			if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
+			newBroker, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest)
+			if err != nil {
 				log.C(ctx).WithError(err).Errorf("error taking over platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
 				return
 			}
+			bnh.resetBrokerCache(ctx, existingBroker, newBroker)
 		} else {
 			log.C(ctx).Errorf("conflict error: existing platform broker with name %s and URL %s CANNOT be taken over as SM broker with URL %s. The URLs need to be the same", existingBroker.Name, existingBroker.BrokerURL, brokerToCreate.Resource.BrokerURL)
 		}
