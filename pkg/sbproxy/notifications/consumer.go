@@ -3,6 +3,7 @@ package notifications
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/Peripli/service-manager/pkg/log"
 
@@ -42,6 +43,10 @@ func (c *Consumer) Consume(ctx context.Context, n *types.Notification) {
 	entry := log.C(ctx).WithField(log.FieldCorrelationID, correlationID)
 	ctx = log.ContextWithLogger(ctx, entry)
 
+	logger := log.C(ctx)
+	logger.Infof("Processing notification with revision %d", n.Revision)
+	start := time.Now()
+
 	switch n.Type {
 	case types.CREATED:
 		notificationHandler.OnCreate(ctx, n.Payload)
@@ -50,4 +55,9 @@ func (c *Consumer) Consume(ctx context.Context, n *types.Notification) {
 	case types.DELETED:
 		notificationHandler.OnDelete(ctx, n.Payload)
 	}
+
+	processingTime := time.Now().Sub(start)
+	totalTime := time.Now().Sub(n.CreatedAt) // time since notification creation
+	logger.Infof("Processed notification with revision %d in %v, total time %v",
+		n.Revision, processingTime, totalTime)
 }
