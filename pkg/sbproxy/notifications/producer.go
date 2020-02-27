@@ -211,14 +211,14 @@ func (p *Producer) scheduleResync(ctx context.Context, resyncChan chan struct{},
 			return
 		case <-resyncChan:
 		case <-timer.C:
-			log.C(ctx).Debug("Resync period has elapsed. Triggering resync.")
+			log.C(ctx).Info("Resync period has elapsed. Triggering resync.")
 		}
 		select {
 		case <-ctx.Done():
 			log.C(ctx).Info("Context cancelled while sending message. Terminating resync timer.")
 			return
 		case messages <- &Message{Resync: true}:
-			log.C(ctx).Debugf("Sending resync message. Channel len/cap: %d/%d", len(messages), cap(messages))
+			log.C(ctx).Infof("Added resync message to queue. Queue size %d of %d.", len(messages), cap(messages))
 		}
 		timer.Stop()
 		timer = time.NewTimer(p.producerSettings.ResyncPeriod)
@@ -247,13 +247,13 @@ func (p *Producer) readNotifications(ctx context.Context, messages chan *Message
 			log.C(ctx).WithError(err).Error("Could not unmarshal WS message into a notification")
 			return
 		}
-		log.C(ctx).Debugf("Received notification with revision %d", notification.Revision)
+		log.C(ctx).Infof("Received notification with revision %d", notification.Revision)
 		select {
 		case <-ctx.Done():
 			log.C(ctx).Info("Context cancelled while sending message. Terminating notification reader.")
 			return
 		case messages <- &Message{Notification: &notification}:
-			log.C(ctx).Debugf("Notification written in channel. Channel len/cap: %d/%d", len(messages), cap(messages))
+			log.C(ctx).Infof("Added notification to queue. Queue size %d of %d.", len(messages), cap(messages))
 		}
 
 		p.lastNotificationRevision = notification.Revision

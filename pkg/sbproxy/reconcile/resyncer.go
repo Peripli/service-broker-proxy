@@ -2,6 +2,7 @@ package reconcile
 
 import (
 	"context"
+	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -40,9 +41,10 @@ func (r *resyncJob) Resync(ctx context.Context) {
 		log.C(ctx).WithError(err).Error("could not create resync job context")
 		return
 	}
-	log.C(ctx).Infof("STARTING resync job %s...", taskID)
+	log.C(ctx).Infof("Starting resync job %s...", taskID)
+	start := time.Now()
 	r.process(resyncContext)
-	log.C(ctx).Infof("FINISHED resync job %s", taskID)
+	log.C(ctx).Infof("Finished resync job %s in %v", taskID, time.Since(start))
 }
 
 func createResyncContext(ctx context.Context) (context.Context, string, error) {
