@@ -44,7 +44,7 @@ func (r *resyncJob) Resync(ctx context.Context) {
 	log.C(ctx).Infof("Starting resync job %s...", taskID)
 	start := time.Now()
 	r.process(resyncContext)
-	log.C(ctx).Infof("Finished resync job %s in %v", taskID, time.Now().Sub(start))
+	log.C(ctx).Infof("Finished resync job %s in %v", taskID, time.Since(start))
 }
 
 func createResyncContext(ctx context.Context) (context.Context, string, error) {

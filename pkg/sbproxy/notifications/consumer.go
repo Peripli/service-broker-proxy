@@ -56,8 +56,8 @@ func (c *Consumer) Consume(ctx context.Context, n *types.Notification) {
 		notificationHandler.OnDelete(ctx, n.Payload)
 	}
 
-	processingTime := time.Now().Sub(start)
-	totalTime := time.Now().Sub(n.CreatedAt) // time since notification creation
+	processingTime := time.Since(start)
+	totalTime := time.Since(n.CreatedAt) // time since notification creation
 	logger.Infof("Processed notification with revision %d in %v, total time %v",
 		n.Revision, processingTime, totalTime)
 }
