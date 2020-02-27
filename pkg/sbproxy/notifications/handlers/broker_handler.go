@@ -114,11 +114,13 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 			Name:      brokerProxyName,
 			BrokerURL: brokerProxyPath,
 		}
-		if _, err := bnh.BrokerClient.CreateBroker(ctx, createRequest); err != nil {
+		broker, err := bnh.BrokerClient.CreateBroker(ctx, createRequest)
+		if err != nil {
 			log.C(ctx).WithError(err).Errorf("error creating broker with name %s and URL %s", createRequest.Name, createRequest.BrokerURL)
 			return
 		}
 		log.C(ctx).Infof("Successfully created SM proxy registration in platform for broker with name %s", brokerProxyName)
+		bnh.resetBrokerCache(ctx, nil, broker)
 	} else {
 		log.C(ctx).Infof("Successfully found broker in platform with name %s and URL %s. Checking if takeover is needed...", existingBroker.Name, existingBroker.BrokerURL)
 		if shouldBeTakenOver(existingBroker, brokerToCreate.Resource) {
@@ -134,10 +136,12 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 			}
 
 			log.C(ctx).Infof("Taking over platform broker with name %s and URL %s...", existingBroker.Name, existingBroker.BrokerURL)
-			if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
+			newBroker, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest)
+			if err != nil {
 				log.C(ctx).WithError(err).Errorf("error taking over platform broker with GUID %s with SM broker with id %s", existingBroker.GUID, brokerToCreate.Resource.GetID())
 				return
 			}
+			bnh.resetBrokerCache(ctx, existingBroker, newBroker)
 		} else {
 			log.C(ctx).Errorf("conflict error: existing platform broker with name %s and URL %s CANNOT be taken over as SM broker with URL %s. The URLs need to be the same", existingBroker.Name, existingBroker.BrokerURL, brokerToCreate.Resource.BrokerURL)
 		}
@@ -190,26 +194,29 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 			Name:      brokerProxyNameAfter,
 			BrokerURL: brokerProxyPath,
 		}
-		if _, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest); err != nil {
+		newBroker, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest)
+		if err != nil {
 			log.C(ctx).WithError(err).Errorf("Could not update broker name from %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
 			return
 		}
 		log.C(ctx).Infof("Successfully renamed broker %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
+		bnh.resetBrokerCache(ctx, existingBroker, newBroker)
 		return
 	}
 
 	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
-	fetchCatalogRequest := &platform.ServiceBroker{
+	broker := &platform.ServiceBroker{
 		GUID:      existingBroker.GUID,
 		Name:      brokerProxyNameAfter,
 		BrokerURL: brokerProxyPath,
 	}
 	if bnh.CatalogFetcher != nil {
-		if err := bnh.CatalogFetcher.Fetch(ctx, fetchCatalogRequest); err != nil {
-			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", fetchCatalogRequest.GUID, brokerAfterUpdate.Resource.ID)
+		if err := bnh.CatalogFetcher.Fetch(ctx, broker); err != nil {
+			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", broker.GUID, brokerAfterUpdate.Resource.ID)
 			return
 		}
 		log.C(ctx).Infof("Successfully refetched catalog for platform broker with name %s and URL %s", existingBroker.Name, existingBroker.BrokerURL)
+		bnh.resetBrokerCache(ctx, nil, broker)
 	} else {
 		log.C(ctx).Warn("No catalog fetcher is provided. Cannot update broker catalog in the platform")
 	}
@@ -262,6 +269,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, pay
 		return
 	}
 	log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
+	bnh.resetBrokerCache(ctx, existingBroker, nil)
 }
 
 func (bnh *BrokerResourceNotificationsHandler) unmarshalPayload(operationType types.NotificationOperation, payload json.RawMessage) (brokerPayload, error) {
@@ -293,4 +301,22 @@ func determineBrokerNameToFind(oldBrokerName, newBrokerName string) string {
 		return oldBrokerName
 	}
 	return newBrokerName
+}
+
+func (bnh *BrokerResourceNotificationsHandler) resetBrokerCache(ctx context.Context, oldBroker, newBroker *platform.ServiceBroker) {
+	cache, ok := bnh.BrokerClient.(platform.Caching)
+	if !ok {
+		return
+	}
+
+	if oldBroker != nil {
+		if err := cache.ResetBroker(ctx, oldBroker, true); err != nil {
+			log.C(ctx).Error(err)
+		}
+	}
+	if newBroker != nil {
+		if err := cache.ResetBroker(ctx, newBroker, false); err != nil {
+			log.C(ctx).Error(err)
+		}
+	}
 }
