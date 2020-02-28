@@ -24,7 +24,6 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   digest = "1:440b02ac61a9264ceb631820fd192c5330223dda97afbba451d3fdfbd041d4ab"
   name = "github.com/Peripli/service-manager"
   packages = [
@@ -71,6 +70,7 @@
   ]
   pruneopts = "NT"
   revision = "8adb0c510e5959124b4f1c7447b26fa6d6329205"
+  version = "v0.10.3"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -201,8 +201,8 @@
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "d23c5127dc24889085f8ccea5c9d560a57a879d8"
-  version = "v1.3.3"
+  revision = "5d5b4c10bd43f85e63bd9e4a3fa9b1ea2ef88af2"
+  version = "v1.3.4"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -290,7 +290,7 @@
   revision = "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
 
 [[projects]]
-  digest = "1:da22f8cea639e4c5a5df6a1604fe33396ee2cea130b8214ba67cb6ad236b87ff"
+  digest = "1:e5e0d775194850f7f06c78f51015ec7c85a59a62613d1ad9847b5ba0f2a021c8"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -298,8 +298,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "2a5ec94050832300f2c49529dbab4b3774cbc30a"
-  version = "v1.10.1"
+  revision = "d4b3bb13d45b000ac3a915d4f32069a9284540bb"
+  version = "v1.10.2"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -633,7 +633,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7217cd222c72ced17b355f472688cd619e80c8b2e811cbe8b68b739091721173"
+  digest = "1:865e8f0cedca9141920b5d7a5b9f41d90fc14324c82506d452cf9cab669a44a7"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -645,7 +645,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "5a598a2470a0279bd28bab287167dc1ef0813153"
+  revision = "0de0cce0169b09b364e001f108dc0399ea8630b3"
 
 [[projects]]
   branch = "master"
@@ -768,7 +768,6 @@
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
-    "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/authenticators",
     "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",
