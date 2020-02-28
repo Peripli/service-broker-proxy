@@ -19,6 +19,7 @@ package reconcile
 import (
 	"context"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/util"
 	"github.com/Peripli/service-manager/pkg/types"
 	"strings"
@@ -155,7 +156,11 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 		}
 
 		if err := r.smClient.PutCredentials(ctx, credentials); err != nil {
-			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+			if err != sm.ErrConflictingBrokerPlatformCredentials {
+				return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+			}
+			username = ""
+			password = ""
 		}
 
 		updateRequest := &platform.UpdateServiceBrokerRequest{
@@ -222,7 +227,11 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		PasswordHash: passwordHash,
 		BrokerID:     brokerInSM.GUID,
 	}); err != nil {
-		return err
+		if err != sm.ErrConflictingBrokerPlatformCredentials {
+			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+		}
+		username = ""
+		password = ""
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{

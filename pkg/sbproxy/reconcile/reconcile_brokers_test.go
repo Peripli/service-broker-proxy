@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
@@ -464,7 +465,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is in SM and is also in platform but points to proxy URL and was renamed in platform it should be updated to point to SM URL and name should be restored", testCase{
+		Entry("When broker is in SM and is also in platform and points to proxy URL but was renamed in platform it should be updated to point to SM URL and name should be restored", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker(platformBrokerProxy2)
@@ -913,4 +914,40 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 	}, entries...)
 
+	Describe("broker platform credentials rotation", func() {
+		When("credentials already exist in SM", func() {
+			Context("broker update", func() {
+				It("should not rotate credentials in SM and in platform", func() {
+					fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smOrphanBroker}, nil)
+					fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformOrphanBrokerProxyRenamed}, nil)
+					fakeSMClient.PutCredentialsReturns(sm.ErrConflictingBrokerPlatformCredentials)
+
+					stubPlatformOpsToSucceed()
+					stubPlatformUpdateBroker(platformBrokerProxy2)
+
+					reconciler.Resyncer.Resync(context.TODO())
+
+					_, updateBrokerRequest := fakePlatformBrokerClient.UpdateBrokerArgsForCall(0)
+					Expect(updateBrokerRequest.Username).To(BeEmpty())
+					Expect(updateBrokerRequest.Password).To(BeEmpty())
+				})
+			})
+
+			Context("broker catalog fetch", func() {
+				It("should not rotate credentials in SM and in platform", func() {
+					fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smbroker1}, nil)
+					fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker1}, nil)
+					fakeSMClient.PutCredentialsReturns(sm.ErrConflictingBrokerPlatformCredentials)
+
+					stubPlatformOpsToSucceed()
+
+					reconciler.Resyncer.Resync(context.TODO())
+
+					_, updateBrokerRequest := fakePlatformCatalogFetcher.FetchArgsForCall(0)
+					Expect(updateBrokerRequest.Username).To(BeEmpty())
+					Expect(updateBrokerRequest.Password).To(BeEmpty())
+				})
+			})
+		})
+	})
 })

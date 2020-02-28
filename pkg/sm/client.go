@@ -53,6 +53,9 @@ const (
 	APICredentials = "%s" + web.BrokerPlatformCredentialsURL
 )
 
+// ErrConflictingBrokerPlatformCredentials error returned from SM when broker platform credentials already exist
+var ErrConflictingBrokerPlatformCredentials = errors.New("conflicting broker platform credentials")
+
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
 type Client interface {
@@ -200,11 +203,16 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 		return errors.Wrap(err, "error registering credentials in Service Manager")
 	}
 
-	if response.StatusCode != http.StatusOK {
+	switch response.StatusCode {
+	case http.StatusOK:
+		log.C(ctx).Debugf("Successfully putting credentials in Service Manager at: %s", c.host)
+	case http.StatusConflict:
+		log.C(ctx).Debugf("Credentials could not be persisted. Existing credentials were found in Service Manager at: %s", c.host)
+		return ErrConflictingBrokerPlatformCredentials
+	default:
 		return fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
 	}
 
-	log.C(ctx).Debugf("Successfully putting credentials in Service Manager at %s", c.host)
 	return nil
 }
 

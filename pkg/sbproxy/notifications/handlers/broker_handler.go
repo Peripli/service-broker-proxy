@@ -118,9 +118,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 	}
 
 	credentials := &types.BrokerPlatformCredential{
-		Username:     username,
-		PasswordHash: passwordHash,
-		BrokerID:     brokerToCreate.Resource.ID,
+		Username:       username,
+		PasswordHash:   passwordHash,
+		BrokerID:       brokerToCreate.Resource.ID,
+		NotificationID: notification.ID,
 	}
 
 	if existingBroker == nil {
@@ -221,9 +222,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 	}
 
 	credentials := &types.BrokerPlatformCredential{
-		Username:     username,
-		PasswordHash: passwordHash,
-		BrokerID:     brokerAfterUpdate.Resource.ID,
+		Username:       username,
+		PasswordHash:   passwordHash,
+		BrokerID:       brokerAfterUpdate.Resource.ID,
+		NotificationID: notification.ID,
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
