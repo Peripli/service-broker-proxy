@@ -25,7 +25,7 @@
 
 [[projects]]
   branch = "credentials_api"
-  digest = "1:a43f784352cdfe14ca57f1c2fe2c8d27a1c1f6f57d8fb38fa2989ab5ed680cd9"
+  digest = "1:34111e994466784393392deed9877d5ba1fd9ab3b5947b26d1869264fa1088bf"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -70,7 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "38f772b5373cc53921256d5df26b9e441372dd11"
+  revision = "5b461686feb8915845cc9c6a8728d671d4f6272e"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -201,8 +201,8 @@
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "d23c5127dc24889085f8ccea5c9d560a57a879d8"
-  version = "v1.3.3"
+  revision = "5d5b4c10bd43f85e63bd9e4a3fa9b1ea2ef88af2"
+  version = "v1.3.4"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -290,7 +290,7 @@
   revision = "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
 
 [[projects]]
-  digest = "1:da22f8cea639e4c5a5df6a1604fe33396ee2cea130b8214ba67cb6ad236b87ff"
+  digest = "1:e5e0d775194850f7f06c78f51015ec7c85a59a62613d1ad9847b5ba0f2a021c8"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -298,8 +298,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "2a5ec94050832300f2c49529dbab4b3774cbc30a"
-  version = "v1.10.1"
+  revision = "d4b3bb13d45b000ac3a915d4f32069a9284540bb"
+  version = "v1.10.2"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"

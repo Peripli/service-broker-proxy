@@ -85,7 +85,8 @@ type BrokerResourceNotificationsHandler struct {
 }
 
 // OnCreate creates brokers from the specified notification payload by invoking the proper platform clients
-func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
+func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, notification *types.Notification) {
+	payload := notification.Payload
 	log.C(ctx).Debugf("Processing broker create notification with payload %s...", string(payload))
 
 	brokerPayload, err := bnh.unmarshalPayload(types.CREATED, payload)
@@ -174,7 +175,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, pay
 }
 
 // OnUpdate modifies brokers from the specified notification payload by invoking the proper platform clients
-func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
+func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, notification *types.Notification) {
+	payload := notification.Payload
 	log.C(ctx).Debugf("Processing broker update notification with payload %s...", string(payload))
 
 	brokerPayload, err := bnh.unmarshalPayload(types.MODIFIED, payload)
@@ -266,7 +268,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, pay
 }
 
 // OnDelete deletes brokers from the provided notification payload by invoking the proper platform clients
-func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
+func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, notification *types.Notification) {
+	payload := notification.Payload
 	log.C(ctx).Debugf("Processing broker delete notification with payload %s...", string(payload))
 
 	brokerPayload, err := bnh.unmarshalPayload(types.DELETED, payload)

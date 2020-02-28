@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/sm/smfakes"
+	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/tidwall/sjson"
 
@@ -125,7 +126,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -141,7 +142,7 @@ var _ = Describe("Broker Handler", func() {
 				})
 
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -157,7 +158,7 @@ var _ = Describe("Broker Handler", func() {
 				})
 
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -173,7 +174,7 @@ var _ = Describe("Broker Handler", func() {
 				})
 
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -189,7 +190,7 @@ var _ = Describe("Broker Handler", func() {
 				})
 
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -205,7 +206,7 @@ var _ = Describe("Broker Handler", func() {
 				})
 
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -221,7 +222,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does try to create and not update or delete broker", func() {
-				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(1))
@@ -252,7 +253,7 @@ var _ = Describe("Broker Handler", func() {
 			When("broker is not in broker blacklist", func() {
 				It("invokes update broker with the correct arguments", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(1))
 
@@ -268,7 +269,7 @@ var _ = Describe("Broker Handler", func() {
 					brokerHandler.BrokerBlacklist = []string{brokerName}
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				})
@@ -279,7 +280,7 @@ var _ = Describe("Broker Handler", func() {
 					brokerHandler.TakeoverEnabled = false
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				})
@@ -294,7 +295,7 @@ var _ = Describe("Broker Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+						brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 					})
 				})
 			})
@@ -316,7 +317,7 @@ var _ = Describe("Broker Handler", func() {
 
 				It("invokes create broker with the correct arguments", func() {
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(1))
 
@@ -339,7 +340,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -349,7 +350,7 @@ var _ = Describe("Broker Handler", func() {
 
 			It("logs an error", func() {
 				VerifyErrorLogged(func() {
-					brokerHandler.OnCreate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 				})
 			})
 		})
@@ -400,7 +401,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(len(fakeBrokerClient.Invocations())).To(Equal(0))
 			})
@@ -413,7 +414,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -429,7 +430,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -444,7 +445,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -464,7 +465,7 @@ var _ = Describe("Broker Handler", func() {
 
 			When("broker is not in broker blacklist", func() {
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -476,7 +477,7 @@ var _ = Describe("Broker Handler", func() {
 			When("broker is in broker blacklist", func() {
 				It("does not try to create, update or delete broker", func() {
 					brokerHandler.BrokerBlacklist = []string{brokerName}
-					brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -548,7 +549,7 @@ var _ = Describe("Broker Handler", func() {
 						GUID:      request.GUID,
 					}, nil
 				}
-				brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 				expectedReq := &platform.UpdateServiceBrokerRequest{
 					GUID:      smBrokerID,
 					Name:      brokerProxyName(brokerHandler.ProxyPrefix, newBrokerName, smBrokerID),
@@ -575,7 +576,7 @@ var _ = Describe("Broker Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+						brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 					})
 				})
 			})
@@ -595,7 +596,7 @@ var _ = Describe("Broker Handler", func() {
 
 				It("fetches the catalog and does not try to update/overtake the platform broker", func() {
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
-					brokerHandler.OnUpdate(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(1))
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
@@ -635,7 +636,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create or update broker", func() {
-				brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -652,7 +653,7 @@ var _ = Describe("Broker Handler", func() {
 				})
 
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -668,7 +669,7 @@ var _ = Describe("Broker Handler", func() {
 			})
 
 			It("does not try to create, update or delete broker", func() {
-				brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+				brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 				Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -688,7 +689,7 @@ var _ = Describe("Broker Handler", func() {
 
 			When("broker is not in broker blacklist", func() {
 				It("does not try to create, update or delete broker", func() {
-					brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -700,7 +701,7 @@ var _ = Describe("Broker Handler", func() {
 			When("broker is in broker blacklist", func() {
 				It("does not try to create, update or delete broker", func() {
 					brokerHandler.BrokerBlacklist = []string{brokerName}
-					brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeCatalogFetcher.FetchCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
@@ -726,7 +727,7 @@ var _ = Describe("Broker Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+						brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 					})
 				})
 			})
@@ -745,7 +746,7 @@ var _ = Describe("Broker Handler", func() {
 
 				It("invokes delete broker with the correct arguments", func() {
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
-					brokerHandler.OnDelete(ctx, json.RawMessage(brokerNotificationPayload))
+					brokerHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(brokerNotificationPayload)})
 
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(1))
 
