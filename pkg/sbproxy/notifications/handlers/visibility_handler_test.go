@@ -11,8 +11,6 @@ import (
 
 	"github.com/tidwall/sjson"
 
-	"github.com/Peripli/service-manager/pkg/query"
-
 	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -49,8 +47,8 @@ var _ = Describe("Visibility Handler", func() {
 		return labels
 	}
 
-	unmarshalLabelChanges := func(labelChangeJSON string) query.LabelChanges {
-		labelChanges := query.LabelChanges{}
+	unmarshalLabelChanges := func(labelChangeJSON string) types.LabelChanges {
+		labelChanges := types.LabelChanges{}
 		err := json.Unmarshal([]byte(labelChangeJSON), &labelChanges)
 		Expect(err).ShouldNot(HaveOccurred())
 

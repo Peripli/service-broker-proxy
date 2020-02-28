@@ -9,8 +9,6 @@ import (
 
 	"github.com/Peripli/service-manager/storage/interceptors"
 
-	"github.com/Peripli/service-manager/pkg/query"
-
 	"github.com/Peripli/service-manager/pkg/log"
 
 	"github.com/Peripli/service-manager/pkg/types"
@@ -21,7 +19,7 @@ import (
 type visibilityPayload struct {
 	New          visibilityWithAdditionalDetails `json:"new"`
 	Old          visibilityWithAdditionalDetails `json:"old"`
-	LabelChanges query.LabelChanges              `json:"label_changes"`
+	LabelChanges types.LabelChanges              `json:"label_changes"`
 }
 
 type visibilityWithAdditionalDetails struct {
