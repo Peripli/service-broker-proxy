@@ -25,7 +25,7 @@
 
 [[projects]]
   branch = "credentials_api"
-  digest = "1:34111e994466784393392deed9877d5ba1fd9ab3b5947b26d1869264fa1088bf"
+  digest = "1:a6c9e06e1cef7df8038979bb692a3c9c8cbc22653f985484f19bf1b81a489210"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -70,7 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "5b461686feb8915845cc9c6a8728d671d4f6272e"
+  revision = "5893920c43a5b80ff3f0302dea5078e5ac88276f"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -517,12 +517,12 @@
   version = "v1.5.1"
 
 [[projects]]
-  digest = "1:13503b1b68ee704913caf452f02968fa313a9934e67d951ed0d39ca8e230d5e0"
+  digest = "1:358f9a53d3bb46b9dd07b4490f9b30f9f85218b41f6bbb48d6503668a45721a6"
   name = "github.com/tidwall/gjson"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0360deb6d803e8c271363ce5f6c85d6cd843a3a0"
-  version = "v1.5.0"
+  revision = "f042915ca17de35980544c91ab2c8ceb73b682f2"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:8453ddbed197809ee8ca28b06bd04e127bec9912deb4ba451fea7a1eca578328"
@@ -647,7 +647,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "0de0cce0169b09b364e001f108dc0399ea8630b3"
+  revision = "244492dfa37ae2ce87222fd06250a03160745faa"
 
 [[projects]]
   branch = "master"
@@ -662,11 +662,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:578046baf093df15df2904bbb0fe06f3f2385bad59987532201007754aa7e1d5"
+  digest = "1:a70084a3b2539ae837aa84c5ab561c6eddfc48eb64737d4f4414405694e47b0e"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "d5e6a3e2c0ae16fc7480523ebcb7fd4dd3215489"
+  revision = "5d559ad92b82f3696a2a2f23108ac03758aabedb"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -770,7 +770,6 @@
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
-    "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/authenticators",
     "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",

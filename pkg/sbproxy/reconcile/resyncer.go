@@ -2,6 +2,7 @@ package reconcile
 
 import (
 	"context"
+	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
@@ -40,9 +41,10 @@ func (r *resyncJob) Resync(ctx context.Context) {
 		log.C(ctx).WithError(err).Error("could not create resync job context")
 		return
 	}
-	log.C(ctx).Infof("STARTING resync job %s...", taskID)
+	log.C(ctx).Infof("Starting resync job %s...", taskID)
+	start := time.Now()
 	r.process(resyncContext)
-	log.C(ctx).Infof("FINISHED resync job %s", taskID)
+	log.C(ctx).Infof("Finished resync job %s in %v", taskID, time.Since(start))
 }
 
 func createResyncContext(ctx context.Context) (context.Context, string, error) {
@@ -90,6 +92,7 @@ func (r *resyncJob) process(ctx context.Context) {
 	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(platformBrokers))
 
 	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
+	r.resetPlatformCache(ctx)
 	r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
 }
 
@@ -103,4 +106,15 @@ func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.Servic
 		return nil, errors.Wrap(err, "an error occurred while obtaining plans from Service Manager")
 	}
 	return smPlans, nil
+}
+
+func (r *resyncJob) resetPlatformCache(ctx context.Context) {
+	logger := log.C(ctx)
+
+	if cache, ok := r.platformClient.(platform.Caching); ok {
+		if err := cache.ResetCache(ctx); err != nil {
+			logger.WithError(err).Error("an error occurred while loading platform data")
+			return
+		}
+	}
 }
