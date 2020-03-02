@@ -183,6 +183,7 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 	return result, nil
 }
 
+//PutCredentials sends new broker platform credentials to Service Manager
 func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
 	log.C(ctx).Debugf("Putting credentials in Service Manager at %s", c.host)
 
