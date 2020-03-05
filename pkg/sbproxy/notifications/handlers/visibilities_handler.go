@@ -76,7 +76,8 @@ type VisibilityResourceNotificationsHandler struct {
 }
 
 // OnCreate creates visibilities from the specified notification payload by invoking the proper platform clients
-func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context, payload json.RawMessage) {
+func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context, notification *types.Notification) {
+	payload := notification.Payload
 	if vnh.VisibilityClient == nil {
 		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped")
 		return
@@ -118,7 +119,8 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 }
 
 // OnUpdate modifies visibilities from the specified notification payload by invoking the proper platform clients
-func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context, payload json.RawMessage) {
+func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context, notification *types.Notification) {
+	payload := notification.Payload
 	if vnh.VisibilityClient == nil {
 		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped.")
 		return
@@ -219,7 +221,8 @@ func (vnh *VisibilityResourceNotificationsHandler) enableServiceAccess(ctx conte
 }
 
 // OnDelete deletes visibilities from the provided notification payload by invoking the proper platform clients
-func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context, payload json.RawMessage) {
+func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context, notification *types.Notification) {
+	payload := notification.Payload
 	if vnh.VisibilityClient == nil {
 		log.C(ctx).Warn("Platform client cannot handle visibilities. Visibility notification will be skipped")
 		return

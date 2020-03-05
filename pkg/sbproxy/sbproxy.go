@@ -169,6 +169,7 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
+				SMClient:        smClient,
 				BrokerClient:    platformClient.Broker(),
 				CatalogFetcher:  platformClient.CatalogFetcher(),
 				ProxyPrefix:     settings.Reconcile.BrokerPrefix,

@@ -9,11 +9,11 @@ import (
 )
 
 type FakeCatalogFetcher struct {
-	FetchStub        func(context.Context, *platform.ServiceBroker) error
+	FetchStub        func(context.Context, *platform.UpdateServiceBrokerRequest) error
 	fetchMutex       sync.RWMutex
 	fetchArgsForCall []struct {
 		arg1 context.Context
-		arg2 *platform.ServiceBroker
+		arg2 *platform.UpdateServiceBrokerRequest
 	}
 	fetchReturns struct {
 		result1 error
@@ -25,12 +25,12 @@ type FakeCatalogFetcher struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeCatalogFetcher) Fetch(arg1 context.Context, arg2 *platform.ServiceBroker) error {
+func (fake *FakeCatalogFetcher) Fetch(arg1 context.Context, arg2 *platform.UpdateServiceBrokerRequest) error {
 	fake.fetchMutex.Lock()
 	ret, specificReturn := fake.fetchReturnsOnCall[len(fake.fetchArgsForCall)]
 	fake.fetchArgsForCall = append(fake.fetchArgsForCall, struct {
 		arg1 context.Context
-		arg2 *platform.ServiceBroker
+		arg2 *platform.UpdateServiceBrokerRequest
 	}{arg1, arg2})
 	fake.recordInvocation("Fetch", []interface{}{arg1, arg2})
 	fake.fetchMutex.Unlock()
@@ -50,13 +50,13 @@ func (fake *FakeCatalogFetcher) FetchCallCount() int {
 	return len(fake.fetchArgsForCall)
 }
 
-func (fake *FakeCatalogFetcher) FetchCalls(stub func(context.Context, *platform.ServiceBroker) error) {
+func (fake *FakeCatalogFetcher) FetchCalls(stub func(context.Context, *platform.UpdateServiceBrokerRequest) error) {
 	fake.fetchMutex.Lock()
 	defer fake.fetchMutex.Unlock()
 	fake.FetchStub = stub
 }
 
-func (fake *FakeCatalogFetcher) FetchArgsForCall(i int) (context.Context, *platform.ServiceBroker) {
+func (fake *FakeCatalogFetcher) FetchArgsForCall(i int) (context.Context, *platform.UpdateServiceBrokerRequest) {
 	fake.fetchMutex.RLock()
 	defer fake.fetchMutex.RUnlock()
 	argsForCall := fake.fetchArgsForCall[i]

@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
@@ -464,7 +465,7 @@ var _ = Describe("Reconcile brokers", func() {
 			},
 		}),
 
-		Entry("When broker is in SM and is also in platform but points to proxy URL and was renamed in platform it should be updated to point to SM URL and name should be restored", testCase{
+		Entry("When broker is in SM and is also in platform and points to proxy URL but was renamed in platform it should be updated to point to SM URL and name should be restored", testCase{
 			stubs: func() {
 				stubPlatformOpsToSucceed()
 				stubPlatformUpdateBroker(platformBrokerProxy2)
@@ -844,6 +845,12 @@ var _ = Describe("Reconcile brokers", func() {
 		var calledCreateBrokerRequests []*platform.CreateServiceBrokerRequest
 		for index := range expected.reconcileCreateCalledFor {
 			_, request := fakePlatformBrokerClient.CreateBrokerArgsForCall(index)
+			Expect(request.Username).ToNot(BeEmpty())
+			Expect(request.Password).ToNot(BeEmpty())
+
+			request.Username = ""
+			request.Password = ""
+
 			calledCreateBrokerRequests = append(calledCreateBrokerRequests, request)
 		}
 		for _, broker := range expected.reconcileCreateCalledFor {
@@ -854,13 +861,23 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 
 		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
-		var calledFetchCatalogBrokers []*platform.ServiceBroker
+		var calledFetchCatalogBrokers []*platform.UpdateServiceBrokerRequest
 		for index := range expected.reconcileCatalogCalledFor {
-			_, serviceBroker := fakePlatformCatalogFetcher.FetchArgsForCall(index)
-			calledFetchCatalogBrokers = append(calledFetchCatalogBrokers, serviceBroker)
+			_, updateServiceBrokerRequest := fakePlatformCatalogFetcher.FetchArgsForCall(index)
+			Expect(updateServiceBrokerRequest.Username).ToNot(BeEmpty())
+			Expect(updateServiceBrokerRequest.Password).ToNot(BeEmpty())
+
+			updateServiceBrokerRequest.Username = ""
+			updateServiceBrokerRequest.Password = ""
+
+			calledFetchCatalogBrokers = append(calledFetchCatalogBrokers, updateServiceBrokerRequest)
 		}
 		for _, broker := range expected.reconcileCatalogCalledFor {
-			Expect(calledFetchCatalogBrokers).To(ContainElement(broker))
+			Expect(calledFetchCatalogBrokers).To(ContainElement(&platform.UpdateServiceBrokerRequest{
+				GUID:      broker.GUID,
+				Name:      broker.Name,
+				BrokerURL: broker.BrokerURL,
+			}))
 		}
 
 		Expect(fakePlatformBrokerClient.DeleteBrokerCallCount()).To(Equal(len(expected.reconcileDeleteCalledFor)))
@@ -880,6 +897,12 @@ var _ = Describe("Reconcile brokers", func() {
 		var calledUpdateBrokerRequests []*platform.UpdateServiceBrokerRequest
 		for index := range expected.reconcileUpdateCalledFor {
 			_, request := fakePlatformBrokerClient.UpdateBrokerArgsForCall(index)
+			Expect(request.Username).ToNot(BeEmpty())
+			Expect(request.Password).ToNot(BeEmpty())
+
+			request.Username = ""
+			request.Password = ""
+
 			calledUpdateBrokerRequests = append(calledUpdateBrokerRequests, request)
 		}
 		for _, broker := range expected.reconcileUpdateCalledFor {
@@ -891,4 +914,40 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 	}, entries...)
 
+	Describe("broker platform credentials rotation", func() {
+		When("credentials already exist in SM", func() {
+			Context("broker update", func() {
+				It("should not rotate credentials in SM and in platform", func() {
+					fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smOrphanBroker}, nil)
+					fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformOrphanBrokerProxyRenamed}, nil)
+					fakeSMClient.PutCredentialsReturns(sm.ErrConflictingBrokerPlatformCredentials)
+
+					stubPlatformOpsToSucceed()
+					stubPlatformUpdateBroker(platformBrokerProxy2)
+
+					reconciler.Resyncer.Resync(context.TODO())
+
+					_, updateBrokerRequest := fakePlatformBrokerClient.UpdateBrokerArgsForCall(0)
+					Expect(updateBrokerRequest.Username).To(BeEmpty())
+					Expect(updateBrokerRequest.Password).To(BeEmpty())
+				})
+			})
+
+			Context("broker catalog fetch", func() {
+				It("should not rotate credentials in SM and in platform", func() {
+					fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smbroker1}, nil)
+					fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker1}, nil)
+					fakeSMClient.PutCredentialsReturns(sm.ErrConflictingBrokerPlatformCredentials)
+
+					stubPlatformOpsToSucceed()
+
+					reconciler.Resyncer.Resync(context.TODO())
+
+					_, updateBrokerRequest := fakePlatformCatalogFetcher.FetchArgsForCall(0)
+					Expect(updateBrokerRequest.Username).To(BeEmpty())
+					Expect(updateBrokerRequest.Password).To(BeEmpty())
+				})
+			})
+		})
+	})
 })

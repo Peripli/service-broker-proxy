@@ -24,6 +24,8 @@ import (
 type CreateServiceBrokerRequest struct {
 	Name      string `json:"name"`
 	BrokerURL string `json:"broker_url"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
 }
 
 // UpdateServiceBrokerRequest type used for requests by the platform client
@@ -31,6 +33,8 @@ type UpdateServiceBrokerRequest struct {
 	GUID      string `json:"guid"`
 	Name      string `json:"name"`
 	BrokerURL string `json:"broker_url"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
 }
 
 // DeleteServiceBrokerRequest type used for requests by the platform client

@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:440b02ac61a9264ceb631820fd192c5330223dda97afbba451d3fdfbd041d4ab"
+  branch = "master"
+  digest = "1:82cf426790dd9a989c9fca34c570646d94d9102c53fb042adb766aada6912227"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -69,8 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "8adb0c510e5959124b4f1c7447b26fa6d6329205"
-  version = "v0.10.3"
+  revision = "ce5f8bcd34bc599ab032640382197723163ad47d"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -517,12 +517,12 @@
   version = "v1.5.1"
 
 [[projects]]
-  digest = "1:13503b1b68ee704913caf452f02968fa313a9934e67d951ed0d39ca8e230d5e0"
+  digest = "1:358f9a53d3bb46b9dd07b4490f9b30f9f85218b41f6bbb48d6503668a45721a6"
   name = "github.com/tidwall/gjson"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0360deb6d803e8c271363ce5f6c85d6cd843a3a0"
-  version = "v1.5.0"
+  revision = "f042915ca17de35980544c91ab2c8ceb73b682f2"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:8453ddbed197809ee8ca28b06bd04e127bec9912deb4ba451fea7a1eca578328"
@@ -621,15 +621,17 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5cdf4eb6946922ebe638b90e548e1a86085b778d9daf0889951b39f44e6bbe6c"
+  digest = "1:6d1e6b1279da86043098d6b35e4e84f5ace42c7a3a8936025a843619b02253ea"
   name = "golang.org/x/crypto"
   packages = [
+    "bcrypt",
+    "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519",
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "2aa609cf4a9d7d1126360de73b55b6002f9e052a"
+  revision = "78000ba7a073cafc0278790f6bce552a0f25850e"
 
 [[projects]]
   branch = "master"
@@ -645,7 +647,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "0de0cce0169b09b364e001f108dc0399ea8630b3"
+  revision = "244492dfa37ae2ce87222fd06250a03160745faa"
 
 [[projects]]
   branch = "master"
@@ -660,11 +662,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:578046baf093df15df2904bbb0fe06f3f2385bad59987532201007754aa7e1d5"
+  digest = "1:8d59aa6f03198132e0ca3bf998677f9698e1e27fc67976c85d85086ac3496530"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "d5e6a3e2c0ae16fc7480523ebcb7fd4dd3215489"
+  revision = "5c8b2ff67527cb88b770f693cebf3799036d8bc0"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -793,6 +795,7 @@
     "github.com/spf13/pflag",
     "github.com/tidwall/gjson",
     "github.com/tidwall/sjson",
+    "golang.org/x/crypto/bcrypt",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

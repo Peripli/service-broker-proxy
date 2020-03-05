@@ -17,6 +17,8 @@
 package sm
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -46,7 +48,13 @@ const (
 
 	// APIServiceOfferings is the SM API for obtaining service offerings
 	APIServiceOfferings = "%s" + web.ServiceOfferingsURL
+
+	// APICredentials is the SM API for managing broker platform credentials
+	APICredentials = "%s" + web.BrokerPlatformCredentialsURL
 )
+
+// ErrConflictingBrokerPlatformCredentials error returned from SM when broker platform credentials already exist
+var ErrConflictingBrokerPlatformCredentials = errors.New("conflicting broker platform credentials")
 
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
@@ -56,6 +64,7 @@ type Client interface {
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 	GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error)
 	GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error)
+	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error
 }
 
 // ServiceManagerClient allows consuming Service Manager APIs
@@ -172,6 +181,40 @@ func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, s
 	}
 
 	return result, nil
+}
+
+//PutCredentials sends new broker platform credentials to Service Manager
+func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
+	log.C(ctx).Debugf("Putting credentials in Service Manager at %s", c.host)
+
+	body, err := json.Marshal(credentials)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf(APICredentials, c.host), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "error registering credentials in Service Manager")
+	}
+
+	switch response.StatusCode {
+	case http.StatusOK:
+		log.C(ctx).Debugf("Successfully putting credentials in Service Manager at: %s", c.host)
+	case http.StatusConflict:
+		log.C(ctx).Debugf("Credentials could not be persisted. Existing credentials were found in Service Manager at: %s", c.host)
+		return ErrConflictingBrokerPlatformCredentials
+	default:
+		return fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
+	}
+
+	return nil
 }
 
 func (c *ServiceManagerClient) call(ctx context.Context, smURL string, params map[string]string, list interface{}) error {

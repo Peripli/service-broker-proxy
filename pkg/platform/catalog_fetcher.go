@@ -24,6 +24,6 @@ import "context"
 //go:generate counterfeiter . CatalogFetcher
 type CatalogFetcher interface {
 
-	// Fetch contains the logic for platform specific catalog fetching for the provided service broker
-	Fetch(ctx context.Context, serviceBroker *ServiceBroker) error
+	// Fetch contains the logic for platform specific catalog fetching for the broker defined in the update request
+	Fetch(ctx context.Context, r *UpdateServiceBrokerRequest) error
 }
