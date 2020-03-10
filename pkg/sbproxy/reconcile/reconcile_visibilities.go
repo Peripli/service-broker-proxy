@@ -49,7 +49,7 @@ func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	logger.Infof("resyncJob SUCCESSFULLY retrieved %d visibilities from platform", len(visibilities))
+	logger.Infof("resyncJob successfully retrieved %d visibilities from platform", len(visibilities))
 
 	return visibilities, nil
 }
@@ -77,7 +77,7 @@ func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerin
 		result[brokerID] = brokerPlans
 		count += len(brokerPlans)
 	}
-	log.C(ctx).Infof("resyncJob SUCCESSFULLY retrieved %d plans from Service Manager", count)
+	log.C(ctx).Infof("resyncJob successfully retrieved %d plans from Service Manager", count)
 
 	return result, nil
 }
@@ -93,7 +93,7 @@ func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers 
 	if err != nil {
 		return nil, err
 	}
-	log.C(ctx).Infof("resyncJob SUCCESSFULLY retrieved %d service offerings from Service Manager", len(offerings))
+	log.C(ctx).Infof("resyncJob successfully retrieved %d service offerings from Service Manager", len(offerings))
 
 	for _, offering := range offerings {
 		if result[offering.BrokerID] == nil {
@@ -113,7 +113,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 	if err != nil {
 		return nil, err
 	}
-	logger.Infof("resyncJob SUCCESSFULLY retrieved %d visibilities from Service Manager", len(visibilities))
+	logger.Infof("resyncJob successfully retrieved %d visibilities from Service Manager", len(visibilities))
 
 	result := make([]*platform.Visibility, 0)
 
@@ -131,7 +131,7 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 			result = append(result, converted...)
 		}
 	}
-	logger.Infof("resyncJob SUCCESSFULLY converted %d Service Manager visibilities to %d platform visibilities", len(visibilities), len(result))
+	logger.Infof("resyncJob successfully converted %d Service Manager visibilities to %d platform visibilities", len(visibilities), len(result))
 
 	return result, nil
 }
@@ -237,7 +237,8 @@ func (r *resyncJob) getVisibilityKey(visibility *platform.Visibility) string {
 
 func (r *resyncJob) createVisibility(ctx context.Context, visibility *platform.Visibility) error {
 	logger := log.C(ctx)
-	logger.Infof("resyncJob creating visibility for catalog plan %s with labels %v...", visibility.CatalogPlanID, visibility.Labels)
+	logger.Infof("resyncJob creating visibility for catalog plan %s from broker %s ...",
+		visibility.CatalogPlanID, visibility.PlatformBrokerName)
 
 	if err := r.platformClient.Visibility().EnableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    visibility.PlatformBrokerName,
@@ -246,14 +247,15 @@ func (r *resyncJob) createVisibility(ctx context.Context, visibility *platform.V
 	}); err != nil {
 		return err
 	}
-	logger.Infof("resyncJob SUCCESSFULLY created visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
+	logger.Infof("resyncJob successfully created visibility for catalog plan %s from broker %s",
+		visibility.CatalogPlanID, visibility.PlatformBrokerName)
 
 	return nil
 }
 
 func (r *resyncJob) deleteVisibility(ctx context.Context, visibility *platform.Visibility) error {
 	logger := log.C(ctx)
-	logger.Infof("resyncJob deleting visibility for catalog plan %s with labels %v...", visibility.CatalogPlanID, visibility.Labels)
+	logger.Infof("resyncJob deleting visibility for catalog plan %s ...", visibility.CatalogPlanID)
 
 	if err := r.platformClient.Visibility().DisableAccessForPlan(ctx, &platform.ModifyPlanAccessRequest{
 		BrokerName:    visibility.PlatformBrokerName,
@@ -262,7 +264,7 @@ func (r *resyncJob) deleteVisibility(ctx context.Context, visibility *platform.V
 	}); err != nil {
 		return err
 	}
-	logger.Infof("resyncJob SUCCESSFULLY deleted visibility for catalog plan %s with labels %v", visibility.CatalogPlanID, visibility.Labels)
+	logger.Infof("resyncJob successfully deleted visibility for catalog plan %s", visibility.CatalogPlanID)
 
 	return nil
 }

@@ -134,7 +134,7 @@ func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBr
 		}
 		brokersFromSM = append(brokersFromSM, brokerReg)
 	}
-	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from Service Manager", len(brokersFromSM))
+	logger.Infof("resyncJob successfully retrieved %d brokers from Service Manager", len(brokersFromSM))
 
 	return brokersFromSM, nil
 }
@@ -175,7 +175,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during fetching catalog...")
 			return err
 		}
-		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob SUCCESSFULLY refetched catalog for broker")
+		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
 	}
 	return nil
 }
@@ -208,7 +208,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker creation")
 		return err
 	}
-	logger.WithFields(logBroker(b)).Infof("resyncJob SUCCESSFULLY created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
+	logger.WithFields(logBroker(b)).Infof("resyncJob successfully created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
 	return nil
 }
 
@@ -246,7 +246,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker update")
 		return err
 	}
-	logger.WithFields(logBroker(b)).Infof("resyncJob SUCCESSFULLY updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
+	logger.WithFields(logBroker(b)).Infof("resyncJob successfully updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
 	return nil
 }
 
@@ -264,7 +264,7 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 		return err
 	}
 
-	logger.WithFields(logBroker(broker)).Infof("resyncJob SUCCESSFULLY deleted proxy broker from platform with name [%s]", deleteRequest.Name)
+	logger.WithFields(logBroker(broker)).Infof("resyncJob successfully deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 	return nil
 }
 
