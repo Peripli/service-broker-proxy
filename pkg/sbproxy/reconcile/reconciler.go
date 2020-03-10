@@ -19,9 +19,7 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
-	"time"
 
 	"github.com/Peripli/service-manager/pkg/types"
 
@@ -47,34 +45,6 @@ type TimestampedError struct {
 
 func (te TimestampedError) Error() string {
 	return fmt.Sprintf("%s-%s", te.Timestamp, te.Cause)
-}
-
-// CompositeError consists of multiple errors and attaches timestamps to them
-type CompositeError []error
-
-// Error implements the error interface and returns a string representation of the composite error
-func (ce *CompositeError) Error() string {
-	errs := make([]string, 0, len(*ce))
-	for i := range *ce {
-		if (*ce)[i] != nil {
-			errs = append(errs, (*ce)[i].Error())
-		}
-	}
-
-	return fmt.Sprintf("composite error: %v", strings.Join(errs, "; "))
-}
-
-// Add allows appending errors
-func (ce *CompositeError) Add(e error) {
-	*ce = append(*ce, TimestampedError{Cause: e, Timestamp: time.Now().Format(time.RFC3339Nano)})
-}
-
-// Len returns the number of errors present in the composite error. If the composite error is nil, Len returns 0.
-func (ce *CompositeError) Len() int {
-	if ce == nil {
-		return 0
-	}
-	return len(*ce)
 }
 
 // Reconciler takes care of propagating broker and visibility changes to the platform.

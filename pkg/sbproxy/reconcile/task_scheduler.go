@@ -2,14 +2,17 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
 	"sync"
+	"sync/atomic"
+
+	"github.com/Peripli/service-manager/pkg/log"
 )
 
 //TaskScheduler schedules tasks to be executed in parallel
 type TaskScheduler struct {
-	ctx            context.Context
-	mutex          sync.Mutex
-	errorsCocurred *CompositeError
+	ctx        context.Context
+	errorCount uint32
 
 	waitGroupLimit chan struct{}
 	wg             sync.WaitGroup
@@ -19,7 +22,6 @@ type TaskScheduler struct {
 func NewScheduler(ctx context.Context, maxParallelTasks int) *TaskScheduler {
 	return &TaskScheduler{
 		ctx:            ctx,
-		errorsCocurred: &CompositeError{},
 		waitGroupLimit: make(chan struct{}, maxParallelTasks),
 	}
 }
@@ -39,9 +41,8 @@ func (state *TaskScheduler) Schedule(f func(context.Context) error) error {
 		}()
 
 		if err := f(state.ctx); err != nil {
-			state.mutex.Lock()
-			defer state.mutex.Unlock()
-			state.errorsCocurred.Add(err)
+			log.C(state.ctx).Error(err)
+			atomic.AddUint32(&state.errorCount, 1)
 		}
 	}()
 
@@ -51,8 +52,8 @@ func (state *TaskScheduler) Schedule(f func(context.Context) error) error {
 //Await waits for the completion of all scheduled tasks
 func (state *TaskScheduler) Await() error {
 	state.wg.Wait()
-	if state.errorsCocurred.Len() != 0 {
-		return state.errorsCocurred
+	if state.errorCount > 0 {
+		return fmt.Errorf("%d errors occurred", state.errorCount)
 	}
 
 	return nil
