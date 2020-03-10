@@ -11,11 +11,10 @@ import (
 
 //TaskScheduler schedules tasks to be executed in parallel
 type TaskScheduler struct {
-	ctx        context.Context
-	errorCount uint32
-
+	ctx            context.Context
 	waitGroupLimit chan struct{}
 	wg             sync.WaitGroup
+	errorCount     uint32
 }
 
 //NewScheduler return a new task scheduler configured to execute a maximum of maxParallelTasks concurrently
