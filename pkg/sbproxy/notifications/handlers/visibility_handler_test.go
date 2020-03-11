@@ -11,8 +11,6 @@ import (
 
 	"github.com/tidwall/sjson"
 
-	"github.com/Peripli/service-manager/pkg/query"
-
 	"github.com/Peripli/service-manager/pkg/types"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -49,8 +47,8 @@ var _ = Describe("Visibility Handler", func() {
 		return labels
 	}
 
-	unmarshalLabelChanges := func(labelChangeJSON string) query.LabelChanges {
-		labelChanges := query.LabelChanges{}
+	unmarshalLabelChanges := func(labelChangeJSON string) types.LabelChanges {
+		labelChanges := types.LabelChanges{}
 		err := json.Unmarshal([]byte(labelChangeJSON), &labelChanges)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -132,7 +130,7 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when visibility client is nil", func() {
 			It("does not try to enable or disable access", func() {
 				h := &handlers.VisibilityResourceNotificationsHandler{}
-				h.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+				h.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -145,7 +143,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -159,7 +157,7 @@ var _ = Describe("Visibility Handler", func() {
 				})
 
 				It("does not try to enable or disable access", func() {
-					visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -173,7 +171,7 @@ var _ = Describe("Visibility Handler", func() {
 				})
 
 				It("does not try to enable or disable access", func() {
-					visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -187,7 +185,7 @@ var _ = Describe("Visibility Handler", func() {
 				})
 
 				It("does not try to enable or disable access", func() {
-					visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -201,7 +199,7 @@ var _ = Describe("Visibility Handler", func() {
 				})
 
 				It("does not try to enable or disable access", func() {
-					visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -216,7 +214,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -230,7 +228,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -240,7 +238,7 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when the visibility notification is for a broker which is in the broker blacklist", func() {
 			It("does not try to enable or disable access", func() {
 				visibilityHandler.BrokerBlacklist = []string{smBrokerName}
-				visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -255,7 +253,7 @@ var _ = Describe("Visibility Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+						visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 					})
 				})
 			})
@@ -275,7 +273,7 @@ var _ = Describe("Visibility Handler", func() {
 
 				It("invokes enable access for plan", func() {
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
-					visibilityHandler.OnCreate(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(1))
 
@@ -346,7 +344,7 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when visibility client is nil", func() {
 			It("does not try to enable or disable access", func() {
 				h := &handlers.VisibilityResourceNotificationsHandler{}
-				h.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+				h.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -359,7 +357,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -373,7 +371,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -387,7 +385,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -397,7 +395,7 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when the visibility notification is for a broker which is in the broker blacklist", func() {
 			It("does not try to enable or disable access", func() {
 				visibilityHandler.BrokerBlacklist = []string{smBrokerName}
-				visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -414,7 +412,7 @@ var _ = Describe("Visibility Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+						visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 					})
 				})
 			})
@@ -427,7 +425,7 @@ var _ = Describe("Visibility Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+						visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 					})
 				})
 			})
@@ -442,7 +440,7 @@ var _ = Describe("Visibility Handler", func() {
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
 
-					visibilityHandler.OnUpdate(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(enableAccessCount))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(disableAccessCount))
@@ -607,7 +605,7 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when visibility client is nil", func() {
 			It("does not try to enable or disable access", func() {
 				h := &handlers.VisibilityResourceNotificationsHandler{}
-				h.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+				h.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -620,7 +618,7 @@ var _ = Describe("Visibility Handler", func() {
 			})
 
 			It("does not try to enable or disable access", func() {
-				visibilityHandler.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -635,7 +633,7 @@ var _ = Describe("Visibility Handler", func() {
 				})
 
 				It("does not try to enable or disable access", func() {
-					visibilityHandler.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -646,7 +644,7 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when the visibility notification is for a broker which is in the broker blacklist", func() {
 			It("does not try to enable or disable access", func() {
 				visibilityHandler.BrokerBlacklist = []string{smBrokerName}
-				visibilityHandler.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+				visibilityHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 				Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(0))
 				Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
@@ -661,7 +659,7 @@ var _ = Describe("Visibility Handler", func() {
 
 				It("logs an error", func() {
 					VerifyErrorLogged(func() {
-						visibilityHandler.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+						visibilityHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 					})
 				})
 			})
@@ -681,7 +679,7 @@ var _ = Describe("Visibility Handler", func() {
 
 				It("invokes disable access for plan", func() {
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(0))
-					visibilityHandler.OnDelete(ctx, json.RawMessage(visibilityNotificationPayload))
+					visibilityHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
 
 					Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(1))
 

@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:ab0a1dd4bdb6f00e7b2ce96ec0b49e8fcafa3a5247abdf654a8986801e207e2b"
+  branch = "master"
+  digest = "1:82cf426790dd9a989c9fca34c570646d94d9102c53fb042adb766aada6912227"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -35,6 +36,7 @@
     "api/info",
     "api/notifications",
     "api/osb",
+    "api/profile",
     "config",
     "operations",
     "pkg/env",
@@ -42,6 +44,7 @@
     "pkg/health",
     "pkg/httpclient",
     "pkg/log",
+    "pkg/multitenancy",
     "pkg/query",
     "pkg/query/parser",
     "pkg/security",
@@ -67,8 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "e64b05359b4a6cb8c42584a2f25910d62fcbbd40"
-  version = "v0.9.9"
+  revision = "ce5f8bcd34bc599ab032640382197723163ad47d"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -83,7 +85,7 @@
   name = "github.com/antlr/antlr4"
   packages = ["runtime/Go/antlr"]
   pruneopts = "UT"
-  revision = "d569f917954406e599d780c009224aa14f1920de"
+  revision = "7a3f40bc341ddfb463d6e0aa1a6265064d020cb6"
   version = "4.8"
 
 [[projects]]
@@ -195,12 +197,12 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:573ca21d3669500ff845bdebee890eb7fc7f0f50c59f2132f2a0c6b03d85086a"
+  digest = "1:d1e35b720b5f5156502ffdd174000c81295919293735342da78582e4dc7a8bcd"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
-  version = "v1.3.2"
+  revision = "5d5b4c10bd43f85e63bd9e4a3fa9b1ea2ef88af2"
+  version = "v1.3.4"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -288,7 +290,7 @@
   revision = "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
 
 [[projects]]
-  digest = "1:60a4c716301192a7be42f363c41b2b1fab64ae80d9db4453c702b13b05ccddeb"
+  digest = "1:e5e0d775194850f7f06c78f51015ec7c85a59a62613d1ad9847b5ba0f2a021c8"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -296,8 +298,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "f61bac3a179b270c811148ce2a1f819dfc82825f"
-  version = "v1.9.7"
+  revision = "d4b3bb13d45b000ac3a915d4f32069a9284540bb"
+  version = "v1.10.2"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -360,7 +362,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:ad7bc85a2256ae7246450290c96619db309d8d8f1918a3163e9af90ef1d7a077"
+  digest = "1:13b913f297752cf0f236c0ab940d0ffaac64e5a97b7bb68c659a9f734bd32a89"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -384,8 +386,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "388ac7e50a3abf0798010091d5094171f4aefc0b"
-  version = "v1.11.0"
+  revision = "40598150331533e3cd497f21dcce387dae84b561"
+  version = "v1.12.0"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -504,23 +506,23 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:99d32780e5238c2621fff621123997c3e3cca96db8be13179013aea77dfab551"
+  digest = "1:49b1087f45b1e49687da2f8eb49d9e07919d4bad3813344251c722141dcb31d6"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
     "require",
   ]
   pruneopts = "UT"
-  revision = "221dbe5ed46703ee255b1da0dec05086f5035f62"
-  version = "v1.4.0"
+  revision = "3ebf1ddaeb260c4b1ae502a01c7844fa8c1fa0e9"
+  version = "v1.5.1"
 
 [[projects]]
-  digest = "1:719b772d0c56bbf1acd3a748f88b9d02ff6da543994b5d7e1adf052eb5b693a1"
+  digest = "1:358f9a53d3bb46b9dd07b4490f9b30f9f85218b41f6bbb48d6503668a45721a6"
   name = "github.com/tidwall/gjson"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5c2e4b382486589dad7478130a364ee2fa6a068b"
-  version = "v1.3.5"
+  revision = "f042915ca17de35980544c91ab2c8ceb73b682f2"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:8453ddbed197809ee8ca28b06bd04e127bec9912deb4ba451fea7a1eca578328"
@@ -531,12 +533,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:ddfe0a54e5f9b29536a6d7b2defa376f2cb2b6e4234d676d7ff214d5b097cb50"
+  digest = "1:f63bab79e68e805cdd9bf70daa09e8c430cfbddf29d14b567a92fb12581b9b95"
   name = "github.com/tidwall/pretty"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1166b9ac2b65e46a43d8618d30d1554f4652d49b"
-  version = "v1.0.0"
+  revision = "b2475501f89994f7ea30b3c94ba86b49079961fe"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:b70c951ba6fdeecfbd50dabe95aa5e1b973866ae9abbece46ad60348112214f2"
@@ -619,19 +621,21 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5cdf4eb6946922ebe638b90e548e1a86085b778d9daf0889951b39f44e6bbe6c"
+  digest = "1:6d1e6b1279da86043098d6b35e4e84f5ace42c7a3a8936025a843619b02253ea"
   name = "golang.org/x/crypto"
   packages = [
+    "bcrypt",
+    "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519",
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "6d4e4cb37c7d6416dfea8472e751c7b6615267a6"
+  revision = "78000ba7a073cafc0278790f6bce552a0f25850e"
 
 [[projects]]
   branch = "master"
-  digest = "1:317bb86f606d3cdb6b282cea377e61ce50023b16bdc72d2edfb2ef0164f18364"
+  digest = "1:865e8f0cedca9141920b5d7a5b9f41d90fc14324c82506d452cf9cab669a44a7"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -643,7 +647,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "6afb5195e5aab057fda82e27171243402346b0ad"
+  revision = "244492dfa37ae2ce87222fd06250a03160745faa"
 
 [[projects]]
   branch = "master"
@@ -658,11 +662,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e13350b7207ecc34977340d53522e0335dd36ed86ca7c346a36d2e88eb0fadfc"
+  digest = "1:8d59aa6f03198132e0ca3bf998677f9698e1e27fc67976c85d85086ac3496530"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "b77594299b429d05028403d72b68172959c7dad5"
+  revision = "5c8b2ff67527cb88b770f693cebf3799036d8bc0"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -747,12 +751,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:b75b3deb2bce8bc079e16bb2aecfe01eb80098f5650f9e93e5643ca8b7b73737"
+  digest = "1:55b110c99c5fdc4f14930747326acce56b52cfce60b24b1c03ef686ac0e46bb1"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1f64d6156d11335c3f22d9330b0ad14fc1e789ce"
-  version = "v2.2.7"
+  revision = "53403b58ad1b561927d19068c655246f2db79d48"
+  version = "v2.2.8"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -766,7 +770,6 @@
     "github.com/Peripli/service-manager/pkg/env/envfakes",
     "github.com/Peripli/service-manager/pkg/health",
     "github.com/Peripli/service-manager/pkg/log",
-    "github.com/Peripli/service-manager/pkg/query",
     "github.com/Peripli/service-manager/pkg/security/authenticators",
     "github.com/Peripli/service-manager/pkg/security/http",
     "github.com/Peripli/service-manager/pkg/server",
@@ -792,6 +795,7 @@
     "github.com/spf13/pflag",
     "github.com/tidwall/gjson",
     "github.com/tidwall/sjson",
+    "golang.org/x/crypto/bcrypt",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

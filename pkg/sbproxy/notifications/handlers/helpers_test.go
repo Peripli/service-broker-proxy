@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
-	"github.com/Peripli/service-manager/pkg/query"
 	"github.com/Peripli/service-manager/pkg/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -11,38 +10,38 @@ import (
 var _ = Describe("Handlers Helpers", func() {
 	Describe("LabelChangesToLabels", func() {
 		Context("for changes with add and remove operations", func() {
-			var labelChanges query.LabelChanges
+			var labelChanges types.LabelChanges
 			var expectedLabelsToAdd types.Labels
 			var expectedLabelsToRemove types.Labels
 
 			BeforeEach(func() {
-				labelChanges = query.LabelChanges{
-					&query.LabelChange{
-						Operation: query.AddLabelOperation,
+				labelChanges = types.LabelChanges{
+					&types.LabelChange{
+						Operation: types.AddLabelOperation,
 						Key:       "organization_guid",
 						Values: []string{
 							"org1",
 							"org2",
 						},
 					},
-					&query.LabelChange{
-						Operation: query.AddLabelValuesOperation,
+					&types.LabelChange{
+						Operation: types.AddLabelValuesOperation,
 						Key:       "organization_guid",
 						Values: []string{
 							"org3",
 							"org4",
 						},
 					},
-					&query.LabelChange{
-						Operation: query.RemoveLabelValuesOperation,
+					&types.LabelChange{
+						Operation: types.RemoveLabelValuesOperation,
 						Key:       "organization_guid",
 						Values: []string{
 							"org5",
 							"org6",
 						},
 					},
-					&query.LabelChange{
-						Operation: query.RemoveLabelOperation,
+					&types.LabelChange{
+						Operation: types.RemoveLabelOperation,
 						Key:       "organization_guid",
 						Values: []string{
 							"org7",
