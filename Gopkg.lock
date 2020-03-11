@@ -25,7 +25,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:82cf426790dd9a989c9fca34c570646d94d9102c53fb042adb766aada6912227"
+  digest = "1:0e7630d73c9fe360a03b114b7395f687b278fa89d6db4f9920af41fa0d4d592e"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -70,7 +70,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "ce5f8bcd34bc599ab032640382197723163ad47d"
+  revision = "e45adbe26da0cde38eec9c13525607610b4144ec"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -119,12 +119,12 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
+  digest = "1:925a2ad8acf10a486cdae4366eaf45847b16d6d7448e654814d8f1d51adeefe4"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
-  version = "v1.4.7"
+  revision = "4bf2d1fec78374803a39307bfb8d340688f4f28e"
+  version = "v1.4.8"
 
 [[projects]]
   digest = "1:2d2a4b9fce4d0a808476e6388fc8ab4d43f1fe5da52fb3e9a088486cc745ed89"
@@ -722,13 +722,13 @@
   version = "v1.6.5"
 
 [[projects]]
-  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
+  digest = "1:925a2ad8acf10a486cdae4366eaf45847b16d6d7448e654814d8f1d51adeefe4"
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  revision = "4bf2d1fec78374803a39307bfb8d340688f4f28e"
   source = "https://github.com/fsnotify/fsnotify.git"
-  version = "v1.4.7"
+  version = "v1.4.8"
 
 [[projects]]
   digest = "1:3c4aaca5a82adc021322f239e0cf3f46852bb0b18ae050d0feab2e9e4c527462"
