@@ -24,8 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:82cf426790dd9a989c9fca34c570646d94d9102c53fb042adb766aada6912227"
+  digest = "1:ecd3c8bac5b638c07efd6075d3ff116bc8b1fbe174d92a07bb955cb7b6e0e172"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -70,7 +69,8 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "ce5f8bcd34bc599ab032640382197723163ad47d"
+  revision = "8e292c9120fe9c5c2f5357ad024e4332176e386f"
+  version = "v0.11.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -119,12 +119,12 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
+  digest = "1:80057945464ffb5b0da1f026beb8df0e8dbd098eaf771a349291bed2cd29a83e"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
-  version = "v1.4.7"
+  revision = "45d7d09e39ef4ac08d493309fa031790c15bfe8a"
+  version = "v1.4.9"
 
 [[projects]]
   digest = "1:2d2a4b9fce4d0a808476e6388fc8ab4d43f1fe5da52fb3e9a088486cc745ed89"
@@ -201,8 +201,8 @@
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "5d5b4c10bd43f85e63bd9e4a3fa9b1ea2ef88af2"
-  version = "v1.3.4"
+  revision = "84668698ea25b64748563aa20726db66a6b8d299"
+  version = "v1.3.5"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -298,8 +298,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "d4b3bb13d45b000ac3a915d4f32069a9284540bb"
-  version = "v1.10.2"
+  revision = "788b7f06fee85b7e1d2aa4a3a86f8dbbbcc771ae"
+  version = "v1.10.3"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -631,7 +631,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "78000ba7a073cafc0278790f6bce552a0f25850e"
+  revision = "f7b00557c8c46a1ea4b035cae84f52028c2c0564"
 
 [[projects]]
   branch = "master"
@@ -722,13 +722,13 @@
   version = "v1.6.5"
 
 [[projects]]
-  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
+  digest = "1:80057945464ffb5b0da1f026beb8df0e8dbd098eaf771a349291bed2cd29a83e"
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  revision = "45d7d09e39ef4ac08d493309fa031790c15bfe8a"
   source = "https://github.com/fsnotify/fsnotify.git"
-  version = "v1.4.7"
+  version = "v1.4.9"
 
 [[projects]]
   digest = "1:3c4aaca5a82adc021322f239e0cf3f46852bb0b18ae050d0feab2e9e4c527462"

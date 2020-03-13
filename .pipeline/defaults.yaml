@@ -4,7 +4,7 @@ general:
   cfDomain: 'cfapps.sap.hana.ondemand.com'
   dockerRegistryProtocol: 'https'
   fortifyApiEndpoint: '/api/v1'
-  fortifyServerUrl: 'https://fortify.mo.sap.corp/ssc'
+  fortifyServerUrl: 'https://fortify.tools.sap/ssc'
   fortifyFprUploadEndpoint: '/upload/resultFileUpload.html'
   fortifyFprDownloadEndpoint: '/download/currentStateFprDownload.html'
   fortifyReportDownloadEndpoint: '/transfer/reportDownload.html'
@@ -485,7 +485,7 @@ steps:
   executeVulasScan:
     serverUrl: 'https://vulas.tools.sap'
     backendEndpoint: '/backend'
-    svmServerUrl: 'https://svmdevzdohvhnx0v.int.sap.eu2.hana.ondemand.com'
+    svmServerUrl: 'https://svmprodzdohvhnx0v.int.sap.eu2.hana.ondemand.com'
     svmEndpoint: '/SVM/services'
     svmExemptionFileName: 'vulas-exemptionsFromSvm.properties'
     space:
