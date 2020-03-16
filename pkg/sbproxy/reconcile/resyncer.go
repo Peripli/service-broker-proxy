@@ -89,7 +89,7 @@ func (r *resyncJob) process(ctx context.Context) {
 		logger.WithError(err).Error("an error occurred while obtaining brokers from Platform")
 		return
 	}
-	logger.Infof("resyncJob SUCCESSFULLY retrieved %d brokers from platform", len(platformBrokers))
+	logger.Infof("resyncJob successfully retrieved %d brokers from platform", len(platformBrokers))
 
 	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
 	r.resetPlatformCache(ctx)

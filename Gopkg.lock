@@ -24,27 +24,23 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:0e7630d73c9fe360a03b114b7395f687b278fa89d6db4f9920af41fa0d4d592e"
+  digest = "1:02cb0c4e7b21e871f86de6e3f58f1cbdb7859239961124ac14884e5b551ba52a"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
     "api/configuration",
-    "api/extensions/security",
     "api/filters",
     "api/healthcheck",
     "api/info",
     "api/notifications",
     "api/osb",
-    "api/profile",
+    "api/plugins",
     "config",
-    "operations",
     "pkg/env",
     "pkg/env/envfakes",
     "pkg/health",
     "pkg/httpclient",
     "pkg/log",
-    "pkg/multitenancy",
     "pkg/query",
     "pkg/query/parser",
     "pkg/security",
@@ -52,8 +48,6 @@
     "pkg/security/filters",
     "pkg/security/filters/middlewares",
     "pkg/security/http",
-    "pkg/security/http/authn",
-    "pkg/security/http/authz",
     "pkg/server",
     "pkg/sm",
     "pkg/types",
@@ -70,7 +64,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "e45adbe26da0cde38eec9c13525607610b4144ec"
+  revision = "master"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -119,12 +113,12 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:925a2ad8acf10a486cdae4366eaf45847b16d6d7448e654814d8f1d51adeefe4"
+  digest = "1:80057945464ffb5b0da1f026beb8df0e8dbd098eaf771a349291bed2cd29a83e"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   pruneopts = "UT"
-  revision = "4bf2d1fec78374803a39307bfb8d340688f4f28e"
-  version = "v1.4.8"
+  revision = "45d7d09e39ef4ac08d493309fa031790c15bfe8a"
+  version = "v1.4.9"
 
 [[projects]]
   digest = "1:2d2a4b9fce4d0a808476e6388fc8ab4d43f1fe5da52fb3e9a088486cc745ed89"
@@ -189,20 +183,12 @@
   version = "v3.5.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:1ba1d79f2810270045c328ae5d674321db34e3aae468eb4233883b473c5c0467"
-  name = "github.com/golang/glog"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
-
-[[projects]]
   digest = "1:d1e35b720b5f5156502ffdd174000c81295919293735342da78582e4dc7a8bcd"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "5d5b4c10bd43f85e63bd9e4a3fa9b1ea2ef88af2"
-  version = "v1.3.4"
+  revision = "84668698ea25b64748563aa20726db66a6b8d299"
+  version = "v1.3.5"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -298,8 +284,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "d4b3bb13d45b000ac3a915d4f32069a9284540bb"
-  version = "v1.10.2"
+  revision = "788b7f06fee85b7e1d2aa4a3a86f8dbbbcc771ae"
+  version = "v1.10.3"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -308,14 +294,6 @@
   pruneopts = "UT"
   revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
   version = "v1.0.2"
-
-[[projects]]
-  digest = "1:8658f775ba5edb37ede96d8ec9eaecdfe06bc4aef1776152070185e6513dc0cc"
-  name = "github.com/kubernetes-sigs/go-open-service-broker-client"
-  packages = ["v2"]
-  pruneopts = "UT"
-  revision = "dca737037ce636eb282e84e3a1c7479c9692e884"
-  version = "0.0.10"
 
 [[projects]]
   branch = "master"
@@ -631,7 +609,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "78000ba7a073cafc0278790f6bce552a0f25850e"
+  revision = "f7b00557c8c46a1ea4b035cae84f52028c2c0564"
 
 [[projects]]
   branch = "master"
@@ -722,13 +700,13 @@
   version = "v1.6.5"
 
 [[projects]]
-  digest = "1:925a2ad8acf10a486cdae4366eaf45847b16d6d7448e654814d8f1d51adeefe4"
+  digest = "1:80057945464ffb5b0da1f026beb8df0e8dbd098eaf771a349291bed2cd29a83e"
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
   pruneopts = "UT"
-  revision = "4bf2d1fec78374803a39307bfb8d340688f4f28e"
+  revision = "45d7d09e39ef4ac08d493309fa031790c15bfe8a"
   source = "https://github.com/fsnotify/fsnotify.git"
-  version = "v1.4.8"
+  version = "v1.4.9"
 
 [[projects]]
   digest = "1:3c4aaca5a82adc021322f239e0cf3f46852bb0b18ae050d0feab2e9e4c527462"
