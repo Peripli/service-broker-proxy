@@ -24,7 +24,8 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:ecd3c8bac5b638c07efd6075d3ff116bc8b1fbe174d92a07bb955cb7b6e0e172"
+  branch = "master"
+  digest = "1:5ba871bcfddd7a389edddfdd902ea315124edc6008438f8fd3e8f826ce89f94e"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -38,6 +39,7 @@
     "api/profile",
     "config",
     "operations",
+    "operations/opcontext",
     "pkg/env",
     "pkg/env/envfakes",
     "pkg/health",
@@ -69,8 +71,7 @@
     "test/testutil",
   ]
   pruneopts = "NT"
-  revision = "8e292c9120fe9c5c2f5357ad024e4332176e386f"
-  version = "v0.11.0"
+  revision = "4bc24943729493fa4d3fbde14704e4b131e8c8dc"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"

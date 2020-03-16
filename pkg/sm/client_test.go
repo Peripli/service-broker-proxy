@@ -177,6 +177,9 @@ var _ = Describe("Client", func() {
 		Entry("Successfully obtain brokers", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
+				Params: map[string]string{
+					"fieldQuery": "ready eq true",
+				},
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -281,6 +284,9 @@ var _ = Describe("Client", func() {
 		Entry("Successfully obtain plans", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIPlans, "http://example.com"),
+				Params: map[string]string{
+					"fieldQuery": "ready eq true",
+				},
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -353,6 +359,9 @@ var _ = Describe("Client", func() {
 		Entry("Successfully obtain visibilities", testCase{
 			expectations: &common.HTTPExpectations{
 				URL: fmt.Sprintf(APIVisibilities, "http://example.com"),
+				Params: map[string]string{
+					"fieldQuery": "ready eq true",
+				},
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -385,7 +394,7 @@ var _ = Describe("Client", func() {
 		}),
 	}
 
-	DescribeTable("GETPlans", func(t testCase) {
+	DescribeTable("GETVisibilities", func(t testCase) {
 		client := newClient(&t)
 		resp, err := client.GetVisibilities(testContextWithCorrelationID(CorrelationIDValue))
 		assertResponse(&t, resp, err)
