@@ -76,7 +76,7 @@ func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerin
 		service := offerings[plan.ServiceOfferingID]
 		if service == nil {
 			return nil, fmt.Errorf(
-				"Inconsistent data received from Service Manager: plan with id %s references missing service id %s",
+				"inconsistent data received from Service Manager: plan with id %s references missing service id %s",
 				plan.ID, plan.ServiceOfferingID)
 		}
 		result[service.BrokerID] = append(result[service.BrokerID], plan)
