@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/Peripli/service-manager/pkg/types"
 
@@ -62,8 +61,7 @@ type Client interface {
 	GetBrokers(ctx context.Context) ([]*types.ServiceBroker, error)
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
-	GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error)
-	GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error)
+	GetServiceOfferings(ctx context.Context) ([]*types.ServiceOffering, error)
 	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error
 }
 
@@ -136,7 +134,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePlan, error) {
 	log.C(ctx).Debugf("Getting service plans for proxy from Service Manager at %s", c.host)
 
-	result := make([]*types.ServicePlan, 0)
+	var result []*types.ServicePlan
 	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), map[string]string{
 		"fieldQuery": "ready eq true",
 	}, &result)
@@ -147,43 +145,16 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 	return result, nil
 }
 
-// GetServiceOfferingsByBrokerIDs returns plans from Service Manager
-func (c *ServiceManagerClient) GetServiceOfferingsByBrokerIDs(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
+// GetServiceOfferings returns service offerings from Service Manager
+func (c *ServiceManagerClient) GetServiceOfferings(ctx context.Context) ([]*types.ServiceOffering, error) {
 	log.C(ctx).Debugf("Getting service offerings from Service Manager at %s", c.host)
 
-	fieldQuery := fmt.Sprintf("broker_id in ('%s') and ready eq true", strings.Join(brokerIDs, "','"))
-	params := map[string]string{
-		"fieldQuery": fieldQuery,
-	}
-
-	result := make([]*types.ServiceOffering, 0)
-	err := c.call(ctx, fmt.Sprintf(APIServiceOfferings, c.host), params, &result)
+	var result []*types.ServiceOffering
+	err := c.call(ctx, fmt.Sprintf(APIServiceOfferings, c.host), map[string]string{
+		"fieldQuery": "ready eq true",
+	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service offerings from Service Manager")
-	}
-
-	return result, nil
-}
-
-// GetPlansByServiceOfferings returns plans from Service Manager
-func (c *ServiceManagerClient) GetPlansByServiceOfferings(ctx context.Context, sos []*types.ServiceOffering) ([]*types.ServicePlan, error) {
-	log.C(ctx).Debugf("Getting service plans from Service Manager at %s", c.host)
-
-	soIDs := ""
-	for _, so := range sos {
-		soIDs += ",'" + so.ID + "'"
-	}
-	soIDs = soIDs[1:]
-
-	fieldQuery := fmt.Sprintf("service_offering_id in (%s) and ready eq true", soIDs)
-	params := map[string]string{
-		"fieldQuery": fieldQuery,
-	}
-
-	result := make([]*types.ServicePlan, 0)
-	err := c.call(ctx, fmt.Sprintf(APIPlans, c.host), params, &result)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
 	}
 
 	return result, nil

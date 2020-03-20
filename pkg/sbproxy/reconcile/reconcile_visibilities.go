@@ -18,6 +18,7 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -62,46 +63,39 @@ func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 	return names
 }
 
-func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
-	result := make(map[string][]*types.ServicePlan)
-	count := 0
+func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerings map[string]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
 	log.C(ctx).Info("resyncJob getting service plans from Service Manager")
-	for brokerID, sos := range offerings {
-		if len(sos) == 0 {
-			continue
-		}
-		brokerPlans, err := r.smClient.GetPlansByServiceOfferings(ctx, sos)
-		if err != nil {
-			return nil, err
-		}
-		result[brokerID] = brokerPlans
-		count += len(brokerPlans)
+	plans, err := r.smClient.GetPlans(ctx)
+	if err != nil {
+		return nil, err
 	}
-	log.C(ctx).Infof("resyncJob successfully retrieved %d plans from Service Manager", count)
+	log.C(ctx).Infof("resyncJob successfully retrieved %d plans from Service Manager", len(plans))
 
+	result := make(map[string][]*types.ServicePlan)
+	for _, plan := range plans {
+		service := offerings[plan.ServiceOfferingID]
+		if service == nil {
+			return nil, fmt.Errorf(
+				"Inconsistent data received from Service Manager: plan with id %s references missing service id %s",
+				plan.ID, plan.ServiceOfferingID)
+		}
+		result[service.BrokerID] = append(result[service.BrokerID], plan)
+	}
 	return result, nil
 }
 
-func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers []*platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
-	result := make(map[string][]*types.ServiceOffering)
-	brokerIDs := make([]string, 0, len(brokers))
-	for _, broker := range brokers {
-		brokerIDs = append(brokerIDs, broker.GUID)
-	}
+func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers []*platform.ServiceBroker) (map[string]*types.ServiceOffering, error) {
 	log.C(ctx).Info("resyncJob getting service offerings from Service Manager...")
-	offerings, err := r.smClient.GetServiceOfferingsByBrokerIDs(ctx, brokerIDs)
+	offerings, err := r.smClient.GetServiceOfferings(ctx)
 	if err != nil {
 		return nil, err
 	}
 	log.C(ctx).Infof("resyncJob successfully retrieved %d service offerings from Service Manager", len(offerings))
 
+	result := make(map[string]*types.ServiceOffering)
 	for _, offering := range offerings {
-		if result[offering.BrokerID] == nil {
-			result[offering.BrokerID] = make([]*types.ServiceOffering, 0)
-		}
-		result[offering.BrokerID] = append(result[offering.BrokerID], offering)
+		result[offering.ID] = offering
 	}
-
 	return result, nil
 }
 
