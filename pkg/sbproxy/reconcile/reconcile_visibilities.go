@@ -62,10 +62,7 @@ func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 	return names
 }
 
-func (r *resyncJob) getSMBrokerPlans(
-	ctx context.Context, offerings map[string]*types.ServiceOffering, smBrokers []*platform.ServiceBroker) (
-	map[string]brokerPlan, error) {
-
+func (r *resyncJob) getSMBrokerPlans(ctx context.Context, offerings map[string]*types.ServiceOffering, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
 	log.C(ctx).Info("resyncJob getting service plans from Service Manager")
 	plans, err := r.smClient.GetPlans(ctx)
 	if err != nil {
