@@ -8,7 +8,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 
 	"github.com/Peripli/service-manager/pkg/log"
-	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 )
@@ -75,8 +74,7 @@ func (r *resyncJob) process(ctx context.Context) {
 		return
 	}
 
-	mappedPlans := mapPlansByBrokerPlanID(plansFromSM)
-	smVisibilities, err := r.getVisibilitiesFromSM(ctx, mappedPlans, smBrokers) // fetch as soon as possible
+	smVisibilities, err := r.getVisibilitiesFromSM(ctx, plansFromSM) // fetch as soon as possible
 	if err != nil {
 		logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
 		return
@@ -96,12 +94,12 @@ func (r *resyncJob) process(ctx context.Context) {
 	r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
 }
 
-func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string][]*types.ServicePlan, error) {
-	smOfferings, err := r.getSMServiceOfferingsByBrokers(ctx, smBrokers)
+func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
+	smOfferings, err := r.getSMServiceOfferings(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error occurred while obtaining service offerings from Service Manager")
 	}
-	smPlans, err := r.getSMPlansByBrokersAndOfferings(ctx, smOfferings)
+	smPlans, err := r.getSMBrokerPlans(ctx, smOfferings, smBrokers)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error occurred while obtaining plans from Service Manager")
 	}

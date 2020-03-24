@@ -236,27 +236,19 @@ var _ = Describe("Reconcile visibilities", func() {
 		}
 
 		fakeSMClient.GetBrokersReturns(smBrokers, nil)
-		fakeSMClient.GetServiceOfferingsByBrokerIDsCalls(func(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
+		fakeSMClient.GetServiceOfferingsCalls(func(ctx context.Context) ([]*types.ServiceOffering, error) {
 			var result []*types.ServiceOffering
-			for _, brokerID := range brokerIDs {
-				for _, broker := range smBrokers {
-					if brokerID == broker.ID {
-						result = append(result, broker.Services...)
-					}
-				}
+			for _, broker := range smBrokers {
+				result = append(result, broker.Services...)
 			}
 			return result, nil
 		})
 
-		fakeSMClient.GetPlansByServiceOfferingsCalls(func(ctx context.Context, offerings []*types.ServiceOffering) ([]*types.ServicePlan, error) {
+		fakeSMClient.GetPlansCalls(func(ctx context.Context) ([]*types.ServicePlan, error) {
 			var result []*types.ServicePlan
-			for _, serviceOffering := range offerings {
-				for _, broker := range smBrokers {
-					for _, brokerServiceOffering := range broker.Services {
-						if serviceOffering.ID == brokerServiceOffering.ID {
-							result = append(result, brokerServiceOffering.Plans...)
-						}
-					}
+			for _, broker := range smBrokers {
+				for _, brokerServiceOffering := range broker.Services {
+					result = append(result, brokerServiceOffering.Plans...)
 				}
 			}
 			return result, nil
@@ -620,9 +612,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		Entry("When services from SM could not be fetched - should not reconcile", testCase{
 			stubs: func() {
-				fakeSMClient.GetServiceOfferingsByBrokerIDsCalls(func(ctx context.Context, brokerIDs []string) ([]*types.ServiceOffering, error) {
-					return nil, fmt.Errorf("error")
-				})
+				fakeSMClient.GetServiceOfferingsReturns(nil, fmt.Errorf("error"))
 			},
 			platformVisibilities: func() []*platform.Visibility {
 				return []*platform.Visibility{
@@ -650,9 +640,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		Entry("When plans from SM could not be fetched - should not reconcile", testCase{
 			stubs: func() {
-				fakeSMClient.GetPlansByServiceOfferingsCalls(func(ctx context.Context, offerings []*types.ServiceOffering) ([]*types.ServicePlan, error) {
-					return nil, fmt.Errorf("error")
-				})
+				fakeSMClient.GetPlansReturns(nil, fmt.Errorf("error"))
 			},
 			platformVisibilities: func() []*platform.Visibility {
 				return []*platform.Visibility{

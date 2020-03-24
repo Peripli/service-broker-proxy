@@ -62,50 +62,53 @@ func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 	return names
 }
 
-func (r *resyncJob) getSMPlansByBrokersAndOfferings(ctx context.Context, offerings map[string][]*types.ServiceOffering) (map[string][]*types.ServicePlan, error) {
-	result := make(map[string][]*types.ServicePlan)
-	count := 0
+func (r *resyncJob) getSMBrokerPlans(ctx context.Context, offerings map[string]*types.ServiceOffering, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
 	log.C(ctx).Info("resyncJob getting service plans from Service Manager")
-	for brokerID, sos := range offerings {
-		if len(sos) == 0 {
+	plans, err := r.smClient.GetPlans(ctx)
+	if err != nil {
+		return nil, err
+	}
+	log.C(ctx).Infof("resyncJob successfully retrieved %d plans from Service Manager", len(plans))
+
+	brokerMap := make(map[string]*platform.ServiceBroker, len(smBrokers))
+	for _, broker := range smBrokers {
+		brokerMap[broker.GUID] = broker
+	}
+
+	brokerPlans := make(map[string]brokerPlan, len(plans))
+	for _, plan := range plans {
+		service := offerings[plan.ServiceOfferingID]
+		if service == nil {
 			continue
 		}
-		brokerPlans, err := r.smClient.GetPlansByServiceOfferings(ctx, sos)
-		if err != nil {
-			return nil, err
+		broker := brokerMap[service.BrokerID]
+		if broker == nil {
+			continue
 		}
-		result[brokerID] = brokerPlans
-		count += len(brokerPlans)
+		brokerPlans[plan.ID] = brokerPlan{
+			ServicePlan: plan,
+			broker:      broker,
+		}
 	}
-	log.C(ctx).Infof("resyncJob successfully retrieved %d plans from Service Manager", count)
-
-	return result, nil
+	return brokerPlans, nil
 }
 
-func (r *resyncJob) getSMServiceOfferingsByBrokers(ctx context.Context, brokers []*platform.ServiceBroker) (map[string][]*types.ServiceOffering, error) {
-	result := make(map[string][]*types.ServiceOffering)
-	brokerIDs := make([]string, 0, len(brokers))
-	for _, broker := range brokers {
-		brokerIDs = append(brokerIDs, broker.GUID)
-	}
+func (r *resyncJob) getSMServiceOfferings(ctx context.Context) (map[string]*types.ServiceOffering, error) {
 	log.C(ctx).Info("resyncJob getting service offerings from Service Manager...")
-	offerings, err := r.smClient.GetServiceOfferingsByBrokerIDs(ctx, brokerIDs)
+	offerings, err := r.smClient.GetServiceOfferings(ctx)
 	if err != nil {
 		return nil, err
 	}
 	log.C(ctx).Infof("resyncJob successfully retrieved %d service offerings from Service Manager", len(offerings))
 
+	result := make(map[string]*types.ServiceOffering)
 	for _, offering := range offerings {
-		if result[offering.BrokerID] == nil {
-			result[offering.BrokerID] = make([]*types.ServiceOffering, 0)
-		}
-		result[offering.BrokerID] = append(result[offering.BrokerID], offering)
+		result[offering.ID] = offering
 	}
-
 	return result, nil
 }
 
-func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[brokerPlanKey]*types.ServicePlan, smBrokers []*platform.ServiceBroker) ([]*platform.Visibility, error) {
+func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[string]brokerPlan) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
 
@@ -118,25 +121,19 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[br
 	result := make([]*platform.Visibility, 0)
 
 	for _, visibility := range visibilities {
-		for _, broker := range smBrokers {
-			key := brokerPlanKey{
-				brokerID: broker.GUID,
-				planID:   visibility.ServicePlanID,
-			}
-			smPlan, found := smPlansMap[key]
-			if !found {
-				continue
-			}
-			converted := r.convertSMVisibility(visibility, smPlan, broker)
-			result = append(result, converted...)
+		smPlan, found := smPlansMap[visibility.ServicePlanID]
+		if !found {
+			continue
 		}
+		converted := r.convertSMVisibility(visibility, smPlan)
+		result = append(result, converted...)
 	}
 	logger.Infof("resyncJob successfully converted %d Service Manager visibilities to %d platform visibilities", len(visibilities), len(result))
 
 	return result, nil
 }
 
-func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *types.ServicePlan, broker *platform.ServiceBroker) []*platform.Visibility {
+func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan brokerPlan) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 	shouldBePublic := visibility.PlatformID == "" || len(visibility.Labels[scopeLabelKey]) == 0
 
@@ -145,7 +142,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: r.brokerProxyName(broker),
+				PlatformBrokerName: r.brokerProxyName(smPlan.broker),
 				Labels:             map[string]string{},
 			},
 		}
@@ -157,7 +154,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan *ty
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: r.brokerProxyName(broker),
+			PlatformBrokerName: r.brokerProxyName(smPlan.broker),
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}
@@ -278,25 +275,6 @@ func (r *resyncJob) convertVisListToMap(list []*platform.Visibility) map[string]
 	return result
 }
 
-func mapPlansByBrokerPlanID(plansByBroker map[string][]*types.ServicePlan) map[brokerPlanKey]*types.ServicePlan {
-	plansMap := make(map[brokerPlanKey]*types.ServicePlan, len(plansByBroker))
-	for brokerID, brokerPlans := range plansByBroker {
-		for _, plan := range brokerPlans {
-			key := brokerPlanKey{
-				brokerID: brokerID,
-				planID:   plan.ID,
-			}
-			plansMap[key] = plan
-		}
-	}
-	return plansMap
-}
-
-type brokerPlanKey struct {
-	brokerID string
-	planID   string
-}
-
 func mapToLabels(m map[string]string) types.Labels {
 	labels := types.Labels{}
 	for k, v := range m {
@@ -305,4 +283,9 @@ func mapToLabels(m map[string]string) types.Labels {
 		}
 	}
 	return labels
+}
+
+type brokerPlan struct {
+	*types.ServicePlan
+	broker *platform.ServiceBroker
 }
