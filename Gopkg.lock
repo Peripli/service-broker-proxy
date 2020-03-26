@@ -24,8 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:5ba871bcfddd7a389edddfdd902ea315124edc6008438f8fd3e8f826ce89f94e"
+  digest = "1:28bb498370110348da1ff112aae1a2204b5476e021fb6b2272415a1f811fcf25"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -40,6 +39,7 @@
     "config",
     "operations",
     "operations/opcontext",
+    "pkg/client",
     "pkg/env",
     "pkg/env/envfakes",
     "pkg/health",
@@ -69,9 +69,11 @@
     "storage/postgres/notification_connection",
     "test/common",
     "test/testutil",
+    "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "4bc24943729493fa4d3fbde14704e4b131e8c8dc"
+  revision = "886610ca4893e744d2c8def77aea46faa036d2a0"
+  version = "v0.12.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -230,12 +232,12 @@
   version = "v1.6.1"
 
 [[projects]]
-  digest = "1:e62657cca9badaa308d86e7716083e4c5933bb78e30a17743fc67f50be26f6f4"
+  digest = "1:6d29f02f0f01c627c2be40fb7347669a9ff2aa215cb97747294c1d13ffa74bdd"
   name = "github.com/gorilla/websocket"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c3e18be99d19e6b3e8f1559eea2c161a665c4b6b"
-  version = "v1.4.1"
+  revision = "b65e62901fc1c0d968042419e74789f6af455eb9"
+  version = "v1.4.2"
 
 [[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
@@ -280,7 +282,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9d697efc0ad1d6ee43708e8fc822861a66107d03f95d2b398ef488305500140a"
+  digest = "1:5f7995e31baca7f9f00534818e69b5a0aadae6fcf3689e9fdcce9d487db45022"
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
@@ -288,7 +290,7 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "2ba0fc60eb4a54030f3a6d73ff0a047349c7eeca"
+  revision = "ee514944af4b0d1b90212831674e03df1b850998"
 
 [[projects]]
   digest = "1:e5e0d775194850f7f06c78f51015ec7c85a59a62613d1ad9847b5ba0f2a021c8"
@@ -339,12 +341,12 @@
   version = "v1.8.1"
 
 [[projects]]
-  digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
+  digest = "1:6ea2d98ba8ae7c06a918970661b744be5d1a385c40917b9c317e9a4f2c36ac6f"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3536a929edddb9a5b34bd6861dc4a9647cb459fe"
-  version = "v1.1.2"
+  revision = "694aaefbc689be1915c2ef39e880409057931a94"
+  version = "v1.2.2"
 
 [[projects]]
   digest = "1:7aefb397a53fc437c90f0fdb3e1419c751c5a3a165ced52325d5d797edf1aca6"
@@ -632,7 +634,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "f7b00557c8c46a1ea4b035cae84f52028c2c0564"
+  revision = "0ec3e9974c59449edd84298612e9f16fa13368e8"
 
 [[projects]]
   branch = "master"
@@ -648,7 +650,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "244492dfa37ae2ce87222fd06250a03160745faa"
+  revision = "d3edc9973b7eb1fb302b0ff2c62357091cea9a30"
 
 [[projects]]
   branch = "master"
@@ -663,11 +665,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8d59aa6f03198132e0ca3bf998677f9698e1e27fc67976c85d85086ac3496530"
+  digest = "1:8b163cc073aac41680c1ce438eae6b046f04511952e60c3cff2915033fe6f58b"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "5c8b2ff67527cb88b770f693cebf3799036d8bc0"
+  revision = "85ca7c5b95cdf1e557abb38a283d1e61a5959c31"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
