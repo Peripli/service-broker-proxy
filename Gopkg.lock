@@ -72,8 +72,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "886610ca4893e744d2c8def77aea46faa036d2a0"
-  version = "v0.12.0"
+  revision = "8a1cc3932b41629a7c455a8daec2ad5d508c7e53"
+  version = "v0.12.1"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
