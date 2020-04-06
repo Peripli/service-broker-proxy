@@ -855,6 +855,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 		for _, broker := range expected.reconcileCreateCalledFor {
 			Expect(calledCreateBrokerRequests).To(ContainElement(&platform.CreateServiceBrokerRequest{
+				ID:        brokerIDFromURL(broker.BrokerURL),
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
 			}))
@@ -874,6 +875,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 		for _, broker := range expected.reconcileCatalogCalledFor {
 			Expect(calledFetchCatalogBrokers).To(ContainElement(&platform.UpdateServiceBrokerRequest{
+				ID:        brokerIDFromURL(broker.BrokerURL),
 				GUID:      broker.GUID,
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,
@@ -888,6 +890,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 		for _, broker := range expected.reconcileDeleteCalledFor {
 			Expect(calledDeleteBrokerRequests).To(ContainElement(&platform.DeleteServiceBrokerRequest{
+				ID:   brokerIDFromURL(broker.BrokerURL),
 				GUID: broker.GUID,
 				Name: broker.Name,
 			}))
@@ -907,6 +910,7 @@ var _ = Describe("Reconcile brokers", func() {
 		}
 		for _, broker := range expected.reconcileUpdateCalledFor {
 			Expect(calledUpdateBrokerRequests).To(ContainElement(&platform.UpdateServiceBrokerRequest{
+				ID:        brokerIDFromURL(broker.BrokerURL),
 				GUID:      broker.GUID,
 				Name:      broker.Name,
 				BrokerURL: broker.BrokerURL,

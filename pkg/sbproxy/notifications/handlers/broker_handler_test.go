@@ -784,6 +784,7 @@ var _ = Describe("Broker Handler", func() {
 
 				BeforeEach(func() {
 					expectedDeleteBrokerRequest = &platform.DeleteServiceBrokerRequest{
+						ID:   smBrokerID,
 						GUID: smBrokerID,
 						Name: brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 					}

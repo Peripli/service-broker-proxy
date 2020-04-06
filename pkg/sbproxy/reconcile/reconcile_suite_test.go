@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -44,6 +45,10 @@ func TestReconcile(t *testing.T) {
 
 func brokerProxyName(brokerName, brokerID string) string {
 	return fmt.Sprintf("%s%s-%s", reconcile.DefaultProxyBrokerPrefix, brokerName, brokerID)
+}
+
+func brokerIDFromURL(brokerURL string) string {
+	return brokerURL[strings.LastIndex(brokerURL, "/")+1:]
 }
 
 func verifyInvocationsUseSameCorrelationID(invocations []map[string][][]interface{}) {
