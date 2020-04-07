@@ -39,6 +39,7 @@ var _ = Describe("Broker Handler", func() {
 	var catalog string
 
 	assertCreateBrokerRequest := func(actualReq, expectedReq *platform.CreateServiceBrokerRequest) {
+		Expect(actualReq.ID).To(Equal(expectedReq.ID))
 		Expect(actualReq.Name).To(Equal(expectedReq.Name))
 		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
 		Expect(actualReq.Username).ToNot(BeEmpty())
@@ -46,6 +47,7 @@ var _ = Describe("Broker Handler", func() {
 	}
 
 	assertUpdateBrokerRequest := func(actualReq, expectedReq *platform.UpdateServiceBrokerRequest) {
+		Expect(actualReq.ID).To(Equal(expectedReq.ID))
 		Expect(actualReq.GUID).To(Equal(expectedReq.GUID))
 		Expect(actualReq.Name).To(Equal(expectedReq.Name))
 		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
@@ -272,6 +274,7 @@ var _ = Describe("Broker Handler", func() {
 				}, nil)
 
 				expectedUpdateBrokerRequest = &platform.UpdateServiceBrokerRequest{
+					ID:        smBrokerID,
 					GUID:      smBrokerID,
 					Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 					BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
@@ -341,6 +344,7 @@ var _ = Describe("Broker Handler", func() {
 					fakeBrokerClient.GetBrokerByNameReturns(nil, nil)
 
 					expectedCreateBrokerRequest = &platform.CreateServiceBrokerRequest{
+						ID:        smBrokerID,
 						Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 						BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
 					}
@@ -595,6 +599,7 @@ var _ = Describe("Broker Handler", func() {
 				}
 				brokerHandler.OnUpdate(ctx, brokerNotification)
 				expectedReq := &platform.UpdateServiceBrokerRequest{
+					ID:        smBrokerID,
 					GUID:      smBrokerID,
 					Name:      brokerProxyName(brokerHandler.ProxyPrefix, newBrokerName, smBrokerID),
 					BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
@@ -631,6 +636,7 @@ var _ = Describe("Broker Handler", func() {
 
 				BeforeEach(func() {
 					expectedUpdateBrokerRequest = &platform.UpdateServiceBrokerRequest{
+						ID:        smBrokerID,
 						GUID:      smBrokerID,
 						Name:      brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 						BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
@@ -784,6 +790,7 @@ var _ = Describe("Broker Handler", func() {
 
 				BeforeEach(func() {
 					expectedDeleteBrokerRequest = &platform.DeleteServiceBrokerRequest{
+						ID:   smBrokerID,
 						GUID: smBrokerID,
 						Name: brokerProxyName(brokerHandler.ProxyPrefix, brokerName, smBrokerID),
 					}

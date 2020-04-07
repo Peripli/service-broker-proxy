@@ -133,6 +133,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 		}
 
 		createRequest := &platform.CreateServiceBrokerRequest{
+			ID:        brokerToCreate.Resource.GetID(),
 			Name:      brokerProxyName,
 			BrokerURL: brokerProxyPath,
 			Username:  username,
@@ -159,6 +160,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 			}
 
 			updateRequest := &platform.UpdateServiceBrokerRequest{
+				ID:        brokerToCreate.Resource.ID,
 				GUID:      existingBroker.GUID,
 				Name:      brokerProxyName,
 				BrokerURL: brokerProxyPath,
@@ -233,6 +235,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
+		ID:        brokerAfterUpdate.Resource.ID,
 		GUID:      existingBroker.GUID,
 		Name:      brokerProxyNameAfter,
 		BrokerURL: brokerProxyPath,
@@ -318,6 +321,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, not
 	log.C(ctx).Infof("Successfully found platform broker with name %s and URL %s. Attempting to delete...", existingBroker.Name, existingBroker.BrokerURL)
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
+		ID:   brokerToDelete.Resource.ID,
 		GUID: existingBroker.GUID,
 		Name: brokerProxyName,
 	}

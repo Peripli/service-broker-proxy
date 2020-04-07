@@ -164,6 +164,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 		}
 
 		updateRequest := &platform.UpdateServiceBrokerRequest{
+			ID:        brokerInSM.GUID,
 			GUID:      brokerGUIDInPlatform,
 			Name:      r.brokerProxyName(brokerInSM),
 			BrokerURL: r.smPath + "/" + brokerInSM.GUID,
@@ -198,6 +199,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 	}
 
 	createRequest := &platform.CreateServiceBrokerRequest{
+		ID:        brokerInSM.GUID,
 		Name:      r.brokerProxyName(brokerInSM),
 		BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 		Username:  username,
@@ -235,6 +237,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
+		ID:        brokerInSM.GUID,
 		GUID:      brokerGUIDInPlatform,
 		Name:      r.brokerProxyName(brokerInSM),
 		BrokerURL: r.smPath + "/" + brokerInSM.GUID,
@@ -255,6 +258,7 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 	logger.WithFields(logBroker(broker)).Info("resyncJob deleting broker from platform...")
 
 	deleteRequest := &platform.DeleteServiceBrokerRequest{
+		ID:   brokerIDFromURL(broker.BrokerURL),
 		GUID: broker.GUID,
 		Name: broker.Name,
 	}
