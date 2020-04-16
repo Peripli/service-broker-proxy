@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:28bb498370110348da1ff112aae1a2204b5476e021fb6b2272415a1f811fcf25"
+  digest = "1:16397f50ae8a9a85c7b162e67a2a2cd9f5386197c09218bab4f46297169a0769"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -72,8 +72,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "8a1cc3932b41629a7c455a8daec2ad5d508c7e53"
-  version = "v0.12.1"
+  revision = "18d7a6f37a954073b7dafc601225a793d6cb6d40"
+  version = "v0.13.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -200,12 +200,12 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:d1e35b720b5f5156502ffdd174000c81295919293735342da78582e4dc7a8bcd"
+  digest = "1:112b07cad4bd500e6e445cc0b9294ca310faa41199c19475c557daa2c7519549"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "84668698ea25b64748563aa20726db66a6b8d299"
-  version = "v1.3.5"
+  revision = "1b794fe86dd6a0c7c52ae69b5c9cb0aeedc52afa"
+  version = "v1.4.0"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -293,7 +293,7 @@
   revision = "ee514944af4b0d1b90212831674e03df1b850998"
 
 [[projects]]
-  digest = "1:e5e0d775194850f7f06c78f51015ec7c85a59a62613d1ad9847b5ba0f2a021c8"
+  digest = "1:6dbdb48005dbf5814c8a9ccf12fc25a4f1c2c19d6261815c5b16558fe489afe8"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -301,8 +301,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "788b7f06fee85b7e1d2aa4a3a86f8dbbbcc771ae"
-  version = "v1.10.3"
+  revision = "e2d2089232ece4911272106ae65a7a06746ea38a"
+  version = "v1.10.4"
 
 [[projects]]
   digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
@@ -634,7 +634,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "baeed622b8d86045ff442b324772b0ad306a2b3f"
+  revision = "0848c9571904fcbcb24543358ca8b5a7dbfde875"
 
 [[projects]]
   branch = "master"
@@ -665,11 +665,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:842f1500cf319662226ee2f897aa1bf5e9228bb851af8a9aaef5c425fe90f14e"
+  digest = "1:f88172369bcdae548777d8f2c59b11561f7e41686f426c583a7abaeec6978cc7"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "c3d80250170dec19bf61949c81233cede5ddaf61"
+  revision = "669c56c373c468cbe0f0c12b7939832b26088d33"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -725,6 +725,42 @@
   version = "v1.6.5"
 
 [[projects]]
+  digest = "1:f1865c7b6c5f85632ff40fd729aa3393e66a2db3de74d43ab7c594be7e9bfe25"
+  name = "google.golang.org/protobuf"
+  packages = [
+    "encoding/prototext",
+    "encoding/protowire",
+    "internal/descfmt",
+    "internal/descopts",
+    "internal/detrand",
+    "internal/encoding/defval",
+    "internal/encoding/messageset",
+    "internal/encoding/tag",
+    "internal/encoding/text",
+    "internal/errors",
+    "internal/fieldnum",
+    "internal/fieldsort",
+    "internal/filedesc",
+    "internal/filetype",
+    "internal/flags",
+    "internal/genname",
+    "internal/impl",
+    "internal/mapsort",
+    "internal/pragma",
+    "internal/set",
+    "internal/strs",
+    "internal/version",
+    "proto",
+    "reflect/protoreflect",
+    "reflect/protoregistry",
+    "runtime/protoiface",
+    "runtime/protoimpl",
+  ]
+  pruneopts = "UT"
+  revision = "3b9eee12916ce611400f93d6c2fed2fc2911b0ad"
+  version = "v1.21.0"
+
+[[projects]]
   digest = "1:80057945464ffb5b0da1f026beb8df0e8dbd098eaf771a349291bed2cd29a83e"
   name = "gopkg.in/fsnotify.v1"
   packages = ["."]
@@ -734,7 +770,7 @@
   version = "v1.4.9"
 
 [[projects]]
-  digest = "1:3c4aaca5a82adc021322f239e0cf3f46852bb0b18ae050d0feab2e9e4c527462"
+  digest = "1:11dd25b4604cee057da7b3135528ea8c8e47bc3047dcd36fa1cae79a8a5c1dde"
   name = "gopkg.in/square/go-jose.v2"
   packages = [
     ".",
@@ -742,8 +778,8 @@
     "json",
   ]
   pruneopts = "UT"
-  revision = "4ef0f1b175ccd65472d154e1207c4d7b8102545f"
-  version = "v2.4.1"
+  revision = "2204b3eaf539b5d4ad438a05b5e0a10e85816bf9"
+  version = "v2.5.0"
 
 [[projects]]
   branch = "v1"
