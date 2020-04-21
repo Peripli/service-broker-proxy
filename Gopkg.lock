@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:16397f50ae8a9a85c7b162e67a2a2cd9f5386197c09218bab4f46297169a0769"
+  digest = "1:27e74645e768e8af5486bf19831666af64065f3def4f0fb56d9b10096a194311"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -67,13 +67,14 @@
     "storage/interceptors",
     "storage/postgres",
     "storage/postgres/notification_connection",
+    "storage/service_plans",
     "test/common",
     "test/testutil",
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "18d7a6f37a954073b7dafc601225a793d6cb6d40"
-  version = "v0.13.0"
+  revision = "c683e1cb21d4ded9d07be28038d49b92d6094a12"
+  version = "v0.13.1"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -634,7 +635,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "0848c9571904fcbcb24543358ca8b5a7dbfde875"
+  revision = "3c4aac89819a5fdc28d906456729d3423fd46969"
 
 [[projects]]
   branch = "master"
@@ -669,7 +670,7 @@
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "669c56c373c468cbe0f0c12b7939832b26088d33"
+  revision = "1957bb5e6d1f523308b49060df02171d06ddfc77"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
