@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:486e53a3ceec87417d854ab64e83c25372bbeefd49660fcd78dba5ebda15e59c"
+  digest = "1:67e3482a112721074ccef934696fadcc6c2e56e3fc4888a8b7ec2fa0b07ca837"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -73,7 +73,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "0.13.3"
+  revision = "004b8af50e1f731def0eca39e158b7725bee0dd1"
+  version = "v0.13.4"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -200,12 +201,12 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:010e6ae8af115497e5112c31d02316bebc3b6853253ed18516a4f624082469a4"
+  digest = "1:9e1f58e0d3991f12e7b532161f56dc12c633fb01802ec60520d877599c2af2c5"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "6c66de79d66478d166c7ea05f5d2ccaf016fbd6b"
-  version = "v1.4.1"
+  revision = "d04d7b157bb510b1e0c10132224b616ac0e26b17"
+  version = "v1.4.2"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -259,20 +260,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:a1038ef593beb4771c8f0f9c26e8b00410acd800af5c6864651d9bf160ea1813"
-  name = "github.com/hpcloud/tail"
-  packages = [
-    ".",
-    "ratelimiter",
-    "util",
-    "watch",
-    "winfile",
-  ]
-  pruneopts = "UT"
-  revision = "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:a3ce4de79566c21e93cb6934797fdaa587ad3fc6a964708ab77babe54ea67188"
   name = "github.com/imkira/go-interpol"
   packages = ["."]
@@ -322,7 +309,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4b3538f72f5c6f77e801bf35500407ed1acac6b91b5e90a8f969a623c67c4379"
+  digest = "1:2284023e6fc3d18e206abf1792f50a062155d25df6a0d104202bf060a3d3d4a1"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -330,7 +317,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "c904eabba4136fb97e44adefd2f4f979131242c7"
+  revision = "f3b22b2cad9e4567803b7ffd9853b8acda021438"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
@@ -357,6 +344,20 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:a9f00de9b605c251f5f1eba5d34c238131f0a7d38f6e7126c6bacc073f314865"
+  name = "github.com/nxadm/tail"
+  packages = [
+    ".",
+    "ratelimiter",
+    "util",
+    "watch",
+    "winfile",
+  ]
+  pruneopts = "UT"
+  revision = "327c577245448d8192115e77a76ea3d6aee88202"
+  version = "v1.4.4"
+
+[[projects]]
   digest = "1:96df5bdca983e4b8c62682af5b67100b187d582ac6db0968d8af52e84138d1e6"
   name = "github.com/onrik/logrus"
   packages = ["filename"]
@@ -365,7 +366,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:13b913f297752cf0f236c0ab940d0ffaac64e5a97b7bb68c659a9f734bd32a89"
+  digest = "1:ab4da5cf5a96ceaeebf4574ad47f16173c50e69befee48bd8513d7f03b26984e"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -389,8 +390,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "40598150331533e3cd497f21dcce387dae84b561"
-  version = "v1.12.0"
+  revision = "cc0216944b25a88d3259699a029d4e601fb8a222"
+  version = "v1.12.1"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -415,12 +416,12 @@
   version = "v1.3.0"
 
 [[projects]]
-  digest = "1:1d835d5c3153aceef96c2d58866edde1aa70e25339831cff07b1e47456410e5c"
+  digest = "1:53aab5f59edb1cd47773bbbb5b1b6d0b76b0c9e31cfac670a0bb7ccc917e98a3"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   pruneopts = "UT"
-  revision = "8e8d2a6aad23fcaa64716c5fa6975ec3abbf8281"
-  version = "v1.7.0"
+  revision = "16c9a8bdc086a2130a88eff98df4088e4c359bb2"
+  version = "v1.8.0"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -634,7 +635,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "4b2356b1ed79e6be3deca3737a3db3d132d2847a"
+  revision = "06a226fb4e3765ef3f48aa2852b401bc7b98e981"
 
 [[projects]]
   branch = "master"
@@ -650,7 +651,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "7e3656a0809f6f95abd88ac65313578f80b00df2"
+  revision = "a91f0712d120a21e49061d61eb6ba9b88cb0d376"
 
 [[projects]]
   branch = "master"
@@ -665,14 +666,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8cab10971112233c82c83683a517378038eba1c20e71b29c592b73fa212437b3"
+  digest = "1:020620a097c2bfd056c8db7d31a69ea2cfed874ce985763dcd9ae00f9fa5f74b"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "bc7a7d42d5c30f4d0fe808715c002826ce2c624e"
+  revision = "1151b9dac4a98d49ef7f80f07ddd826ff51e0b36"
 
 [[projects]]
   digest = "1:28deae5fe892797ff37a317b5bcda96d11d1c90dadd89f1337651df3bc4c586e"
@@ -728,7 +729,7 @@
   version = "v1.6.6"
 
 [[projects]]
-  digest = "1:b76a323f549018e4ca29937a8e189d2167a2eb6cea652bf5d9f4a1d15c636cb6"
+  digest = "1:2d07e31460124a78b7493196e5f6c7425404865f7de73161ea7f2c6ee427ef72"
   name = "google.golang.org/protobuf"
   packages = [
     "encoding/prototext",
@@ -760,17 +761,8 @@
     "runtime/protoimpl",
   ]
   pruneopts = "UT"
-  revision = "8b0d71ac935315b10385aaaf30175de0c74bbba6"
-  version = "v1.22.0"
-
-[[projects]]
-  digest = "1:80057945464ffb5b0da1f026beb8df0e8dbd098eaf771a349291bed2cd29a83e"
-  name = "gopkg.in/fsnotify.v1"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "45d7d09e39ef4ac08d493309fa031790c15bfe8a"
-  source = "https://github.com/fsnotify/fsnotify.git"
-  version = "v1.4.9"
+  revision = "d165be301fb1e13390ad453281ded24385fd8ebc"
+  version = "v1.23.0"
 
 [[projects]]
   digest = "1:c864e49942441f23f2b51ba1eacf4d43dedec45b76f06800207b20fc8642ad78"
@@ -793,12 +785,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:55b110c99c5fdc4f14930747326acce56b52cfce60b24b1c03ef686ac0e46bb1"
+  digest = "1:d7f1bd887dc650737a421b872ca883059580e9f8314d601f88025df4f4802dce"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "53403b58ad1b561927d19068c655246f2db79d48"
-  version = "v2.2.8"
+  revision = "0b1645d91e851e735d3e23330303ce81f70adbe3"
+  version = "v2.3.0"
 
 [solve-meta]
   analyzer-name = "dep"
