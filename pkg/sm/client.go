@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path"
 	"strconv"
 	"time"
 
@@ -198,5 +197,5 @@ func (c *ServiceManagerClient) listAll(ctx context.Context, smURL string, params
 }
 
 func (c *ServiceManagerClient) getURL(route string) string {
-	return path.Join(c.url, route)
+	return c.url + route
 }
