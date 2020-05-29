@@ -25,6 +25,20 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Settings type holds SM Client config properties
+type Settings struct {
+	User                 string
+	Password             string
+	URL                  string
+	OSBAPIPath           string        `mapstructure:"osb_api_path"`
+	NotificationsAPIPath string        `mapstructure:"notifications_api_path"`
+	RequestTimeout       time.Duration `mapstructure:"request_timeout"`
+	SkipSSLValidation    bool          `mapstructure:"skip_ssl_validation"`
+	VisibilitiesPageSize int           `mapstructure:"visibilities_page_size"`
+
+	Transport http.RoundTripper
+}
+
 // DefaultSettings builds a default Service Manager Settings
 func DefaultSettings() *Settings {
 	return &Settings{
@@ -50,19 +64,6 @@ func NewSettings(env env.Environment) (*Settings, error) {
 	}
 
 	return config.Sm, nil
-}
-
-// Settings type holds SM Client config properties
-type Settings struct {
-	User                 string
-	Password             string
-	URL                  string
-	OSBAPIPath           string        `mapstructure:"osb_api_path"`
-	NotificationsAPIPath string        `mapstructure:"notifications_api_path"`
-	RequestTimeout       time.Duration `mapstructure:"request_timeout"`
-	SkipSSLValidation    bool          `mapstructure:"skip_ssl_validation"`
-
-	Transport http.RoundTripper
 }
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid
