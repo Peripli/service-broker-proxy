@@ -22,9 +22,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"strconv"
 	"time"
 
 	"github.com/Peripli/service-manager/pkg/log"
+	"github.com/Peripli/service-manager/pkg/web"
 
 	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/pkg/errors"
@@ -35,6 +38,8 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
+
+const smURL = "http://example.com"
 
 type MockTransport struct {
 	f func(req *http.Request) (*http.Response, error)
@@ -63,7 +68,7 @@ var _ = Describe("Client", func() {
 			settings = &Settings{
 				User:                 "admin",
 				Password:             "admin",
-				URL:                  "http://example.com",
+				URL:                  smURL,
 				OSBAPIPath:           "/osb",
 				NotificationsAPIPath: "/v1/notifications",
 				RequestTimeout:       5,
@@ -106,6 +111,7 @@ var _ = Describe("Client", func() {
 	})
 
 	const CorrelationIDValue = "corelation-id-value"
+	const VisibilitiesPageSize = 100
 
 	type testCase struct {
 		expectations *common.HTTPExpectations
@@ -119,11 +125,12 @@ var _ = Describe("Client", func() {
 		client, err := NewClient(&Settings{
 			User:                 "admin",
 			Password:             "admin",
-			URL:                  "http://example.com",
+			URL:                  smURL,
 			OSBAPIPath:           "/osb",
 			NotificationsAPIPath: "/v1/notifications",
 			RequestTimeout:       2 * time.Second,
 			SkipSSLValidation:    false,
+			VisibilitiesPageSize: VisibilitiesPageSize,
 			Transport:            httpClient(t.reaction, t.expectations),
 		})
 		Expect(err).ShouldNot(HaveOccurred())
@@ -176,7 +183,7 @@ var _ = Describe("Client", func() {
 	brokerEntries := []TableEntry{
 		Entry("Successfully obtain brokers", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
+				URL: path.Join(smURL, web.ServiceBrokersURL),
 				Params: map[string]string{
 					"fieldQuery": "ready eq true",
 				},
@@ -196,7 +203,7 @@ var _ = Describe("Client", func() {
 
 		Entry("Returns error when API returns error", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
+				URL: path.Join(smURL, web.ServiceBrokersURL),
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -212,7 +219,7 @@ var _ = Describe("Client", func() {
 
 		Entry("Returns error when API response body is invalid", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
+				URL: path.Join(smURL, web.ServiceBrokersURL),
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -229,7 +236,7 @@ var _ = Describe("Client", func() {
 
 		Entry("Returns error when API returns error", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIInternalBrokers, "http://example.com"),
+				URL: path.Join(smURL, web.ServiceBrokersURL),
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -283,7 +290,7 @@ var _ = Describe("Client", func() {
 	planEntries := []TableEntry{
 		Entry("Successfully obtain plans", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIPlans, "http://example.com"),
+				URL: path.Join(smURL, web.ServicePlansURL),
 				Params: map[string]string{
 					"fieldQuery": "ready eq true",
 				},
@@ -303,7 +310,7 @@ var _ = Describe("Client", func() {
 
 		Entry("Returns error when API returns error", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIPlans, "http://example.com"),
+				URL: path.Join(smURL, web.ServicePlansURL),
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
@@ -358,9 +365,10 @@ var _ = Describe("Client", func() {
 	visibilitiesEntries := []TableEntry{
 		Entry("Successfully obtain visibilities", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIVisibilities, "http://example.com"),
+				URL: path.Join(smURL, web.VisibilitiesURL),
 				Params: map[string]string{
 					"fieldQuery": "ready eq true",
+					"max_items":  strconv.Itoa(VisibilitiesPageSize),
 				},
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
@@ -378,7 +386,7 @@ var _ = Describe("Client", func() {
 
 		Entry("Returns error when API returns error", testCase{
 			expectations: &common.HTTPExpectations{
-				URL: fmt.Sprintf(APIVisibilities, "http://example.com"),
+				URL: path.Join(smURL, web.VisibilitiesURL),
 				Headers: map[string]string{
 					"Authorization":             "Basic " + basicAuth("admin", "admin"),
 					log.CorrelationIDHeaders[0]: CorrelationIDValue,
