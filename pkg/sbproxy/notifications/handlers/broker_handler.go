@@ -255,7 +255,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		newBroker, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest)
 		if err != nil {
 			log.C(ctx).WithError(err).Errorf("Could not update broker name from %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
-			defer bnh.revertBrokerCredentials(ctx, createdCredentials)
+			bnh.revertBrokerCredentials(ctx, createdCredentials)
 			return
 		}
 		log.C(ctx).Infof("Successfully renamed broker %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
@@ -272,7 +272,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 
 		if err := bnh.CatalogFetcher.Fetch(ctx, updateRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", updateRequest.GUID, brokerAfterUpdate.Resource.ID)
-			defer bnh.revertBrokerCredentials(ctx, createdCredentials)
+			bnh.revertBrokerCredentials(ctx, createdCredentials)
 			return
 		}
 		log.C(ctx).Infof("Successfully refetched catalog for platform broker with name %s and URL %s", existingBroker.Name, existingBroker.BrokerURL)
