@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/util"
 
@@ -243,16 +244,18 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		Password:  password,
 	}
 
+	var createdCredentials *types.BrokerPlatformCredential
 	if brokerProxyNameBefore != brokerProxyNameAfter {
 		log.C(ctx).Infof("Broker %s was renamed to %s. Triggering broker update...", brokerProxyNameBefore, brokerProxyNameAfter)
 
-		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+		if createdCredentials, err = bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 			return
 		}
 		newBroker, err := bnh.BrokerClient.UpdateBroker(ctx, updateRequest)
 		if err != nil {
 			log.C(ctx).WithError(err).Errorf("Could not update broker name from %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
+			defer bnh.revertBrokerCredentials(ctx, createdCredentials)
 			return
 		}
 		log.C(ctx).Infof("Successfully renamed broker %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
@@ -262,13 +265,14 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 
 	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
 	if bnh.CatalogFetcher != nil {
-		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+		if createdCredentials, err = bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 			return
 		}
 
 		if err := bnh.CatalogFetcher.Fetch(ctx, updateRequest); err != nil {
 			log.C(ctx).WithError(err).Errorf("error during fetching catalog for platform guid %s and sm id %s", updateRequest.GUID, brokerAfterUpdate.Resource.ID)
+			defer bnh.revertBrokerCredentials(ctx, createdCredentials)
 			return
 		}
 		log.C(ctx).Infof("Successfully refetched catalog for platform broker with name %s and URL %s", existingBroker.Name, existingBroker.BrokerURL)
@@ -333,6 +337,13 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, not
 
 	log.C(ctx).Infof("Successfully deleted platform broker with platform ID %s and name %s", existingBroker.GUID, existingBroker.Name)
 	bnh.resetBrokerCache(ctx, existingBroker, nil)
+}
+
+func (bnh *BrokerResourceNotificationsHandler) revertBrokerCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) {
+	log.C(ctx).Infof("Will try to revert the broker credentials in Service Manager with id %s", credentials.ID)
+	if err := bnh.SMClient.RevertCredentials(ctx, credentials); err != nil {
+		log.C(ctx).WithError(err).Errorf("Could not revert broker credetials with id %s: %s", credentials.ID, err)
+	}
 }
 
 func (bnh *BrokerResourceNotificationsHandler) unmarshalPayload(operationType types.NotificationOperation, payload json.RawMessage) (brokerPayload, error) {
