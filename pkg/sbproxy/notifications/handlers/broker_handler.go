@@ -128,7 +128,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 	if existingBroker == nil {
 		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
 
-		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+		if _, err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 			return
 		}
@@ -155,7 +155,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 				return
 			}
 
-			if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+			if _, err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
 				log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 				return
 			}

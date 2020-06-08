@@ -19,10 +19,11 @@ package reconcile
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/util"
 	"github.com/Peripli/service-manager/pkg/types"
-	"strings"
 
 	"github.com/Peripli/service-manager/pkg/util/slice"
 
@@ -155,7 +156,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			BrokerID:     brokerInSM.GUID,
 		}
 
-		if err := r.smClient.PutCredentials(ctx, credentials); err != nil {
+		if _, err := r.smClient.PutCredentials(ctx, credentials); err != nil {
 			if err != sm.ErrConflictingBrokerPlatformCredentials {
 				return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
 			}
@@ -190,7 +191,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 		return err
 	}
 
-	if err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
+	if _, err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 		Username:     username,
 		PasswordHash: passwordHash,
 		BrokerID:     brokerInSM.GUID,
@@ -224,7 +225,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		return err
 	}
 
-	if err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
+	if _, err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 		Username:     username,
 		PasswordHash: passwordHash,
 		BrokerID:     brokerInSM.GUID,

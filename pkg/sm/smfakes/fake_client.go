@@ -62,16 +62,30 @@ type FakeClient struct {
 		result1 []*types.Visibility
 		result2 error
 	}
-	PutCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) error
+	PutCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)
 	putCredentialsMutex       sync.RWMutex
 	putCredentialsArgsForCall []struct {
 		arg1 context.Context
 		arg2 *types.BrokerPlatformCredential
 	}
 	putCredentialsReturns struct {
-		result1 error
+		result1 *types.BrokerPlatformCredential
+		result2 error
 	}
 	putCredentialsReturnsOnCall map[int]struct {
+		result1 *types.BrokerPlatformCredential
+		result2 error
+	}
+	RevertCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) error
+	revertCredentialsMutex       sync.RWMutex
+	revertCredentialsArgsForCall []struct {
+		arg1 context.Context
+		arg2 *types.BrokerPlatformCredential
+	}
+	revertCredentialsReturns struct {
+		result1 error
+	}
+	revertCredentialsReturnsOnCall map[int]struct {
 		result1 error
 	}
 	invocations      map[string][][]interface{}
@@ -330,7 +344,7 @@ func (fake *FakeClient) GetVisibilitiesReturnsOnCall(i int, result1 []*types.Vis
 	}{result1, result2}
 }
 
-func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) error {
+func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error) {
 	fake.putCredentialsMutex.Lock()
 	ret, specificReturn := fake.putCredentialsReturnsOnCall[len(fake.putCredentialsArgsForCall)]
 	fake.putCredentialsArgsForCall = append(fake.putCredentialsArgsForCall, struct {
@@ -343,10 +357,10 @@ func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerP
 		return fake.PutCredentialsStub(arg1, arg2)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
 	fakeReturns := fake.putCredentialsReturns
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeClient) PutCredentialsCallCount() int {
@@ -355,7 +369,7 @@ func (fake *FakeClient) PutCredentialsCallCount() int {
 	return len(fake.putCredentialsArgsForCall)
 }
 
-func (fake *FakeClient) PutCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) error) {
+func (fake *FakeClient) PutCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)) {
 	fake.putCredentialsMutex.Lock()
 	defer fake.putCredentialsMutex.Unlock()
 	fake.PutCredentialsStub = stub
@@ -368,25 +382,89 @@ func (fake *FakeClient) PutCredentialsArgsForCall(i int) (context.Context, *type
 	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeClient) PutCredentialsReturns(result1 error) {
+func (fake *FakeClient) PutCredentialsReturns(result1 *types.BrokerPlatformCredential, result2 error) {
 	fake.putCredentialsMutex.Lock()
 	defer fake.putCredentialsMutex.Unlock()
 	fake.PutCredentialsStub = nil
 	fake.putCredentialsReturns = struct {
-		result1 error
-	}{result1}
+		result1 *types.BrokerPlatformCredential
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeClient) PutCredentialsReturnsOnCall(i int, result1 error) {
+func (fake *FakeClient) PutCredentialsReturnsOnCall(i int, result1 *types.BrokerPlatformCredential, result2 error) {
 	fake.putCredentialsMutex.Lock()
 	defer fake.putCredentialsMutex.Unlock()
 	fake.PutCredentialsStub = nil
 	if fake.putCredentialsReturnsOnCall == nil {
 		fake.putCredentialsReturnsOnCall = make(map[int]struct {
-			result1 error
+			result1 *types.BrokerPlatformCredential
+			result2 error
 		})
 	}
 	fake.putCredentialsReturnsOnCall[i] = struct {
+		result1 *types.BrokerPlatformCredential
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeClient) RevertCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) error {
+	fake.revertCredentialsMutex.Lock()
+	ret, specificReturn := fake.revertCredentialsReturnsOnCall[len(fake.revertCredentialsArgsForCall)]
+	fake.revertCredentialsArgsForCall = append(fake.revertCredentialsArgsForCall, struct {
+		arg1 context.Context
+		arg2 *types.BrokerPlatformCredential
+	}{arg1, arg2})
+	fake.recordInvocation("RevertCredentials", []interface{}{arg1, arg2})
+	fake.revertCredentialsMutex.Unlock()
+	if fake.RevertCredentialsStub != nil {
+		return fake.RevertCredentialsStub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.revertCredentialsReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeClient) RevertCredentialsCallCount() int {
+	fake.revertCredentialsMutex.RLock()
+	defer fake.revertCredentialsMutex.RUnlock()
+	return len(fake.revertCredentialsArgsForCall)
+}
+
+func (fake *FakeClient) RevertCredentialsCalls(stub func(context.Context, *types.BrokerPlatformCredential) error) {
+	fake.revertCredentialsMutex.Lock()
+	defer fake.revertCredentialsMutex.Unlock()
+	fake.RevertCredentialsStub = stub
+}
+
+func (fake *FakeClient) RevertCredentialsArgsForCall(i int) (context.Context, *types.BrokerPlatformCredential) {
+	fake.revertCredentialsMutex.RLock()
+	defer fake.revertCredentialsMutex.RUnlock()
+	argsForCall := fake.revertCredentialsArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeClient) RevertCredentialsReturns(result1 error) {
+	fake.revertCredentialsMutex.Lock()
+	defer fake.revertCredentialsMutex.Unlock()
+	fake.RevertCredentialsStub = nil
+	fake.revertCredentialsReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeClient) RevertCredentialsReturnsOnCall(i int, result1 error) {
+	fake.revertCredentialsMutex.Lock()
+	defer fake.revertCredentialsMutex.Unlock()
+	fake.RevertCredentialsStub = nil
+	if fake.revertCredentialsReturnsOnCall == nil {
+		fake.revertCredentialsReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.revertCredentialsReturnsOnCall[i] = struct {
 		result1 error
 	}{result1}
 }
@@ -404,6 +482,8 @@ func (fake *FakeClient) Invocations() map[string][][]interface{} {
 	defer fake.getVisibilitiesMutex.RUnlock()
 	fake.putCredentialsMutex.RLock()
 	defer fake.putCredentialsMutex.RUnlock()
+	fake.revertCredentialsMutex.RLock()
+	defer fake.revertCredentialsMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
