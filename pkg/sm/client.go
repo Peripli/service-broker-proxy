@@ -193,9 +193,10 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 
 // RevertCredentials move the old credentials as new. Intended to be used if the update of the broker in platform fails
 func (c *ServiceManagerClient) RevertCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
-	log.C(ctx).Infof("Reverting credentials with id %s in Service Manager at %s", credentials.ID, c.url)
+	endpoint := fmt.Sprintf("%s/%s", c.getURL(web.BrokerPlatformCredentialsURL), credentials.ID)
+	log.C(ctx).Infof("Reverting credentials with id %s in Service Manager at %s", credentials.ID, endpoint)
 
-	req, err := http.NewRequest(http.MethodPatch, fmt.Sprintf("%s/%s", c.getURL(web.BrokerPlatformCredentialsURL), credentials.ID), nil)
+	req, err := http.NewRequest(http.MethodPatch, endpoint, nil)
 	if err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func (c *ServiceManagerClient) RevertCredentials(ctx context.Context, credential
 		log.C(ctx).Errorf("Credentials with id %s could not be found", credentials.ID)
 		return ErrBrokerPlatformCredentialsNotFound
 	default:
-		return fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
+		return fmt.Errorf("unexpected response status code received (%v) upon credentials reverting", response.StatusCode)
 	}
 
 	return nil
