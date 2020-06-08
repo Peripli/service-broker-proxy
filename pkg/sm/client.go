@@ -196,7 +196,7 @@ func (c *ServiceManagerClient) RevertCredentials(ctx context.Context, credential
 	endpoint := fmt.Sprintf("%s/%s", c.getURL(web.BrokerPlatformCredentialsURL), credentials.ID)
 	log.C(ctx).Infof("Reverting credentials with id %s in Service Manager at %s", credentials.ID, endpoint)
 
-	req, err := http.NewRequest(http.MethodPatch, endpoint, nil)
+	req, err := http.NewRequest(http.MethodPatch, endpoint, bytes.NewBuffer([]byte(`{}`)))
 	if err != nil {
 		return err
 	}
