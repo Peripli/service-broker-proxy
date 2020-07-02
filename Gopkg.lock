@@ -24,7 +24,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:2ca7092fad1840ec46a56d5f872d1ea8dc41ccda7392c350eadefcf58a835bc6"
+  digest = "1:74ab8238332731ce1115d465aa54b663742139a58209b3cce4a7e14be67fdb20"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -74,8 +74,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "e82055cd99aa853f58b2203d8cfcfdd4d629e4de"
-  version = "v0.14.0"
+  revision = "0e69133a7f403f549af351206bc632c52eea909d"
+  version = "v0.15.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -289,8 +289,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "7d4a7636a2a9987e3f1fccaf10e8aa65ae54cefa"
-  version = "v1.10.9"
+  revision = "a8f778f32d263b3a95d1e5a90534f5f680560abe"
+  version = "v1.10.10"
 
 [[projects]]
   digest = "1:09cb61dc19af93deae01587e2fdb1c081e0bf48f1a5ad5fa24f48750dc57dce8"
@@ -310,7 +310,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:53fdcc6cb976299b987ca544ee5f5cea5a2348051d9211604c96dfe3ba788ac7"
+  digest = "1:cbcf3bea501927a3f43f51186a944a9d68a258e364e69b6e7279d29c0f37a787"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -318,7 +318,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "8ae9eeaa02388a26cd5586023a0c4166c021a83d"
+  revision = "bd4ec23c4e78fe8d3f450b1ba03a94dc817cae33"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
@@ -476,8 +476,8 @@
     "mem",
   ]
   pruneopts = "UT"
-  revision = "1524d0a48baf070afc40a397f4ac0cfb0a490c92"
-  version = "v1.3.0"
+  revision = "64b7ddd95f1fbe60faf105741af72d8f3579e5f0"
+  version = "v1.3.1"
 
 [[projects]]
   digest = "1:516e71bed754268937f57d4ecb190e01958452336fa73dbac880894164e91c1f"
@@ -637,7 +637,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "70a84ac30bf957c7df57edd1935d2081871515e1"
+  revision = "75b288015ac94e66e3d6715fb68a9b41bf046ec2"
 
 [[projects]]
   branch = "master"
@@ -653,7 +653,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "627f9648deb96c27737b83199d44bb5c1010cbcf"
+  revision = "4c5254603344ea4a8ae4bed7e296a9588303e14f"
 
 [[projects]]
   branch = "master"
@@ -668,14 +668,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a88fe0246d085e14829adc0333b68f26934b9898ad6a1cbe48bd4b4a24cb5a9a"
+  digest = "1:de18db9b6b884884bbb43eafaee3c72a06c8d4ac69d87411c52b5801a5e814f7"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "f1bc736245b146b19d485cdbc534f9a765257080"
+  revision = "ddb9806d33aed8dbaac1cd6f1cba58952e87f933"
 
 [[projects]]
   digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
@@ -731,7 +731,7 @@
   version = "v1.6.6"
 
 [[projects]]
-  digest = "1:2a628685d02a3eb98bd3b2b25778967113a5bdfae5be743e2612960b07780809"
+  digest = "1:cccb3a18e62abaccd19c309fc01a69da2509719f5a453cb2e66969f670503245"
   name = "google.golang.org/protobuf"
   packages = [
     "encoding/prototext",
@@ -744,12 +744,11 @@
     "internal/encoding/tag",
     "internal/encoding/text",
     "internal/errors",
-    "internal/fieldnum",
     "internal/fieldsort",
     "internal/filedesc",
     "internal/filetype",
     "internal/flags",
-    "internal/genname",
+    "internal/genid",
     "internal/impl",
     "internal/mapsort",
     "internal/pragma",
@@ -763,8 +762,8 @@
     "runtime/protoimpl",
   ]
   pruneopts = "UT"
-  revision = "5c3dd7024aed895adfe053f26b5a479e991cbca9"
-  version = "v1.24.0"
+  revision = "3f7a61f89bb6813f89d981d1870ed68da0b3c3f1"
+  version = "v1.25.0"
 
 [[projects]]
   digest = "1:c864e49942441f23f2b51ba1eacf4d43dedec45b76f06800207b20fc8642ad78"
