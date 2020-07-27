@@ -42,17 +42,17 @@ func (b *BasicAuthTransport) RoundTrip(request *http.Request) (*http.Response, e
 	return b.Rt.RoundTrip(request)
 }
 
-// SkipSSLTransport implements http.RoundTripper and sets the SSL Validation to match the provided property
-type SkipSSLTransport struct {
+// SSLTransport implements http.RoundTripper and sets the SSL transport
+type SSLTransport struct {
 	SkipSslValidation bool
-
-	Rt http.RoundTripper
+	TLSCertificates   []tls.Certificate
+	Rt                http.RoundTripper
 }
 
-var _ http.RoundTripper = &SkipSSLTransport{}
+var _ http.RoundTripper = &SSLTransport{}
 
 // RoundTrip implements http.RoundTrip and adds skip SSL validation logic
-func (b *SkipSSLTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+func (b *SSLTransport) RoundTrip(request *http.Request) (*http.Response, error) {
 	if b.Rt == nil {
 		b.Rt = http.DefaultTransport
 	}
@@ -60,6 +60,7 @@ func (b *SkipSSLTransport) RoundTrip(request *http.Request) (*http.Response, err
 	if defaultTransport, ok := b.Rt.(*http.Transport); ok {
 		defaultTransport.TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: b.SkipSslValidation,
+			Certificates:       b.TLSCertificates,
 		}
 	}
 

@@ -18,10 +18,15 @@ package sm
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"time"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -48,6 +53,24 @@ func httpClient(reaction *common.HTTPReaction, checks *common.HTTPExpectations) 
 	return &MockTransport{
 		f: common.DoHTTP(reaction, checks),
 	}
+}
+
+func TLSMockServer(mockResponse string) *httptest.Server {
+
+	router := mux.NewRouter()
+	router.HandleFunc("/v1/testTLS", func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		io.WriteString(rw, mockResponse)
+	}).Methods(http.MethodGet)
+
+	uServer := httptest.NewUnstartedServer(router)
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM([]byte(ClientCertificate))
+	uServer.TLS = &tls.Config{}
+	uServer.TLS.ClientCAs = caCertPool
+	uServer.TLS.ClientAuth = tls.RequireAndVerifyClientCert
+	uServer.StartTLS()
+	return uServer
 }
 
 func basicAuth(username, password string) string {
@@ -81,6 +104,111 @@ var _ = Describe("Client", func() {
 			})
 		})
 
+		When("client is connecting to an mTLS server", func() {
+			var mockServer *httptest.Server
+			BeforeEach(func() {
+				mockServer = TLSMockServer(`{
+					"num_items": 1,
+					"items" : [{"name" : "hello world"}]
+				}`)
+			})
+
+			AfterEach(func() {
+				mockServer.Close()
+			})
+
+			When("mTLS valid settings are present in config", func() {
+
+				BeforeEach(func() {
+					settings = &Settings{
+						User:                 "admin",
+						Password:             "admin",
+						URL:                  "http://example.com",
+						OSBAPIPath:           "/osb",
+						NotificationsAPIPath: "/v1/notifications",
+						RequestTimeout:       5 * time.Second,
+						SkipSSLValidation:    true,
+						TLSClientKey:         ClientKey,
+						TLSClientCertificate: ClientCertificate,
+					}
+				})
+
+				It("should establish a valid connection to the mTLS server", func() {
+					client, err := NewClient(settings)
+					Expect(err).ShouldNot(HaveOccurred())
+					transport := client.httpClient.Transport.(*BasicAuthTransport)
+					_, ok := transport.Rt.(*SSLTransport)
+					Expect(ok).To(BeTrue())
+					var params map[string]string
+					result := make([]*types.ServiceOffering, 0)
+					err = client.call(context.TODO(), mockServer.URL+"/v1/testTLS", params, &result)
+					Expect(result[0].Name).To(Equal("hello world"))
+					Expect(err).ShouldNot(HaveOccurred())
+				})
+			})
+
+			When("mTLS private key does not match pubic key", func() {
+
+				BeforeEach(func() {
+					settings = &Settings{
+						User:                 "admin",
+						Password:             "admin",
+						URL:                  "http://example.com",
+						OSBAPIPath:           "/osb",
+						NotificationsAPIPath: "/v1/notifications",
+						RequestTimeout:       5 * time.Second,
+						SkipSSLValidation:    true,
+						TLSClientKey:         InvalidClientKey,
+						TLSClientCertificate: ClientCertificate,
+					}
+				})
+
+				It("should fail due to not matching keys", func() {
+					_, err := NewClient(settings)
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("private key does not match public key"))
+				})
+			})
+			When("bad certificates is used by the client", func() {
+				BeforeEach(func() {
+					settings = &Settings{
+						User:                 "admin",
+						Password:             "admin",
+						URL:                  "http://example.com",
+						OSBAPIPath:           "/osb",
+						NotificationsAPIPath: "/v1/notifications",
+						RequestTimeout:       5 * time.Second,
+						SkipSSLValidation:    true,
+						TLSClientKey:         InvalidClientKey,
+						TLSClientCertificate: InvalidClientCertificate,
+					}
+				})
+
+				It("should fail to establish a connection", func() {
+					client, err := NewClient(settings)
+					Expect(err).ShouldNot(HaveOccurred())
+					transport := client.httpClient.Transport.(*BasicAuthTransport)
+					_, ok := transport.Rt.(*SSLTransport)
+					Expect(ok).To(BeTrue())
+					var params map[string]string
+					result := make([]*types.ServiceOffering, 0)
+					err = client.call(context.TODO(), mockServer.URL+"/v1/testTLS", params, &result)
+					Expect(err).Should(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("bad certificate"))
+				})
+			})
+
+			Context("when transport is not present in config", func() {
+				It("uses a skip ssl transport as base transport", func() {
+					client, err := NewClient(settings)
+					Expect(err).ShouldNot(HaveOccurred())
+					transport := client.httpClient.Transport.(*BasicAuthTransport)
+					_, ok := transport.Rt.(*SSLTransport)
+					Expect(ok).To(BeTrue())
+				})
+			})
+		})
+
 		Context("when config is valid", func() {
 			Context("when transport is present in config", func() {
 				It("it uses it as base transport", func() {
@@ -98,7 +226,7 @@ var _ = Describe("Client", func() {
 					client, err := NewClient(settings)
 					Expect(err).ShouldNot(HaveOccurred())
 					transport := client.httpClient.Transport.(*BasicAuthTransport)
-					_, ok := transport.Rt.(*SkipSSLTransport)
+					_, ok := transport.Rt.(*SSLTransport)
 					Expect(ok).To(BeTrue())
 				})
 			})

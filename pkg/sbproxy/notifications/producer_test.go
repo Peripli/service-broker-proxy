@@ -2,6 +2,8 @@ package notifications_test
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -216,6 +218,69 @@ var _ = Describe("Notifications", func() {
 				}
 				messages := producer.Start(producerCtx, group)
 				Eventually(messages).Should(Receive(Equal(message)))
+			})
+		})
+
+		Context("When a server that accept mTLS exists", func() {
+			var tlsServer *httptest.Server
+			var tlsSocketServer *wsServer
+			BeforeEach(func() {
+				tlsServer, tlsSocketServer = newServerWithTLS()
+				producerSettings = &notifications.ProducerSettings{
+					MinPingPeriod:        100 * time.Millisecond,
+					ReconnectDelay:       100 * time.Millisecond,
+					PongTimeout:          20 * time.Millisecond,
+					ResyncPeriod:         300 * time.Millisecond,
+					PingPeriodPercentage: 60,
+					MessagesQueueSize:    10,
+				}
+			})
+
+			AfterEach(func() {
+				tlsServer.Close()
+			})
+
+			When("valid mTLS certificate settings are used", func() {
+
+				BeforeEach(func() {
+					smSettings = &sm.Settings{
+						URL:                  tlsServer.URL,
+						User:                 "admin",
+						Password:             "admin",
+						RequestTimeout:       11 * time.Second,
+						TLSClientCertificate: sm.ClientCertificate,
+						TLSClientKey:         sm.ClientKey,
+						SkipSSLValidation:    true,
+						NotificationsAPIPath: "/v1/notifications",
+					}
+				})
+
+				It("successfully pings the mTLS server using valid client certificate", func(done Done) {
+					times := make(chan time.Time, 10)
+					tlsSocketServer.onClientConnected = func(conn *websocket.Conn) {
+						times <- time.Now()
+					}
+					tlsSocketServer.pingHandler = func(string) error {
+						defer GinkgoRecover()
+						now := time.Now()
+						times <- now
+						if len(times) == 3 {
+							start := <-times
+							for i := 0; i < 2; i++ {
+								t := <-times
+								pingPeriod, err := time.ParseDuration(tlsSocketServer.maxPingPeriod)
+								Expect(err).ToNot(HaveOccurred())
+								Expect(t.Sub(start)).To(BeNumerically("<", pingPeriod))
+								start = t
+							}
+							close(done)
+						}
+						tlsSocketServer.conn.WriteControl(websocket.PongMessage, []byte{}, now.Add(1*time.Second))
+						return nil
+					}
+					newProducer, _ := notifications.NewProducer(producerSettings, smSettings)
+					newProducer.Start(producerCtx, group)
+				}, (500 * time.Second).Seconds())
 			})
 		})
 
@@ -479,6 +544,25 @@ func newWSServer() *wsServer {
 	mux.HandleFunc("/v1/notifications", s.handler)
 	s.mux = mux
 	return s
+}
+
+func newServerWithTLS() (*httptest.Server, *wsServer) {
+	s := &wsServer{
+		maxPingPeriod:            (100 * time.Millisecond).String(),
+		lastNotificationRevision: strconv.FormatInt(types.InvalidRevision, 10),
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/notifications", s.handler)
+
+	uServer := httptest.NewUnstartedServer(mux)
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM([]byte(sm.ClientCertificate))
+	uServer.TLS = &tls.Config{}
+	uServer.TLS.ClientCAs = caCertPool
+	uServer.TLS.ClientAuth = tls.RequireAndVerifyClientCert
+	uServer.StartTLS()
+	return uServer, s
 }
 
 func (s *wsServer) Start() {

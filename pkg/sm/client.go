@@ -24,8 +24,6 @@ import (
 
 	"github.com/Peripli/service-manager/pkg/types"
 
-	"time"
-
 	"context"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -71,12 +69,17 @@ func NewClient(config *Settings) (*ServiceManagerClient, error) {
 	}
 
 	httpClient := &http.Client{}
-	httpClient.Timeout = time.Duration(config.RequestTimeout)
-	tr := config.Transport
+	httpClient.Timeout = config.RequestTimeout
+	tlsCerts, err := config.GetCertificates()
+	if err != nil {
+		return nil, err
+	}
 
+	tr := config.Transport
 	if tr == nil {
-		tr = &SkipSSLTransport{
+		tr = &SSLTransport{
 			SkipSslValidation: config.SkipSSLValidation,
+			TLSCertificates:   tlsCerts,
 		}
 	}
 

@@ -17,6 +17,7 @@
 package sm
 
 import (
+	"crypto/tls"
 	"time"
 
 	"net/http"
@@ -57,12 +58,28 @@ type Settings struct {
 	User                 string
 	Password             string
 	URL                  string
+	TLSClientKey         string        `mapstructure:"tls_client_id"`
+	TLSClientCertificate string        `mapstructure:"tls_client_certificate"`
 	OSBAPIPath           string        `mapstructure:"osb_api_path"`
 	NotificationsAPIPath string        `mapstructure:"notifications_api_path"`
 	RequestTimeout       time.Duration `mapstructure:"request_timeout"`
 	SkipSSLValidation    bool          `mapstructure:"skip_ssl_validation"`
 
 	Transport http.RoundTripper
+}
+
+func (sm *Settings) GetCertificates() ([]tls.Certificate, error) {
+	var tlsCerts []tls.Certificate
+	if len(sm.TLSClientCertificate) != 0 || len(sm.TLSClientKey) != 0 {
+		cert, err := tls.X509KeyPair([]byte(sm.TLSClientCertificate), []byte(sm.TLSClientKey))
+		if err != nil {
+			return nil, errors.New("invalidate TLS configuration: " + err.Error())
+		}
+
+		tlsCerts = append(tlsCerts, cert)
+	}
+
+	return tlsCerts, nil
 }
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid
