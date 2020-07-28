@@ -349,6 +349,10 @@ func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerP
 	return fakeReturns.result1
 }
 
+func (fake *FakeClient) ActivateCredentials(ctx context.Context, credentialsID string) error {
+	return nil
+}
+
 func (fake *FakeClient) PutCredentialsCallCount() int {
 	fake.putCredentialsMutex.RLock()
 	defer fake.putCredentialsMutex.RUnlock()

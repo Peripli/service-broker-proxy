@@ -124,10 +124,13 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 		NotificationID: notification.ID,
 	}
 
+	var credentialResponse *types.BrokerPlatformCredential
+
 	if existingBroker == nil {
 		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
 
-		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+		credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+		if err != nil {
 			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 			return
 		}
@@ -154,7 +157,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 				return
 			}
 
-			if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+			if err != nil {
 				log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 				return
 			}
@@ -178,6 +182,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 		} else {
 			log.C(ctx).Errorf("conflict error: existing platform broker with name %s and URL %s CANNOT be taken over as SM broker with URL %s. The URLs need to be the same", existingBroker.Name, existingBroker.BrokerURL, brokerToCreate.Resource.BrokerURL)
 		}
+	}
+	err = bnh.SMClient.ActivateCredentials(ctx, credentialResponse.ID)
+	if err != nil {
+		log.C(ctx).WithError(err).Errorf("failed to activate credentials with id %s", credentialResponse.ID)
 	}
 }
 
@@ -233,6 +241,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		BrokerID:       brokerAfterUpdate.Resource.ID,
 		NotificationID: notification.ID,
 	}
+	var credentialsFromResponse *types.BrokerPlatformCredential
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		ID:        brokerAfterUpdate.Resource.ID,
@@ -246,7 +255,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 	if brokerProxyNameBefore != brokerProxyNameAfter {
 		log.C(ctx).Infof("Broker %s was renamed to %s. Triggering broker update...", brokerProxyNameBefore, brokerProxyNameAfter)
 
-		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+		credentialsFromResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+		if err != nil {
 			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 			return
 		}
@@ -257,12 +267,10 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		}
 		log.C(ctx).Infof("Successfully renamed broker %s to %s", brokerProxyNameBefore, brokerProxyNameAfter)
 		bnh.resetBrokerCache(ctx, existingBroker, newBroker)
-		return
-	}
-
-	log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
-	if bnh.CatalogFetcher != nil {
-		if err := bnh.SMClient.PutCredentials(ctx, credentials); err != nil {
+	} else if bnh.CatalogFetcher != nil {
+		log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
+		credentialsFromResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+		if err != nil {
 			log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 			return
 		}
@@ -279,6 +287,12 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		})
 	} else {
 		log.C(ctx).Warn("No catalog fetcher is provided. Cannot update broker catalog in the platform")
+	}
+
+	log.C(ctx).Infof("Activating credentials with id %s", credentials.ID)
+	err = bnh.SMClient.ActivateCredentials(ctx, credentialsFromResponse.ID)
+	if err != nil {
+		log.C(ctx).WithError(err).Errorf("failed to activate new credentials for broker id %s", credentials.BrokerID)
 	}
 }
 
