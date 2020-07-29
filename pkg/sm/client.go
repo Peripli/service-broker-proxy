@@ -181,6 +181,10 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 		return nil, fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
 	}
 	var brokerPlatformCred = types.BrokerPlatformCredential{}
+	if body, err = util.BodyToBytes(response.Body); err != nil {
+		log.C(ctx).WithError(err).Error("error reading response body")
+		return nil, err
+	}
 	if err = json.Unmarshal(body, &brokerPlatformCred); err != nil {
 		log.C(ctx).WithError(err).Error("failed to unmarshal broker credentials")
 		return nil, err
