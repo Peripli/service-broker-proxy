@@ -36,6 +36,7 @@ import (
 
 // ErrConflictingBrokerPlatformCredentials error returned from SM when broker platform credentials already exist
 var ErrConflictingBrokerPlatformCredentials = errors.New("conflicting broker platform credentials")
+var ErrBrokerPlatformCredentialsNotFound = errors.New("credentials not found")
 
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
@@ -202,8 +203,7 @@ func (c *ServiceManagerClient) ActivateCredentials(ctx context.Context, credenti
 		return err
 	}
 
-	//req.Header.Add("Content-Type", "application/json")
-
+	req.Header.Add("Content-Type", "application/json")
 	response, err := c.httpClient.Do(req)
 	if err != nil {
 		return errors.Wrap(err, "error registering credentials in Service Manager")
@@ -213,10 +213,10 @@ func (c *ServiceManagerClient) ActivateCredentials(ctx context.Context, credenti
 	case http.StatusOK:
 		log.C(ctx).Debugf("Successfully putting credentials in Service Manager at: %s", c.url)
 	case http.StatusNotFound:
-		log.C(ctx).Debugf("Credentials could not be activated. Existing credentials were found in Service Manager at: %s", c.url)
-		return ErrConflictingBrokerPlatformCredentials
+		log.C(ctx).Debugf("Credentials could not be activated. credentials with id %s were not found in Service Manager at: %s", credentialsID, c.url)
+		return ErrBrokerPlatformCredentialsNotFound
 	default:
-		return fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
+		return fmt.Errorf("unexpected response status code received (%v) upon credentials activation", response.StatusCode)
 	}
 
 	return nil
