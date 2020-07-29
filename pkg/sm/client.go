@@ -198,7 +198,7 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 func (c *ServiceManagerClient) ActivateCredentials(ctx context.Context, credentialsID string) error {
 	log.C(ctx).Debugf("Activating credentials in Service Manager at %s", c.url)
 
-	req, err := http.NewRequest(http.MethodPut, c.getURL(fmt.Sprintf("%s/%s/activate", web.BrokerPlatformCredentialsURL, credentialsID)), nil)
+	req, err := http.NewRequest(http.MethodPut, c.getURL(fmt.Sprintf("%s/%s/activate", web.BrokerPlatformCredentialsURL, credentialsID)), bytes.NewBufferString("{}"))
 	if err != nil {
 		return err
 	}
