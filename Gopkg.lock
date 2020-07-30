@@ -24,7 +24,15 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:2cbf49f307aba41290b7f4b72e5bea946936388633ffd6dfeb15c48aebabb3b6"
+  digest = "1:db68af2043b5de50b5dde7953a212d47efa299e1bef79379ac6ebcd243f34f99"
+  name = "github.com/Kount/pq-timeouts"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "079ba81f56daf25f2c22b7b2c224f5a9ba38840c"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:d6389ac13403489ae33cec85fe76ee4d09ddb3170b5a13cd8c54720e729d8424"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -74,8 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "7f756bbe4ca55d3cb7e7b02aefae2d942fd246b6"
-  version = "v0.15.1"
+  revision = "17caa69d4ddc67623030237c00dcc9a02a828190"
+  version = "v0.15.2"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -310,7 +318,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b13346213a04419b68513cd5759cd591cb2b37987315c05cd3c3cc9650ea7dac"
+  digest = "1:d27eedd7296593e6ea74aed67aa0d04d97305c860209b0d4996a8aa2eac7fd0b"
   name = "github.com/lib/pq"
   packages = [
     ".",
@@ -318,7 +326,7 @@
     "scram",
   ]
   pruneopts = "UT"
-  revision = "24222a3b71eb19911ce2c82dbcdd0cbc913f335c"
+  revision = "e7751f584844fbf92a5a18b13a0af1c855e34460"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
@@ -329,12 +337,12 @@
   version = "v1.8.1"
 
 [[projects]]
-  digest = "1:297791112a7dced4f5bcc044c447cbc3d906667884e8f792f4eb8aa1aa27f3af"
+  digest = "1:aff0e9185b5df855488a42e064cb479e994636d3cefa47d053495123d086add4"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d16e9488127408e67948eb43b6d3fbb9f222da10"
-  version = "v1.3.2"
+  revision = "9e1e4717f8567d7ead72d070d064ad17d444a67e"
+  version = "v1.3.3"
 
 [[projects]]
   digest = "1:7aefb397a53fc437c90f0fdb3e1419c751c5a3a165ced52325d5d797edf1aca6"
@@ -637,7 +645,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "948cd5f35899cbf089c620b3caeac9b60fa08704"
+  revision = "123391ffb6de907695e1066dc40c1ff09322aeb6"
 
 [[projects]]
   branch = "master"
@@ -668,14 +676,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:de18db9b6b884884bbb43eafaee3c72a06c8d4ac69d87411c52b5801a5e814f7"
+  digest = "1:4196f59cc34072808c8e7c23c6ce2fffa50d9eff217e2feb734f4b08369a3bf1"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "ddb9806d33aed8dbaac1cd6f1cba58952e87f933"
+  revision = "3e129f6d46b10b0e1da36b3deffcb55e09631b64"
 
 [[projects]]
   digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
