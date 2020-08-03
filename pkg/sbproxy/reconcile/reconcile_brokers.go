@@ -177,12 +177,8 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during fetching catalog...")
 			return err
 		}
-		err = r.smClient.ActivateCredentials(ctx, credentialsResponse.ID)
-		if err != nil {
-			log.C(ctx).WithError(err).Errorf("failed to activate credentials with id %s", credentialsResponse.ID)
-			return err
-		}
 		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
+		r.activateBrokerCredentials(ctx, credentialsResponse)
 	}
 	return nil
 }
@@ -217,12 +213,8 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker creation")
 		return err
 	}
-	err = r.smClient.ActivateCredentials(ctx, credentialResponse.ID)
-	if err != nil {
-		log.C(ctx).WithError(err).Errorf("failed to activate credentials with id %s", credentialResponse.ID)
-		return err
-	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob successfully created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
+	r.activateBrokerCredentials(ctx, credentialResponse)
 	return nil
 }
 
@@ -262,12 +254,8 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker update")
 		return err
 	}
-	err = r.smClient.ActivateCredentials(ctx, credentialResponse.ID)
-	if err != nil {
-		log.C(ctx).WithError(err).Errorf("failed to activate credentials with id %s", credentialResponse.ID)
-		return err
-	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob successfully updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
+	r.activateBrokerCredentials(ctx, credentialResponse)
 	return nil
 }
 
@@ -292,6 +280,14 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 
 func (r *resyncJob) brokerProxyName(broker *platform.ServiceBroker) string {
 	return fmt.Sprintf("%s%s-%s", r.options.BrokerPrefix, broker.Name, broker.GUID)
+}
+
+func (r *resyncJob) activateBrokerCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) {
+	log.C(ctx).Debugf("activating broker platform credentials with id %s", credentials.ID)
+	err := r.smClient.ActivateCredentials(ctx, credentials.ID)
+	if err != nil {
+		log.C(ctx).WithError(err).Errorf("failed to activate credentials with id %s", credentials.ID)
+	}
 }
 
 func logBroker(broker *platform.ServiceBroker) logrus.Fields {

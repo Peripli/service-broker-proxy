@@ -30,6 +30,7 @@ var _ = Describe("Broker Handler", func() {
 	var brokerHandler *handlers.BrokerResourceNotificationsHandler
 
 	var brokerNotification *types.Notification
+	var brokerPlatformCredential *types.BrokerPlatformCredential
 
 	var brokerNotificationPayload string
 	var brokerName string
@@ -62,6 +63,13 @@ var _ = Describe("Broker Handler", func() {
 		Expect(credentials.PasswordHash).ToNot(BeEmpty())
 		Expect(credentials.BrokerID).To(Equal(smBrokerID))
 		Expect(credentials.NotificationID).To(Equal(testNotificationID))
+		Expect(credentials.Active).To(Equal(false))
+	}
+
+	assertActivateCredentialsRequest := func() {
+		Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(1))
+		_, credentialsID := fakeSMClient.ActivateCredentialsArgsForCall(0)
+		Expect(credentialsID).ToNot(BeEmpty())
 	}
 
 	BeforeEach(func() {
@@ -119,6 +127,12 @@ var _ = Describe("Broker Handler", func() {
 			},
 			Payload: json.RawMessage(brokerNotificationPayload),
 		}
+
+		brokerPlatformCredential = &types.BrokerPlatformCredential{
+			Base: types.Base{
+				ID: "213456",
+			},
+		}
 	})
 
 	Describe("OnCreate", func() {
@@ -154,6 +168,7 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 				Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+				Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 			})
 		})
 
@@ -171,6 +186,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -189,6 +205,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -207,6 +224,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -225,6 +243,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -243,6 +262,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 		})
@@ -250,6 +270,7 @@ var _ = Describe("Broker Handler", func() {
 		Context("when getting broker by name from the platform returns an error", func() {
 			BeforeEach(func() {
 				fakeBrokerClient.GetBrokerByNameReturns(nil, fmt.Errorf("error"))
+				fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 			})
 
 			It("does try to create and not update or delete broker", func() {
@@ -260,6 +281,7 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 				assertPutCredentialsRequest()
+				assertActivateCredentialsRequest()
 			})
 		})
 
@@ -281,6 +303,7 @@ var _ = Describe("Broker Handler", func() {
 				}
 
 				fakeBrokerClient.UpdateBrokerReturns(nil, fmt.Errorf("error"))
+				fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 			})
 
 			When("broker is not in broker blacklist", func() {
@@ -296,6 +319,7 @@ var _ = Describe("Broker Handler", func() {
 					assertUpdateBrokerRequest(callRequest, expectedUpdateBrokerRequest)
 
 					assertPutCredentialsRequest()
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -308,6 +332,7 @@ var _ = Describe("Broker Handler", func() {
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -320,6 +345,7 @@ var _ = Describe("Broker Handler", func() {
 
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 		})
@@ -350,7 +376,7 @@ var _ = Describe("Broker Handler", func() {
 					}
 
 					fakeBrokerClient.CreateBrokerReturns(nil, nil)
-
+					fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 				})
 
 				It("invokes create broker with the correct arguments", func() {
@@ -364,6 +390,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(callCtx).To(Equal(ctx))
 					assertCreateBrokerRequest(callRequest, expectedCreateBrokerRequest)
 					assertPutCredentialsRequest()
+					assertActivateCredentialsRequest()
 				})
 			})
 		})
@@ -386,6 +413,7 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 				Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+				Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 			})
 
 			It("logs an error", func() {
@@ -445,6 +473,7 @@ var _ = Describe("Broker Handler", func() {
 
 				Expect(len(fakeBrokerClient.Invocations())).To(Equal(0))
 				Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+				Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 			})
 		})
 
@@ -463,6 +492,7 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 				Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+				Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 			})
 		})
 
@@ -481,6 +511,7 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 				Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+				Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 			})
 		})
 
@@ -497,6 +528,7 @@ var _ = Describe("Broker Handler", func() {
 				Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 				Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 				Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+				Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 			})
 		})
 
@@ -518,6 +550,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 
@@ -531,6 +564,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(fakeBrokerClient.UpdateBrokerCallCount()).To(Equal(0))
 					Expect(fakeBrokerClient.DeleteBrokerCallCount()).To(Equal(0))
 					Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 				})
 			})
 		})
@@ -585,6 +619,7 @@ var _ = Describe("Broker Handler", func() {
 					}, nil
 				}
 				fakeBrokerClient.UpdateBrokerReturns(nil, nil)
+				fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 			})
 
 			It("Should update the broker name in the platform", func() {
@@ -606,6 +641,7 @@ var _ = Describe("Broker Handler", func() {
 				}
 				assertUpdateBrokerRequest(updateRequest, expectedReq)
 				assertPutCredentialsRequest()
+				assertActivateCredentialsRequest()
 			})
 		})
 
@@ -643,6 +679,7 @@ var _ = Describe("Broker Handler", func() {
 					}
 
 					fakeCatalogFetcher.FetchReturns(nil)
+					fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 				})
 
 				It("fetches the catalog and does not try to update/overtake the platform broker", func() {
@@ -657,6 +694,7 @@ var _ = Describe("Broker Handler", func() {
 					Expect(callCtx).To(Equal(ctx))
 					assertUpdateBrokerRequest(callRequest, expectedUpdateBrokerRequest)
 					assertPutCredentialsRequest()
+					assertActivateCredentialsRequest()
 				})
 			})
 		})

@@ -94,6 +94,12 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformClient.CatalogFetcherReturns(fakePlatformCatalogFetcher)
 		fakePlatformClient.VisibilityReturns(fakePlatformVisibilitiesClient)
 
+		fakeSMClient.PutCredentialsReturns(&types.BrokerPlatformCredential{
+			Base: types.Base{
+				ID: "123456",
+			},
+		}, nil)
+
 		platformClient := struct {
 			*platformfakes.FakeCatalogFetcher
 			*platformfakes.FakeClient
@@ -924,13 +930,14 @@ var _ = Describe("Reconcile brokers", func() {
 				It("should not rotate credentials in SM and in platform", func() {
 					fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smOrphanBroker}, nil)
 					fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformOrphanBrokerProxyRenamed}, nil)
-					fakeSMClient.PutCredentialsReturns(sm.ErrConflictingBrokerPlatformCredentials)
+					fakeSMClient.PutCredentialsReturns(nil, sm.ErrConflictingBrokerPlatformCredentials)
 
 					stubPlatformOpsToSucceed()
 					stubPlatformUpdateBroker(platformBrokerProxy2)
 
 					reconciler.Resyncer.Resync(context.TODO())
 
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 					_, updateBrokerRequest := fakePlatformBrokerClient.UpdateBrokerArgsForCall(0)
 					Expect(updateBrokerRequest.Username).To(BeEmpty())
 					Expect(updateBrokerRequest.Password).To(BeEmpty())
@@ -941,12 +948,13 @@ var _ = Describe("Reconcile brokers", func() {
 				It("should not rotate credentials in SM and in platform", func() {
 					fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smbroker1}, nil)
 					fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker1}, nil)
-					fakeSMClient.PutCredentialsReturns(sm.ErrConflictingBrokerPlatformCredentials)
+					fakeSMClient.PutCredentialsReturns(nil, sm.ErrConflictingBrokerPlatformCredentials)
 
 					stubPlatformOpsToSucceed()
 
 					reconciler.Resyncer.Resync(context.TODO())
 
+					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 					_, updateBrokerRequest := fakePlatformCatalogFetcher.FetchArgsForCall(0)
 					Expect(updateBrokerRequest.Username).To(BeEmpty())
 					Expect(updateBrokerRequest.Password).To(BeEmpty())
