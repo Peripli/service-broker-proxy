@@ -36,6 +36,8 @@ import (
 
 // ErrConflictingBrokerPlatformCredentials error returned from SM when broker platform credentials already exist
 var ErrConflictingBrokerPlatformCredentials = errors.New("conflicting broker platform credentials")
+
+// ErrBrokerPlatformCredentialsNotFound error returned from SM when the given broker platform credentials id does not exist
 var ErrBrokerPlatformCredentialsNotFound = errors.New("credentials not found")
 
 // Client provides the logic for calling into the Service Manager
