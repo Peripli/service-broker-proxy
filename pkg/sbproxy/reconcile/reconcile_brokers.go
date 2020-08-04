@@ -162,6 +162,8 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			}
 			username = ""
 			password = ""
+		} else {
+			r.activateBrokerCredentials(ctx, credentialsResponse)
 		}
 
 		updateRequest := &platform.UpdateServiceBrokerRequest{
@@ -178,7 +180,6 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			return err
 		}
 		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
-		r.activateBrokerCredentials(ctx, credentialsResponse)
 	}
 	return nil
 }
@@ -239,6 +240,8 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		}
 		username = ""
 		password = ""
+	} else {
+		r.activateBrokerCredentials(ctx, credentialResponse)
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
@@ -255,7 +258,6 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		return err
 	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob successfully updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
-	r.activateBrokerCredentials(ctx, credentialResponse)
 	return nil
 }
 
