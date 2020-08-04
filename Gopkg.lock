@@ -74,8 +74,7 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "7f756bbe4ca55d3cb7e7b02aefae2d942fd246b6"
-  version = "v0.15.1"
+  branch = "i501080_broker_credentials"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
