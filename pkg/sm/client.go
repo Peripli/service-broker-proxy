@@ -184,12 +184,8 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 		return nil, fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
 	}
 	var brokerPlatformCred = types.BrokerPlatformCredential{}
-	if body, err = util.BodyToBytes(response.Body); err != nil {
+	if err = util.BodyToObject(response.Body, &brokerPlatformCred); err != nil {
 		log.C(ctx).WithError(err).Error("error reading response body")
-		return nil, err
-	}
-	if err = json.Unmarshal(body, &brokerPlatformCred); err != nil {
-		log.C(ctx).WithError(err).Error("failed to unmarshal broker credentials")
 		return nil, err
 	}
 
@@ -213,7 +209,7 @@ func (c *ServiceManagerClient) ActivateCredentials(ctx context.Context, credenti
 
 	switch response.StatusCode {
 	case http.StatusOK:
-		log.C(ctx).Debugf("Successfully putting credentials in Service Manager at: %s", c.url)
+		log.C(ctx).Debugf("Successfully activating credentials in Service Manager at: %s", c.url)
 	case http.StatusNotFound:
 		log.C(ctx).Debugf("Credentials could not be activated. credentials with id %s were not found in Service Manager at: %s", credentialsID, c.url)
 		return ErrBrokerPlatformCredentialsNotFound
