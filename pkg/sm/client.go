@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -62,12 +61,18 @@ func NewClient(config *Settings) (*ServiceManagerClient, error) {
 	}
 
 	httpClient := &http.Client{}
-	httpClient.Timeout = time.Duration(config.RequestTimeout)
+	httpClient.Timeout = config.RequestTimeout
+	tlsCerts, err := config.GetCertificates()
+	if err != nil {
+		return nil, err
+	}
+
 	tr := config.Transport
 
 	if tr == nil {
-		tr = &SkipSSLTransport{
+		tr = &SSLTransport{
 			SkipSslValidation: config.SkipSSLValidation,
+			TLSCertificates:   tlsCerts,
 		}
 	}
 

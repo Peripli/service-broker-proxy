@@ -42,7 +42,7 @@ var _ = Describe("Transport", func() {
 			basicTransport = &BasicAuthTransport{
 				Username: "admin",
 				Password: "admin",
-				Rt: &SkipSSLTransport{
+				Rt: &SSLTransport{
 					SkipSslValidation: true,
 				},
 			}

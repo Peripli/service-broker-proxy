@@ -286,6 +286,11 @@ func (p *Producer) connect(ctx context.Context) error {
 	headers := http.Header{}
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(p.smSettings.User+":"+p.smSettings.Password))
 	headers.Add("Authorization", auth)
+	tlsCertificates, err := p.smSettings.GetCertificates()
+
+	if err != nil {
+		return err
+	}
 
 	connectURL := *p.url
 	if p.lastNotificationRevision != types.InvalidRevision {
@@ -298,11 +303,11 @@ func (p *Producer) connect(ctx context.Context) error {
 		HandshakeTimeout: p.smSettings.RequestTimeout,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: p.smSettings.SkipSSLValidation,
+			Certificates:       tlsCertificates,
 		},
 	}
 
 	log.C(ctx).Debugf("Connecting to %s ...", &connectURL)
-	var err error
 	var resp *http.Response
 	p.conn, resp, err = dialer.DialContext(ctx, connectURL.String(), headers)
 	if err != nil {
