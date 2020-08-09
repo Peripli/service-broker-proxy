@@ -17,6 +17,7 @@
 package sm
 
 import (
+	"crypto/tls"
 	"time"
 
 	"net/http"
@@ -35,8 +36,9 @@ type Settings struct {
 	RequestTimeout       time.Duration `mapstructure:"request_timeout"`
 	SkipSSLValidation    bool          `mapstructure:"skip_ssl_validation"`
 	VisibilitiesPageSize int           `mapstructure:"visibilities_page_size"`
-
-	Transport http.RoundTripper
+	TLSClientKey         string        `mapstructure:"tls_client_id"`
+	TLSClientCertificate string        `mapstructure:"tls_client_certificate"`
+	Transport            http.RoundTripper
 }
 
 // DefaultSettings builds a default Service Manager Settings
@@ -64,6 +66,21 @@ func NewSettings(env env.Environment) (*Settings, error) {
 	}
 
 	return config.Sm, nil
+}
+
+// GetCertificates returns the client TLS certificates if configured
+func (c *Settings) GetCertificates() ([]tls.Certificate, error) {
+	var tlsCerts []tls.Certificate
+	if len(c.TLSClientCertificate) != 0 || len(c.TLSClientKey) != 0 {
+		cert, err := tls.X509KeyPair([]byte(c.TLSClientCertificate), []byte(c.TLSClientKey))
+		if err != nil {
+			return nil, errors.New("invalidate TLS configuration: " + err.Error())
+		}
+
+		tlsCerts = append(tlsCerts, cert)
+	}
+
+	return tlsCerts, nil
 }
 
 // Validate validates the configuration and returns appropriate errors in case it is invalid
