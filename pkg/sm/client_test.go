@@ -606,4 +606,63 @@ var _ = Describe("Client", func() {
 		resp, err := client.GetVisibilities(testContextWithCorrelationID(CorrelationIDValue))
 		assertResponse(&t, resp, err)
 	}, visibilitiesEntries...)
+
+	activateBrokerCredentialsEntries := []TableEntry{
+		Entry("Successfully activate credentials", testCase{
+			expectations: &common.HTTPExpectations{
+				Headers: map[string]string{
+					"Authorization": "Basic " + basicAuth("admin", "admin"),
+				},
+				Body: "{}",
+			},
+			reaction: &common.HTTPReaction{
+				Status: http.StatusOK,
+				Body:   "{}",
+				Err:    nil,
+			},
+			expectedResponse: "{}",
+			expectedErr:      nil,
+		}),
+
+		Entry("Returns not found error when given credentials id not exists", testCase{
+			expectations: &common.HTTPExpectations{
+				Headers: map[string]string{
+					"Authorization": "Basic " + basicAuth("admin", "admin"),
+				},
+				Body: "{}",
+			},
+			reaction: &common.HTTPReaction{
+				Status: http.StatusNotFound,
+				Err:    ErrBrokerPlatformCredentialsNotFound,
+			},
+			expectedResponse: nil,
+			expectedErr:      ErrBrokerPlatformCredentialsNotFound,
+		}),
+
+		Entry("Returns error when API returns error", testCase{
+			expectations: &common.HTTPExpectations{
+				Headers: map[string]string{
+					"Authorization": "Basic " + basicAuth("admin", "admin"),
+				},
+				Body: "{}",
+			},
+			reaction: &common.HTTPReaction{
+				Status: http.StatusInternalServerError,
+				Err:    fmt.Errorf("expected error"),
+			},
+			expectedResponse: nil,
+			expectedErr:      fmt.Errorf("expected error"),
+		}),
+	}
+
+	DescribeTable("ActivateCredentials", func(t testCase) {
+		client := newClient(&t)
+		err := client.ActivateCredentials(testContextWithCorrelationID(CorrelationIDValue), "12345")
+		if t.expectedErr != nil {
+			Expect(errors.Cause(err).Error()).To(ContainSubstring(t.expectedErr.Error()))
+		} else {
+			Expect(err).To(BeNil())
+		}
+		fmt.Print(err)
+	}, activateBrokerCredentialsEntries...)
 })

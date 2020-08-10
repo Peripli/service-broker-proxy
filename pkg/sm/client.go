@@ -36,6 +36,9 @@ import (
 // ErrConflictingBrokerPlatformCredentials error returned from SM when broker platform credentials already exist
 var ErrConflictingBrokerPlatformCredentials = errors.New("conflicting broker platform credentials")
 
+// ErrBrokerPlatformCredentialsNotFound error returned from SM when the given broker platform credentials id does not exist
+var ErrBrokerPlatformCredentialsNotFound = errors.New("credentials not found")
+
 // Client provides the logic for calling into the Service Manager
 //go:generate counterfeiter . Client
 type Client interface {
@@ -43,7 +46,8 @@ type Client interface {
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 	GetServiceOfferings(ctx context.Context) ([]*types.ServiceOffering, error)
-	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error
+	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)
+	ActivateCredentials(ctx context.Context, credentialsID string) error
 }
 
 // ServiceManagerClient allows consuming Service Manager APIs
@@ -155,24 +159,24 @@ func (c *ServiceManagerClient) GetServiceOfferings(ctx context.Context) ([]*type
 }
 
 //PutCredentials sends new broker platform credentials to Service Manager
-func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) error {
+func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error) {
 	log.C(ctx).Debugf("Putting credentials in Service Manager at %s", c.url)
 
 	body, err := json.Marshal(credentials)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPut, c.getURL(web.BrokerPlatformCredentialsURL), bytes.NewBuffer(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Add("Content-Type", "application/json")
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "error registering credentials in Service Manager")
+		return nil, errors.Wrap(err, "error registering credentials in Service Manager")
 	}
 
 	switch response.StatusCode {
@@ -180,9 +184,42 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 		log.C(ctx).Debugf("Successfully putting credentials in Service Manager at: %s", c.url)
 	case http.StatusConflict:
 		log.C(ctx).Debugf("Credentials could not be persisted. Existing credentials were found in Service Manager at: %s", c.url)
-		return ErrConflictingBrokerPlatformCredentials
+		return nil, ErrConflictingBrokerPlatformCredentials
 	default:
-		return fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
+		return nil, fmt.Errorf("unexpected response status code received (%v) upon credentials registration", response.StatusCode)
+	}
+	var brokerPlatformCred = types.BrokerPlatformCredential{}
+	if err = util.BodyToObject(response.Body, &brokerPlatformCred); err != nil {
+		log.C(ctx).WithError(err).Error("error reading response body")
+		return nil, err
+	}
+
+	return &brokerPlatformCred, nil
+}
+
+//ActivateCredentials notifies Service Manager that the new broker credentials are valid and verified
+func (c *ServiceManagerClient) ActivateCredentials(ctx context.Context, credentialsID string) error {
+	log.C(ctx).Debugf("Activating credentials in Service Manager at %s", c.url)
+
+	req, err := http.NewRequest(http.MethodPut, c.getURL(fmt.Sprintf("%s/%s/activate", web.BrokerPlatformCredentialsURL, credentialsID)), bytes.NewBufferString("{}"))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "error registering credentials in Service Manager")
+	}
+
+	switch response.StatusCode {
+	case http.StatusOK:
+		log.C(ctx).Debugf("Successfully activating credentials in Service Manager at: %s", c.url)
+	case http.StatusNotFound:
+		log.C(ctx).Debugf("Credentials could not be activated. credentials with id %s were not found in Service Manager at: %s", credentialsID, c.url)
+		return ErrBrokerPlatformCredentialsNotFound
+	default:
+		return fmt.Errorf("unexpected response status code received (%v) upon credentials activation", response.StatusCode)
 	}
 
 	return nil
