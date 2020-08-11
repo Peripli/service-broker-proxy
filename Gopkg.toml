@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/Peripli/service-manager"
-  branch = "i501080_broker_credentials"
+  branch = "master"
 
 # Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
