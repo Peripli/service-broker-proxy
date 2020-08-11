@@ -32,7 +32,8 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:d6389ac13403489ae33cec85fe76ee4d09ddb3170b5a13cd8c54720e729d8424"
+  branch = "master"
+  digest = "1:a1d02d2705e4e1dcf5594bc68e29711ebd833866e2c33fb01daed249841a88a9"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -82,7 +83,7 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  branch = "i501080_broker_credentials"
+  revision = "8e269b7b6e334aa9c7dd9cf91c07d0782373559c"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -834,6 +835,7 @@
     "github.com/fatih/structs",
     "github.com/gavv/httpexpect",
     "github.com/gofrs/uuid",
+    "github.com/gorilla/mux",
     "github.com/gorilla/websocket",
     "github.com/onsi/ginkgo",
     "github.com/onsi/ginkgo/extensions/table",
