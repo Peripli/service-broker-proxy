@@ -32,8 +32,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a1d02d2705e4e1dcf5594bc68e29711ebd833866e2c33fb01daed249841a88a9"
+  digest = "1:142d3b28b24cbfff90ae565f75819513964b36a6991df0357326acb4676c2e51"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -83,7 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "8e269b7b6e334aa9c7dd9cf91c07d0782373559c"
+  revision = "4a19d22dea243315424e9f975c1eb2727efc7a42"
+  version = "v0.16.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -477,15 +477,15 @@
   version = "v1.4.1"
 
 [[projects]]
-  digest = "1:ef433ff3fe7a464ceb7c7d1654ac9c7ae8d379d0ed83a69a7d263e4cc78b1a5c"
+  digest = "1:5ad8413f4c2ad0d2caca2eed04f2f0c011503f048a3d9d7e87d8c80a805b0d70"
   name = "github.com/spf13/afero"
   packages = [
     ".",
     "mem",
   ]
   pruneopts = "UT"
-  revision = "5d9e780691031108454ca1486803a187e1ab02f1"
-  version = "v1.3.2"
+  revision = "799ff74c0fd7e7df974e6ffa1c94e3d206f5673b"
+  version = "v1.3.4"
 
 [[projects]]
   digest = "1:516e71bed754268937f57d4ecb190e01958452336fa73dbac880894164e91c1f"
@@ -676,14 +676,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4196f59cc34072808c8e7c23c6ce2fffa50d9eff217e2feb734f4b08369a3bf1"
+  digest = "1:62268e4fac0a3c01179e7a8ce8a3db467cacc31577cb6e1b93e39bad84cd5eef"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "3e129f6d46b10b0e1da36b3deffcb55e09631b64"
+  revision = "1b9f1253b3ed7b65abba1a5ee3f58da72dae0ab7"
 
 [[projects]]
   digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
