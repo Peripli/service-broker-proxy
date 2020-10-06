@@ -307,7 +307,7 @@ func (p *Producer) connect(ctx context.Context) error {
 		},
 	}
 
-	log.C(ctx).Debugf("Connecting to %s ...", &connectURL)
+	log.C(ctx).Debugf("Connecting to %s request timeout %v", &connectURL, p.smSettings.RequestTimeout)
 	var resp *http.Response
 	p.conn, resp, err = dialer.DialContext(ctx, connectURL.String(), headers)
 	if err != nil {
