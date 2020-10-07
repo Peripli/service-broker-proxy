@@ -285,9 +285,10 @@ func (p *Producer) ping(ctx context.Context, done chan<- struct{}) {
 }
 
 func (p *Producer) connect(ctx context.Context) error {
+	//create context with correlation id
 	connectContext, correlationID, err := createConnectContext(ctx)
-	if err == nil {
-		ctx = connectContext
+	if err != nil {
+		connectContext = ctx
 	}
 
 	headers := http.Header{}
@@ -317,16 +318,16 @@ func (p *Producer) connect(ctx context.Context) error {
 		},
 	}
 
-	log.C(ctx).Debugf("Connecting to %s request timeout %v", &connectURL, p.smSettings.RequestTimeout)
+	log.C(connectContext).Debugf("Connecting to %s request timeout %v", &connectURL, p.smSettings.RequestTimeout)
 	var resp *http.Response
-	p.conn, resp, err = dialer.DialContext(ctx, connectURL.String(), headers)
+	p.conn, resp, err = dialer.DialContext(connectContext, connectURL.String(), headers)
 	if err != nil {
 		if resp != nil {
 			var body []byte
 			if resp.Body != nil {
 				body, _ = ioutil.ReadAll(resp.Body)
 			}
-			log.C(ctx).WithError(err).Errorf("Could not connect to %s: status: %d body: %s", &connectURL, resp.StatusCode, string(body))
+			log.C(connectContext).WithError(err).Errorf("Could not connect to %s: status: %d body: %s", &connectURL, resp.StatusCode, string(body))
 			if resp.StatusCode == http.StatusGone {
 				return errLastNotificationGone
 			}
@@ -335,8 +336,8 @@ func (p *Producer) connect(ctx context.Context) error {
 	}
 
 	// Set the new revision as well as the ping interval and read timeout
-	if err := p.readResponseHeaders(ctx, resp.Header); err != nil {
-		p.closeConnection(ctx)
+	if err := p.readResponseHeaders(connectContext, resp.Header); err != nil {
+		p.closeConnection(connectContext)
 
 		return err
 	}
