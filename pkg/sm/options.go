@@ -49,7 +49,7 @@ func DefaultSettings() *Settings {
 		URL:                  "",
 		OSBAPIPath:           "/v1/osb",
 		NotificationsAPIPath: "/v1/notifications",
-		RequestTimeout:       5 * time.Second,
+		RequestTimeout:       60 * time.Second,
 		SkipSSLValidation:    false,
 		Transport:            nil,
 	}
