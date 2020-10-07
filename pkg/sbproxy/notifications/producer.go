@@ -383,11 +383,15 @@ func (p *Producer) closeConnection(ctx context.Context) {
 }
 
 func createConnectContext(ctx context.Context) (context.Context, string, error) {
-		correlationID, err := uuid.NewV4()
-		if err != nil {
-			log.C(ctx).Errorf("could not generate correlationID")
-			return nil, "", err
-		}
-		entry := log.C(ctx).WithField(log.FieldCorrelationID, correlationID.String())
-		return log.ContextWithLogger(ctx, entry), correlationID.String(), nil
+	existingCorrelationID := log.C(ctx).Data[log.FieldCorrelationID].(string)
+	if len(existingCorrelationID) > 0 {
+		return ctx, existingCorrelationID, nil
+	}
+	correlationID, err := uuid.NewV4()
+	if err != nil {
+		log.C(ctx).Errorf("could not generate correlationID")
+		return nil, "", err
+	}
+	entry := log.C(ctx).WithField(log.FieldCorrelationID, correlationID.String())
+	return log.ContextWithLogger(ctx, entry), correlationID.String(), nil
 }
