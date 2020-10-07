@@ -293,7 +293,9 @@ func (p *Producer) connect(ctx context.Context) error {
 	headers := http.Header{}
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(p.smSettings.User+":"+p.smSettings.Password))
 	headers.Add("Authorization", auth)
-	headers.Add("X-CorrelationID", correlationID)
+	if len(correlationID) > 0 {
+		headers.Add("X-CorrelationID", correlationID)
+	}
 	tlsCertificates, err := p.smSettings.GetCertificates()
 
 	if err != nil {
