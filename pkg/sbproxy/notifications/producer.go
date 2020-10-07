@@ -22,6 +22,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/gofrs/uuid"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -283,9 +285,18 @@ func (p *Producer) ping(ctx context.Context, done chan<- struct{}) {
 }
 
 func (p *Producer) connect(ctx context.Context) error {
+	//create context with correlation id
+	connectContext, correlationID, err := createConnectContext(ctx)
+	if err != nil {
+		connectContext = ctx
+	}
+
 	headers := http.Header{}
 	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(p.smSettings.User+":"+p.smSettings.Password))
 	headers.Add("Authorization", auth)
+	if len(correlationID) > 0 {
+		headers.Add("X-CorrelationID", correlationID)
+	}
 	tlsCertificates, err := p.smSettings.GetCertificates()
 
 	if err != nil {
@@ -307,23 +318,26 @@ func (p *Producer) connect(ctx context.Context) error {
 		},
 	}
 
-	log.C(ctx).Debugf("Connecting to %s request timeout %v", &connectURL, p.smSettings.RequestTimeout)
+	log.C(connectContext).Debugf("Connecting to %s request timeout %v", &connectURL, p.smSettings.RequestTimeout)
 	var resp *http.Response
-	p.conn, resp, err = dialer.DialContext(ctx, connectURL.String(), headers)
+	p.conn, resp, err = dialer.DialContext(connectContext, connectURL.String(), headers)
 	if err != nil {
 		if resp != nil {
-			log.C(ctx).WithError(err).Errorf("Could not connect to %s: status: %d", &connectURL, resp.StatusCode)
+			var body []byte
+			if resp.Body != nil {
+				body, _ = ioutil.ReadAll(resp.Body)
+			}
+			log.C(connectContext).WithError(err).Errorf("Could not connect to %s: status: %d body: %s", &connectURL, resp.StatusCode, string(body))
 			if resp.StatusCode == http.StatusGone {
 				return errLastNotificationGone
 			}
 		}
-
 		return err
 	}
 
 	// Set the new revision as well as the ping interval and read timeout
-	if err := p.readResponseHeaders(ctx, resp.Header); err != nil {
-		p.closeConnection(ctx)
+	if err := p.readResponseHeaders(connectContext, resp.Header); err != nil {
+		p.closeConnection(connectContext)
 
 		return err
 	}
@@ -369,4 +383,18 @@ func (p *Producer) closeConnection(ctx context.Context) {
 	if err := p.conn.Close(); err != nil {
 		log.C(ctx).WithError(err).Warn("Could not close websocket connection")
 	}
+}
+
+func createConnectContext(ctx context.Context) (context.Context, string, error) {
+	existingCorrelationID := log.C(ctx).Data[log.FieldCorrelationID].(string)
+	if len(existingCorrelationID) > 0 {
+		return ctx, existingCorrelationID, nil
+	}
+	correlationID, err := uuid.NewV4()
+	if err != nil {
+		log.C(ctx).Errorf("could not generate correlationID")
+		return nil, "", err
+	}
+	entry := log.C(ctx).WithField(log.FieldCorrelationID, correlationID.String())
+	return log.ContextWithLogger(ctx, entry), correlationID.String(), nil
 }
