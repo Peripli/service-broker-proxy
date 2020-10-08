@@ -32,7 +32,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:40ce758b65ba0f403bee13bea47cd4a03829d6948f3ce33685e26439089b1b7b"
+  digest = "1:8b62742a066c8ffef909290b9a1396f08635a6151eef60bc0bbdfbe3bdd0c2ac"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -82,8 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "5536946a19dd68ae71f73e6076ccce6a5bf27df9"
-  version = "v0.16.6"
+  revision = "20cad65845e43dc2e00ffa7151856b0c6c9f941f"
+  version = "v0.16.8"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -661,7 +661,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "0a1ea396d57c75b04aff7cb73d169717064c2b8a"
+  revision = "a7d1128ccaa05167332a625f69773af1a0c6b39c"
 
 [[projects]]
   branch = "master"
@@ -676,14 +676,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:038438b19b29b14db1bdeb52cef40bbf97b2c2838d9df29a08e4aa6c5e91c92f"
+  digest = "1:cdd029a9d58728dfd73b6057c3239fb6e7b7c55ca0f35734908a9a3c7c64b919"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "997123666555e12657192e21133d8fa631b22cdf"
+  revision = "c1f3e3309c71a23ccb90cb6427b13ee385c1c186"
 
 [[projects]]
   digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
