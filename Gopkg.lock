@@ -32,7 +32,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:8b62742a066c8ffef909290b9a1396f08635a6151eef60bc0bbdfbe3bdd0c2ac"
+  digest = "1:ee259419426ad51ca0ec27930bd0e940fd9f7c01262ce82ee9ab39b2f5522758"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -82,8 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "20cad65845e43dc2e00ffa7151856b0c6c9f941f"
-  version = "v0.16.8"
+  revision = "5889817b33c9f0f64f96889bb4723463882781c1"
+  version = "v0.16.9"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -210,12 +210,12 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:9e1f58e0d3991f12e7b532161f56dc12c633fb01802ec60520d877599c2af2c5"
+  digest = "1:903cefda69fade8ffb9f4c16008da9f5d2bd949c69925f34b9bca5e3e639eb8c"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "d04d7b157bb510b1e0c10132224b616ac0e26b17"
-  version = "v1.4.2"
+  revision = "4846b58453b3708320bdb524f25cc5a1d9cda4d4"
+  version = "v1.4.3"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -375,7 +375,7 @@
   version = "v0.4.1"
 
 [[projects]]
-  digest = "1:815f49b33e9d6189e63af32eb90d20c9034ea62a39818aa7447f4424cb89f079"
+  digest = "1:52ec386264bd951074c122d102f52bb1ede26a68e5520867b6f524021f8041b6"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -400,8 +400,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "6d83527acb3f6cda405ce47a475d480117098381"
-  version = "v1.14.1"
+  revision = "55c858784e51c26077949c81b6defb6b97b76944"
+  version = "v1.14.2"
 
 [[projects]]
   digest = "1:e42321c3ec0ff36c0644da60c2c1469886b214134286f4610199b704619e11a3"
@@ -645,11 +645,11 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "7f63de1d35b0f77fa2b9faea3e7deb402a2383c8"
+  revision = "9e8e0b390897c84cad53ebe9ed2d1d331a5394d9"
 
 [[projects]]
   branch = "master"
-  digest = "1:3348ef0f4726d89a3d2398b33f97617d7ff708d7324b51ca676ce09fcc473f12"
+  digest = "1:ffd188d0254878e1f8b9c7eea9799cc7057d83e97dd09af888bc261d5027348b"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -661,7 +661,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "a7d1128ccaa05167332a625f69773af1a0c6b39c"
+  revision = "f5854403a9740e74b2e9e725e6cd7c8a57711905"
 
 [[projects]]
   branch = "master"
@@ -676,14 +676,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:cdd029a9d58728dfd73b6057c3239fb6e7b7c55ca0f35734908a9a3c7c64b919"
+  digest = "1:178adb4fd56b97a2dd6ecc5fd38a5f3070ad5465ddb231568816a33545ac4b63"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "c1f3e3309c71a23ccb90cb6427b13ee385c1c186"
+  revision = "6e5568b54d1aaee5899c0083c5776f88b8c5b907"
 
 [[projects]]
   digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
@@ -735,8 +735,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "553959209a20f3be281c16dd5be5c740a893978f"
-  version = "v1.6.6"
+  revision = "5d1c1d03f8703c2e81478d9a30e9afa2d3e4bd8a"
+  version = "v1.6.7"
 
 [[projects]]
   digest = "1:cccb3a18e62abaccd19c309fc01a69da2509719f5a453cb2e66969f670503245"
