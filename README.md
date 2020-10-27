@@ -1,4 +1,4 @@
-# Service Broker Proxy
+# Service Broker Proxy 
 
 [![Build Status](https://travis-ci.org/Peripli/service-broker-proxy.svg?branch=master)](https://travis-ci.org/Peripli/service-broker-proxy)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Peripli/service-broker-proxy)](https://goreportcard.com/report/github.com/Peripli/service-broker-proxy)
