@@ -70,4 +70,12 @@ type BrokerClient interface {
 
 	// UpdateBroker updates a broker registration at the platform
 	UpdateBroker(ctx context.Context, r *UpdateServiceBrokerRequest) (*ServiceBroker, error)
+
+	PlatformNameProvider
+}
+
+// PlatformNameProvider provides the resource name in platform
+type PlatformNameProvider interface {
+	// GetBrokerPlatformName obtains the broker name in the platform
+	GetBrokerPlatformName(name string) string
 }
