@@ -269,5 +269,9 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 }
 
 func (vnh *VisibilityResourceNotificationsHandler) brokerProxyName(brokerName, brokerID string) string {
+	nameProvider, ok := vnh.VisibilityClient.(platform.PlatformNameProvider)
+	if ok {
+		brokerName = nameProvider.GetBrokerPlatformName(brokerName)
+	}
 	return fmt.Sprintf("%s%s-%s", vnh.ProxyPrefix, brokerName, brokerID)
 }

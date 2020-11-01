@@ -97,7 +97,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 
 	brokerToCreate := brokerPayload.New
 	brokerProxyPath := bnh.brokerProxyPath(brokerToCreate.Resource)
-	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource, bnh.BrokerClient)
+	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToCreate.Resource.Name) {
 		log.C(ctx).Infof("Broker name %s for broker create notification is part of broker blacklist. Skipping notification...", brokerToCreate.Resource.Name)
@@ -199,8 +199,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 
 	brokerBeforeUpdate := brokerPayload.Old
 	brokerAfterUpdate := brokerPayload.New
-	brokerProxyNameBefore := bnh.brokerProxyName(brokerBeforeUpdate.Resource, bnh.BrokerClient)
-	brokerProxyNameAfter := bnh.brokerProxyName(brokerAfterUpdate.Resource, bnh.BrokerClient)
+	brokerProxyNameBefore := bnh.brokerProxyName(brokerBeforeUpdate.Resource)
+	brokerProxyNameAfter := bnh.brokerProxyName(brokerAfterUpdate.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
 	brokerToFind := determineBrokerNameToFind(brokerProxyNameBefore, brokerProxyNameAfter)
@@ -300,7 +300,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, not
 	}
 
 	brokerToDelete := brokerPayload.Old
-	brokerProxyName := bnh.brokerProxyName(brokerToDelete.Resource, bnh.BrokerClient)
+	brokerProxyName := bnh.brokerProxyName(brokerToDelete.Resource)
 	brokerProxyPath := bnh.brokerProxyPath(brokerToDelete.Resource)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToDelete.Resource.Name) {
@@ -356,9 +356,9 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.Ser
 	return bnh.SMPath + "/" + broker.GetID()
 }
 
-func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker, client platform.BrokerClient) string {
+func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
 	brokerName := broker.Name
-	nameProvider, ok := client.(platform.PlatformNameProvider)
+	nameProvider, ok := bnh.BrokerClient.(platform.PlatformNameProvider)
 	if ok {
 		brokerName = nameProvider.GetBrokerPlatformName(brokerName)
 	}

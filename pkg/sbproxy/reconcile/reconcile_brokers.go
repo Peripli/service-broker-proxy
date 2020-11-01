@@ -281,6 +281,11 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 }
 
 func (r *resyncJob) brokerProxyName(broker *platform.ServiceBroker) string {
+	brokerName := broker.Name
+	nameProvider, ok := r.platformClient.(platform.PlatformNameProvider)
+	if ok {
+		brokerName = nameProvider.GetBrokerPlatformName(brokerName)
+	}
 	return fmt.Sprintf("%s%s-%s", r.options.BrokerPrefix, broker.Name, broker.GUID)
 }
 
