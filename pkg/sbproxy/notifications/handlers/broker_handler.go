@@ -358,11 +358,11 @@ func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.Ser
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
 	brokerName := broker.Name
-	nameProvider, ok := bnh.BrokerClient.(platform.PlatformNameProvider)
+	nameProvider, ok := bnh.BrokerClient.(platform.BrokerPlatformNameProvider)
 	if ok {
 		brokerName = nameProvider.GetBrokerPlatformName(brokerName)
 	}
-	return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, broker.Name, broker.ID)
+	return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, brokerName, broker.ID)
 }
 
 func shouldBeTakenOver(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {

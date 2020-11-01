@@ -18,8 +18,8 @@ package platform
 
 // PlatformNameProvider provides the resource name in the platform,
 // according to how the platform enforces it (e.g k8s not allowing upper case letters)
-//go:generate counterfeiter . PlatformNameProvider
-type PlatformNameProvider interface {
+//go:generate counterfeiter . BrokerPlatformNameProvider
+type BrokerPlatformNameProvider interface {
 	// GetBrokerPlatformName obtains the broker name in the platform
 	GetBrokerPlatformName(name string) string
 }
