@@ -22,10 +22,11 @@ import (
 )
 
 var _ = Describe("Visibility Handler", func() {
+
 	var ctx context.Context
 
 	var fakeVisibilityClient *platformfakes.FakeVisibilityClient
-
+	var fakeBrokerPlatformNameProvider *platformfakes.FakeBrokerPlatformNameProvider
 	var visibilityHandler *handlers.VisibilityResourceNotificationsHandler
 
 	var visibilityNotificationPayload string
@@ -36,6 +37,8 @@ var _ = Describe("Visibility Handler", func() {
 	var anotherCatalogPlanID string
 	var smBrokerID string
 	var smBrokerName string
+	var expectedBrokerName string
+	var brokerNameInNextFuncCall string
 
 	var err error
 
@@ -53,6 +56,27 @@ var _ = Describe("Visibility Handler", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 
 		return labelChanges
+	}
+
+	setupBrokerNameProvider := func() {
+		brokerNameInNextFuncCall = ""
+		expectedBrokerName = brokerProxyName(visibilityHandler.ProxyPrefix, "broker-name", smBrokerID)
+
+		fakeBrokerPlatformNameProvider.GetBrokerPlatformNameStub = mockGetBrokerPlatformNameFunc
+		fakeVisibilityClient.EnableAccessForPlanStub = func(ctx context.Context, request *platform.ModifyPlanAccessRequest) error {
+			brokerNameInNextFuncCall = request.BrokerName
+			return nil
+		}
+		fakeVisibilityClient.DisableAccessForPlanStub = func(ctx context.Context, request *platform.ModifyPlanAccessRequest) error {
+			brokerNameInNextFuncCall = request.BrokerName
+			return nil
+		}
+		PlatformVisibilityClientMock := PlatformVisibilityClientMock{
+			fakeVisibilityClient,
+			fakeBrokerPlatformNameProvider,
+		}
+
+		visibilityHandler.VisibilityClient = PlatformVisibilityClientMock
 	}
 
 	BeforeEach(func() {
@@ -101,6 +125,7 @@ var _ = Describe("Visibility Handler", func() {
 		anotherCatalogPlanID = "anotherCatalogPlanID"
 
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
+		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
 		visibilityHandler = &handlers.VisibilityResourceNotificationsHandler{
 			VisibilityClient: fakeVisibilityClient,
@@ -282,6 +307,33 @@ var _ = Describe("Visibility Handler", func() {
 					Expect(callCtx).To(Equal(ctx))
 					Expect(callRequest).To(Equal(expectedRequest))
 				})
+			})
+		})
+
+		Context("with platform name provider", func() {
+			BeforeEach(func() {
+				visibilityNotificationPayload = fmt.Sprintf(`
+			{
+				"new": {
+					"resource": {
+						"id": "visID",
+						"platform_id": "smPlatformID",
+						"service_plan_id": "smServicePlanID",
+						"labels": %s
+					},
+					"additional": {
+						"broker_id": "%s",
+						"broker_name": "%s",
+						"service_plan": %s
+					}
+				}
+			}`, labels, smBrokerID, brokerNameForNameProvider, catalogPlan)
+				setupBrokerNameProvider()
+			})
+
+			It("changes the broker name according to the name provider function", func() {
+				visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedBrokerName))
 			})
 		})
 	})
@@ -580,6 +632,47 @@ var _ = Describe("Visibility Handler", func() {
 				})
 			})
 		})
+
+		Context("with platform name provider", func() {
+			BeforeEach(func() {
+				visibilityNotificationPayload = fmt.Sprintf(`
+			{
+				"old": {
+					"resource": {
+						"id": "visID",
+						"platform_id": "smPlatformID",
+						"service_plan_id": "smServicePlanID",
+						"labels": %s
+					},
+					"additional": {
+						"broker_id": "%s",
+						"broker_name": "%s",
+						"service_plan": %s
+					}
+				},
+				"new": {
+					"resource": {
+						"id": "visID",
+						"platform_id": "smPlatformID",
+						"service_plan_id": "smServicePlanID",
+						"labels": %s
+					},
+					"additional": {
+						"broker_id": "%s",
+						"broker_name": "%s",
+						"service_plan": %s
+					}
+				},
+				"label_changes": %s
+			}`, labels, smBrokerID, brokerNameForNameProvider, catalogPlan, labels, smBrokerID, brokerNameForNameProvider, catalogPlan, labelChanges)
+				setupBrokerNameProvider()
+			})
+
+			It("changes the broker name according to the name provider function", func() {
+				visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedBrokerName))
+			})
+		})
 	})
 
 	Describe("OnDelete", func() {
@@ -690,6 +783,33 @@ var _ = Describe("Visibility Handler", func() {
 				})
 			})
 
+		})
+
+		Context("with platform name provider", func() {
+			BeforeEach(func() {
+				visibilityNotificationPayload = fmt.Sprintf(`
+					{
+						"old": {
+							"resource": {
+								"id": "visID",
+								"platform_id": "smPlatformID",
+								"service_plan_id": "smServicePlanID",
+								"labels": %s
+							},
+							"additional": {
+								"broker_id": "%s",
+								"broker_name": "%s",
+								"service_plan": %s
+							}
+						}
+					}`, labels, smBrokerID, brokerNameForNameProvider, catalogPlan)
+				setupBrokerNameProvider()
+			})
+
+			It("changes the broker name according to the name provider function", func() {
+				visibilityHandler.OnDelete(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedBrokerName))
+			})
 		})
 	})
 })
