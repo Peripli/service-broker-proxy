@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"fmt"
-	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"strings"
 	"testing"
 
@@ -14,16 +13,6 @@ import (
 )
 
 const brokerNameForNameProvider = "Broker_Name"
-
-type PlatformBrokerClientMock struct {
-	platform.BrokerClient
-	platform.BrokerPlatformNameProvider
-}
-
-type PlatformVisibilityClientMock struct {
-	platform.VisibilityClient
-	platform.BrokerPlatformNameProvider
-}
 
 func TestHandlers(t *testing.T) {
 	RegisterFailHandler(Fail)

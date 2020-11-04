@@ -71,12 +71,16 @@ var _ = Describe("Visibility Handler", func() {
 			brokerNameInNextFuncCall = request.BrokerName
 			return nil
 		}
-		PlatformVisibilityClientMock := PlatformVisibilityClientMock{
+
+		visibilityClientWithNameProvider := struct {
+			platform.VisibilityClient
+			platform.BrokerPlatformNameProvider
+		}{
 			fakeVisibilityClient,
 			fakeBrokerPlatformNameProvider,
 		}
 
-		visibilityHandler.VisibilityClient = PlatformVisibilityClientMock
+		visibilityHandler.VisibilityClient = visibilityClientWithNameProvider
 	}
 
 	BeforeEach(func() {

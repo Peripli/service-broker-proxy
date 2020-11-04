@@ -90,7 +90,10 @@ var _ = Describe("Broker Handler", func() {
 		}
 		fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 
-		brokerClientWithNameProvider := PlatformBrokerClientMock{
+		brokerClientWithNameProvider := struct {
+			platform.BrokerClient
+			platform.BrokerPlatformNameProvider
+		}{
 			fakeBrokerClient,
 			fakeBrokerPlatformNameProvider,
 		}
