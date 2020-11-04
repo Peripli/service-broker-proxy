@@ -39,7 +39,7 @@ func VerifyErrorLogged(f func()) {
 }
 
 func mockGetBrokerPlatformNameFunc(name string) string {
-	return strings.ReplaceAll(strings.ToLower(name), "_", "-")
+	return strings.Replace(strings.ToLower(name), "_", "-", -1)
 }
 
 func brokerProxyName(prefix, brokerName, brokerID string) string {
