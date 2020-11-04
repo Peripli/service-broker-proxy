@@ -32,7 +32,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:ee259419426ad51ca0ec27930bd0e940fd9f7c01262ce82ee9ab39b2f5522758"
+  digest = "1:f31ac25892fca9e1a8441efe2ce5b2285f104a90279a183f001e71eb9934cc93"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -82,8 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "5889817b33c9f0f64f96889bb4723463882781c1"
-  version = "v0.16.9"
+  revision = "700d4b92ac9159ce165c6faea87a1fd5009f75c8"
+  version = "v0.16.10"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -297,8 +297,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "06dfa05f34740a0ee7ad9932a6f65d523328e98e"
-  version = "v1.11.1"
+  revision = "456984a7ed625447418279c10e2a8b6e357aa267"
+  version = "v1.11.2"
 
 [[projects]]
   digest = "1:09cb61dc19af93deae01587e2fdb1c081e0bf48f1a5ad5fa24f48750dc57dce8"
@@ -539,12 +539,12 @@
   version = "v1.6.1"
 
 [[projects]]
-  digest = "1:8453ddbed197809ee8ca28b06bd04e127bec9912deb4ba451fea7a1eca578328"
+  digest = "1:eed1c98b70dcc500db2484f998bf64ae5ec159d95fd412ba6833a65081d8b4d5"
   name = "github.com/tidwall/match"
   packages = ["."]
   pruneopts = "UT"
-  revision = "33827db735fff6510490d69a8622612558a557ed"
-  version = "v1.0.1"
+  revision = "9e52e9e068387201730ec4876bac3a1902d0eef8"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:f63bab79e68e805cdd9bf70daa09e8c430cfbddf29d14b567a92fb12581b9b95"
@@ -649,7 +649,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ffd188d0254878e1f8b9c7eea9799cc7057d83e97dd09af888bc261d5027348b"
+  digest = "1:5dfa2548163bba3750b1e70aa8f652d1c0716eacdaddf2a98f699c8c684e5f2a"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -661,7 +661,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "f5854403a9740e74b2e9e725e6cd7c8a57711905"
+  revision = "ff519b6c91021e6316e1df005bc19f266994ddda"
 
 [[projects]]
   branch = "master"
@@ -676,17 +676,17 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:178adb4fd56b97a2dd6ecc5fd38a5f3070ad5465ddb231568816a33545ac4b63"
+  digest = "1:464e63d528295644cab298e007fb5866a1f5f81e4e3437ea2389ca10ae039c23"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "6e5568b54d1aaee5899c0083c5776f88b8c5b907"
+  revision = "da207088b7d1961c44ec61e9dc15a73745693ab6"
 
 [[projects]]
-  digest = "1:4e215023f245ee44676ce94f5031f41a7ba2089adf2d9c0175f36eeb6dd62f46"
+  digest = "1:b8df5da6a9ef5cfef65d10ed33dbb877cbff969a0cee4934e5603eb405b2eb8f"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -719,8 +719,8 @@
     "unicode/rangetable",
   ]
   pruneopts = "UT"
-  revision = "23ae387dee1f90d29a23c0e87ee0b46038fbed0e"
-  version = "v0.3.3"
+  revision = "22f1617af38ed4cd65b3b96e02bab267e560155c"
+  version = "v0.3.4"
 
 [[projects]]
   digest = "1:15bbb120d95283019f8891f2762fab3e735075b2cf9b378497277d2fe6c4abca"
