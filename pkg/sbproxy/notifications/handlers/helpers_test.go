@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 	"github.com/Peripli/service-manager/pkg/types"
 	. "github.com/onsi/ginkgo"
@@ -77,4 +78,15 @@ var _ = Describe("Handlers Helpers", func() {
 			})
 		})
 	})
+	Describe("BrokerProxyName", func() {
+		It("changes name according to platform name provider function", func() {
+			returnName := "some-broker-name"
+			brokerID := "1234"
+			fakeBrokerPlatformNameProvider := &platformfakes.FakeBrokerPlatformNameProvider{}
+			fakeBrokerPlatformNameProvider.GetBrokerPlatformNameReturns(returnName)
+			newName := handlers.BrokerProxyName(fakeBrokerPlatformNameProvider, "name", brokerID, "")
+			Expect(newName).To(Equal(returnName + "-" + brokerID))
+		})
+	})
+
 })
