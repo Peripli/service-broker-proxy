@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,11 +41,12 @@ var _ = Describe("Reconcile visibilities", func() {
 	)
 
 	var (
-		fakeSMClient               *smfakes.FakeClient
-		fakePlatformClient         *platformfakes.FakeClient
-		fakePlatformCatalogFetcher *platformfakes.FakeCatalogFetcher
-		fakePlatformBrokerClient   *platformfakes.FakeBrokerClient
-		fakeVisibilityClient       *platformfakes.FakeVisibilityClient
+		fakeSMClient                   *smfakes.FakeClient
+		fakePlatformClient             *platformfakes.FakeClient
+		fakePlatformCatalogFetcher     *platformfakes.FakeCatalogFetcher
+		fakePlatformBrokerClient       *platformfakes.FakeBrokerClient
+		fakeVisibilityClient           *platformfakes.FakeVisibilityClient
+		fakeBrokerPlatformNameProvider *platformfakes.FakeBrokerPlatformNameProvider
 
 		reconciler *reconcile.Reconciler
 
@@ -56,6 +58,8 @@ var _ = Describe("Reconcile visibilities", func() {
 		parallelRequestsCounter      int
 		maxParallelRequestsCounter   int
 		parallelRequestsCounterMutex sync.Mutex
+
+		brokerNameInNextFunc string
 	)
 
 	generatePlansFor := func(service *types.ServiceOffering, count int) {
@@ -112,12 +116,17 @@ var _ = Describe("Reconcile visibilities", func() {
 		return result
 	}
 
-	generatePlatformBrokersFor := func(brokers []*types.ServiceBroker) []*platform.ServiceBroker {
+	generatePlatformBrokersFor := func(brokers []*types.ServiceBroker, platformBrokerNameFunc func(name string) string) []*platform.ServiceBroker {
 		result := make([]*platform.ServiceBroker, 0, len(brokers))
+		var name string
 		for _, broker := range brokers {
+			name = broker.Name
+			if platformBrokerNameFunc != nil {
+				name = platformBrokerNameFunc(name)
+			}
 			result = append(result, &platform.ServiceBroker{
 				GUID:      "platformBrokerID1",
-				Name:      brokerProxyName(broker.Name, broker.ID),
+				Name:      brokerProxyName(name, broker.ID),
 				BrokerURL: fakeSMAppHost + "/" + broker.ID,
 			})
 		}
@@ -208,12 +217,17 @@ var _ = Describe("Reconcile visibilities", func() {
 		parallelRequestsCounterMutex.Unlock()
 	}
 
+	mockGetPlatformBrokerName := func(name string) string {
+		return strings.ToLower(name)
+	}
+
 	BeforeEach(func() {
 		fakeSMClient = &smfakes.FakeClient{}
 		fakePlatformClient = &platformfakes.FakeClient{}
 		fakePlatformBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
+		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
 		fakePlatformClient.BrokerReturns(fakePlatformBrokerClient)
 		fakePlatformClient.VisibilityReturns(fakeVisibilityClient)
@@ -226,35 +240,13 @@ var _ = Describe("Reconcile visibilities", func() {
 		}
 
 		smBrokers = generateSMBrokers(2, 4, 100)
-
-		platformBrokers = generatePlatformBrokersFor(smBrokers)
+		platformBrokers = generatePlatformBrokersFor(smBrokers, nil)
 
 		platformBrokerNonProxy = &platform.ServiceBroker{
 			GUID:      "platformBrokerID3",
 			Name:      "platformBroker3",
 			BrokerURL: "https://platformBroker3.com",
 		}
-
-		fakeSMClient.GetBrokersReturns(smBrokers, nil)
-		fakeSMClient.GetServiceOfferingsCalls(func(ctx context.Context) ([]*types.ServiceOffering, error) {
-			var result []*types.ServiceOffering
-			for _, broker := range smBrokers {
-				result = append(result, broker.Services...)
-			}
-			return result, nil
-		})
-
-		fakeSMClient.GetPlansCalls(func(ctx context.Context) ([]*types.ServicePlan, error) {
-			var result []*types.ServicePlan
-			for _, broker := range smBrokers {
-				for _, brokerServiceOffering := range broker.Services {
-					result = append(result, brokerServiceOffering.Plans...)
-				}
-			}
-			return result, nil
-		})
-
-		fakePlatformBrokerClient.GetBrokersReturns(append(platformBrokers, platformBrokerNonProxy), nil)
 
 		fakePlatformBrokerClient.CreateBrokerCalls(func(ctx context.Context, r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
 			return &platform.ServiceBroker{
@@ -266,10 +258,13 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		maxParallelRequestsCounter = 0
 		parallelRequestsCounter = 0
+		brokerNameInNextFunc = ""
 	})
 
 	type testCase struct {
 		stubs func()
+
+		prepareClientWithPlatformNameProvider func()
 
 		platformVisibilities func() []*platform.Visibility
 		smVisibilities       func() []*types.Visibility
@@ -773,13 +768,85 @@ var _ = Describe("Reconcile visibilities", func() {
 				Expect(maxParallelRequestsCounter).To(Equal(maxParallelRequests))
 			},
 		}),
+
+		Entry("When client contains platform name provider, it changes the broker name accordingly", testCase{
+			stubs: func() {
+				fakeBrokerPlatformNameProvider.GetBrokerPlatformNameStub = mockGetPlatformBrokerName
+				fakeVisibilityClient.GetVisibilitiesByBrokersStub = func(ctx context.Context, names []string) ([]*platform.Visibility, error) {
+					brokerNameInNextFunc = names[0]
+					return []*platform.Visibility{
+						{
+							Public:        true,
+							CatalogPlanID: smBrokers[0].Services[0].Plans[1].CatalogID,
+							// current PlatformBrokerName is assumed to be with proper name according to function
+							PlatformBrokerName: brokerProxyName(mockGetPlatformBrokerName(smBrokers[0].Name), smBrokers[0].ID),
+						},
+					}, nil
+				}
+			},
+			smVisibilities: func() []*types.Visibility {
+				return []*types.Visibility{
+					{
+						ServicePlanID: smBrokers[0].Services[0].Plans[0].ID,
+					},
+				}
+			},
+			expectations: func() {
+				// brokerNameInNextFunc should match the current broker name in platform
+				Expect(brokerNameInNextFunc).To(Equal(brokerProxyName(mockGetPlatformBrokerName(smBrokers[0].Name), smBrokers[0].ID)))
+			},
+
+			prepareClientWithPlatformNameProvider: func() {
+				smBrokers = generateSMBrokers(1, 1, 2)
+				platformBrokers = generatePlatformBrokersFor(smBrokers, mockGetPlatformBrokerName)
+				platformClient := struct {
+					*platformfakes.FakeClient
+					*platformfakes.FakeBrokerPlatformNameProvider
+				}{
+					FakeClient:                     fakePlatformClient,
+					FakeBrokerPlatformNameProvider: fakeBrokerPlatformNameProvider,
+				}
+
+				reconciler = &reconcile.Reconciler{
+					Resyncer: reconcile.NewResyncer(reconcile.DefaultSettings(), platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
+				}
+			},
+		}),
 	}
 
 	DescribeTable("Resync", func(t testCase) {
+		if t.prepareClientWithPlatformNameProvider != nil {
+			t.prepareClientWithPlatformNameProvider()
+		}
+
 		fakeSMClient.GetVisibilitiesReturns(t.smVisibilities(), nil)
+		fakeSMClient.GetBrokersReturns(smBrokers, nil)
+
+		fakeSMClient.GetServiceOfferingsCalls(func(ctx context.Context) ([]*types.ServiceOffering, error) {
+			var result []*types.ServiceOffering
+			for _, broker := range smBrokers {
+				result = append(result, broker.Services...)
+			}
+			return result, nil
+		})
+
+		fakeSMClient.GetPlansCalls(func(ctx context.Context) ([]*types.ServicePlan, error) {
+			var result []*types.ServicePlan
+			for _, broker := range smBrokers {
+				for _, brokerServiceOffering := range broker.Services {
+					result = append(result, brokerServiceOffering.Plans...)
+				}
+			}
+			return result, nil
+		})
+
+		fakePlatformBrokerClient.GetBrokersReturns(append(platformBrokers, platformBrokerNonProxy), nil)
 
 		fakeVisibilityClient.VisibilityScopeLabelKeyReturns(scopeKey)
-		fakeVisibilityClient.GetVisibilitiesByBrokersReturns(t.platformVisibilities(), nil)
+
+		if t.platformVisibilities != nil {
+			fakeVisibilityClient.GetVisibilitiesByBrokersReturns(t.platformVisibilities(), nil)
+		}
 
 		if t.stubs != nil {
 			t.stubs()
