@@ -104,7 +104,8 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
+	platformBrokerName := BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
+
 	err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels())
 	if err != nil {
 		logger.Error(err)
@@ -141,7 +142,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := vnh.brokerProxyName(oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID)
+	platformBrokerName := BrokerProxyName(vnh.VisibilityClient, oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID, vnh.ProxyPrefix)
 
 	labelsToAdd, labelsToRemove := LabelChangesToLabels(visibilityPayload.LabelChanges)
 
@@ -261,13 +262,9 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := vnh.brokerProxyName(v.Additional.BrokerName, v.Additional.BrokerID)
+	platformBrokerName := BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
 	err := vnh.disableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels())
 	if err != nil {
 		logger.Error(err)
 	}
-}
-
-func (vnh *VisibilityResourceNotificationsHandler) brokerProxyName(brokerName, brokerID string) string {
-	return fmt.Sprintf("%s%s-%s", vnh.ProxyPrefix, brokerName, brokerID)
 }

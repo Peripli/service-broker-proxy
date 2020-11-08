@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/sm/smfakes"
 	"github.com/Peripli/service-manager/pkg/types"
-
 	"github.com/tidwall/sjson"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -26,6 +25,7 @@ var _ = Describe("Broker Handler", func() {
 	var fakeCatalogFetcher *platformfakes.FakeCatalogFetcher
 	var fakeBrokerClient *platformfakes.FakeBrokerClient
 	var fakeSMClient *smfakes.FakeClient
+	var fakeBrokerPlatformNameProvider *platformfakes.FakeBrokerPlatformNameProvider
 
 	var brokerHandler *handlers.BrokerResourceNotificationsHandler
 
@@ -35,6 +35,8 @@ var _ = Describe("Broker Handler", func() {
 	var brokerNotificationPayload string
 	var brokerName string
 	var brokerURL string
+	var expectedBrokerName string
+	var brokerNameInNextFuncCall string
 
 	var smBrokerID string
 	var catalog string
@@ -70,6 +72,33 @@ var _ = Describe("Broker Handler", func() {
 		Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(1))
 		_, credentialsID := fakeSMClient.ActivateCredentialsArgsForCall(0)
 		Expect(credentialsID).ToNot(BeEmpty())
+	}
+
+	setupBrokerNameProvider := func() {
+		brokerNameInNextFuncCall = ""
+		expectedBrokerName = brokerProxyName(brokerHandler.ProxyPrefix, "broker-name", smBrokerID)
+
+		fakeBrokerPlatformNameProvider.GetBrokerPlatformNameStub = mockGetBrokerPlatformNameFunc
+
+		fakeBrokerClient.GetBrokerByNameStub = func(ctx context.Context, name string) (*platform.ServiceBroker, error) {
+			brokerNameInNextFuncCall = name
+			return &platform.ServiceBroker{
+				GUID:      smBrokerID,
+				Name:      name,
+				BrokerURL: "some-url.com",
+			}, nil
+		}
+		fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
+
+		brokerClientWithNameProvider := struct {
+			platform.BrokerClient
+			platform.BrokerPlatformNameProvider
+		}{
+			fakeBrokerClient,
+			fakeBrokerPlatformNameProvider,
+		}
+
+		brokerHandler.BrokerClient = brokerClientWithNameProvider
 	}
 
 	BeforeEach(func() {
@@ -110,6 +139,7 @@ var _ = Describe("Broker Handler", func() {
 		fakeSMClient = &smfakes.FakeClient{}
 		fakeCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
+		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
 		brokerHandler = &handlers.BrokerResourceNotificationsHandler{
 			SMClient:        fakeSMClient,
@@ -422,6 +452,33 @@ var _ = Describe("Broker Handler", func() {
 				})
 			})
 		})
+
+		Context("with platform name provider", func() {
+			BeforeEach(func() {
+				brokerNotification.Payload = json.RawMessage(fmt.Sprintf(`
+			{
+				"new": {
+					"resource": {
+						"id": "%s",
+						"name": "%s",
+						"broker_url": "%s",
+						"description": "brokerDescription",
+						"labels": {
+							"key1": ["value1", "value2"],
+							"key2": ["value3", "value4"]
+						}
+					},
+					"additional": %s
+				}
+			}`, smBrokerID, brokerNameForNameProvider, brokerURL, catalog))
+				setupBrokerNameProvider()
+			})
+
+			It("changes the broker name according to the name provider function", func() {
+				brokerHandler.OnCreate(ctx, brokerNotification)
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedBrokerName))
+			})
+		})
 	})
 
 	Describe("OnUpdate", func() {
@@ -698,6 +755,53 @@ var _ = Describe("Broker Handler", func() {
 				})
 			})
 		})
+
+		Context("with platform name provider", func() {
+			BeforeEach(func() {
+				brokerNotification.Payload = json.RawMessage(fmt.Sprintf(`
+		{
+			"old": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"]
+					}
+				},
+				"additional": %s
+			},
+			"new": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"],
+						"key3": ["value5", "value6"]
+					}
+				},
+				"additional": %s
+			},
+			"label_changes": {
+				"op": "add",
+				"key": "key3",
+				"values": ["value5", "value6"]
+			}
+		}`, smBrokerID, brokerNameForNameProvider, brokerURL, catalog, smBrokerID, brokerNameForNameProvider, brokerURL, catalog))
+				setupBrokerNameProvider()
+			})
+
+			It("changes the broker name according to the name provider function", func() {
+				brokerHandler.OnUpdate(ctx, brokerNotification)
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedBrokerName))
+			})
+		})
+
 	})
 
 	Describe("OnDelete", func() {
@@ -847,6 +951,33 @@ var _ = Describe("Broker Handler", func() {
 					Expect(callCtx).To(Equal(ctx))
 					Expect(callRequest).To(Equal(expectedDeleteBrokerRequest))
 				})
+			})
+		})
+
+		Context("with platform name provider", func() {
+			BeforeEach(func() {
+				brokerNotification.Payload = json.RawMessage(fmt.Sprintf(`
+		{
+			"old": {
+				"resource": {
+					"id": "%s",
+					"name": "%s",
+					"broker_url": "%s",
+					"description": "brokerDescription",
+					"labels": {
+						"key1": ["value1", "value2"],
+						"key2": ["value3", "value4"]
+					}
+				},
+				"additional": %s
+			}
+		}`, smBrokerID, brokerNameForNameProvider, brokerURL, catalog))
+				setupBrokerNameProvider()
+			})
+
+			It("changes the broker name according to the name provider function", func() {
+				brokerHandler.OnDelete(ctx, brokerNotification)
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedBrokerName))
 			})
 		})
 	})

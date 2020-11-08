@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/platform"
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
@@ -21,4 +23,14 @@ func LabelChangesToLabels(changes types.LabelChanges) (types.Labels, types.Label
 	}
 
 	return labelsToAdd, labelsToRemove
+}
+
+// BrokerProxyName creates the service-manager name format for the broker.
+// If the platform enforces any constraints via GetBrokerPlatformName, the name will first be altered accordingly.
+func BrokerProxyName(client interface{}, brokerName string, brokerID string, proxyPrefix string) string {
+	nameProvider, ok := client.(platform.BrokerPlatformNameProvider)
+	if ok {
+		brokerName = nameProvider.GetBrokerPlatformName(brokerName)
+	}
+	return fmt.Sprintf("%s%s-%s", proxyPrefix, brokerName, brokerID)
 }

@@ -97,18 +97,18 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 
 	brokerToCreate := brokerPayload.New
 	brokerProxyPath := bnh.brokerProxyPath(brokerToCreate.Resource)
-	brokerProxyName := bnh.brokerProxyName(brokerToCreate.Resource)
+	brokerProxyName := BrokerProxyName(bnh.BrokerClient, brokerToCreate.Resource.Name, brokerToCreate.Resource.ID, bnh.ProxyPrefix)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToCreate.Resource.Name) {
 		log.C(ctx).Infof("Broker name %s for broker create notification is part of broker blacklist. Skipping notification...", brokerToCreate.Resource.Name)
 		return
 	}
 
-	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToCreate.Resource.Name)
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
 
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToCreate.Resource.Name)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
-		log.C(ctx).Debugf("Could not find platform broker in platform with name %s: %s", brokerToCreate.Resource.Name, err)
+		log.C(ctx).Debugf("Could not find platform broker in platform with name %s: %s", brokerProxyName, err)
 	}
 
 	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
@@ -129,7 +129,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 
 		credentialResponse, err := bnh.SMClient.PutCredentials(ctx, credentials)
 		if err != nil {
-			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
+			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerProxyName, err)
 			return
 		}
 
@@ -198,8 +198,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 
 	brokerBeforeUpdate := brokerPayload.Old
 	brokerAfterUpdate := brokerPayload.New
-	brokerProxyNameBefore := bnh.brokerProxyName(brokerBeforeUpdate.Resource)
-	brokerProxyNameAfter := bnh.brokerProxyName(brokerAfterUpdate.Resource)
+	brokerProxyNameBefore := BrokerProxyName(bnh.BrokerClient, brokerBeforeUpdate.Resource.Name, brokerBeforeUpdate.Resource.ID, bnh.ProxyPrefix)
+	brokerProxyNameAfter := BrokerProxyName(bnh.BrokerClient, brokerAfterUpdate.Resource.Name, brokerAfterUpdate.Resource.ID, bnh.ProxyPrefix)
 	brokerProxyPath := bnh.brokerProxyPath(brokerAfterUpdate.Resource)
 
 	brokerToFind := determineBrokerNameToFind(brokerProxyNameBefore, brokerProxyNameAfter)
@@ -299,7 +299,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, not
 	}
 
 	brokerToDelete := brokerPayload.Old
-	brokerProxyName := bnh.brokerProxyName(brokerToDelete.Resource)
+	brokerProxyName := BrokerProxyName(bnh.BrokerClient, brokerToDelete.Resource.Name, brokerToDelete.Resource.ID, bnh.ProxyPrefix)
 	brokerProxyPath := bnh.brokerProxyPath(brokerToDelete.Resource)
 
 	if slice.StringsAnyEquals(bnh.BrokerBlacklist, brokerToDelete.Resource.Name) {
@@ -353,10 +353,6 @@ func (bnh *BrokerResourceNotificationsHandler) unmarshalPayload(operationType ty
 
 func (bnh *BrokerResourceNotificationsHandler) brokerProxyPath(broker *types.ServiceBroker) string {
 	return bnh.SMPath + "/" + broker.GetID()
-}
-
-func (bnh *BrokerResourceNotificationsHandler) brokerProxyName(broker *types.ServiceBroker) string {
-	return fmt.Sprintf("%s%s-%s", bnh.ProxyPrefix, broker.Name, broker.ID)
 }
 
 func shouldBeTakenOver(brokerFromPlatform *platform.ServiceBroker, brokerFromSM *types.ServiceBroker) bool {

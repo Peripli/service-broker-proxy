@@ -19,6 +19,7 @@ package reconcile
 import (
 	"context"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/util"
 	"github.com/Peripli/service-manager/pkg/types"
@@ -78,18 +79,19 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 
 func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, scheduler *TaskScheduler, desiredBroker *platform.ServiceBroker, brokerKeyMap map[string]*platform.ServiceBroker) {
 	platformBroker, shouldBeTakenOver := brokerKeyMap[getBrokerKey(desiredBroker)]
+	brokerProxyName := handlers.BrokerProxyName(r.platformClient, desiredBroker.Name, desiredBroker.GUID, r.options.BrokerPrefix)
 
 	if shouldBeTakenOver {
 		if r.options.TakeoverEnabled {
 			if err := scheduler.Schedule(func(ctx context.Context) error {
-				return r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker)
+				return r.updateBrokerRegistration(ctx, platformBroker.GUID, desiredBroker, brokerProxyName)
 			}); err != nil {
 				log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
 			}
 		}
 	} else {
 		if err := scheduler.Schedule(func(ctx context.Context) error {
-			return r.createBrokerRegistration(ctx, desiredBroker)
+			return r.createBrokerRegistration(ctx, desiredBroker, brokerProxyName)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not create broker registration in platform")
 		}
@@ -97,15 +99,17 @@ func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, scheduler *Tas
 }
 
 func (r *resyncJob) resyncTakenOverBroker(ctx context.Context, scheduler *TaskScheduler, desiredBroker *platform.ServiceBroker, existingBroker *platform.ServiceBroker) {
-	if existingBroker.Name != r.brokerProxyName(desiredBroker) || !strings.HasPrefix(existingBroker.BrokerURL, r.smPath) { // broker name has been changed in the platform or broker proxy URL should be updated
+	brokerProxyName := handlers.BrokerProxyName(r.platformClient, desiredBroker.Name, desiredBroker.GUID, r.options.BrokerPrefix)
+	// if broker name has been changed in the platform or broker proxy URL should be updated
+	if existingBroker.Name != brokerProxyName || !strings.HasPrefix(existingBroker.BrokerURL, r.smPath) {
 		if err := scheduler.Schedule(func(ctx context.Context) error {
-			return r.updateBrokerRegistration(ctx, existingBroker.GUID, desiredBroker)
+			return r.updateBrokerRegistration(ctx, existingBroker.GUID, desiredBroker, brokerProxyName)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not update broker registration in platform")
 		}
 	} else {
 		if err := scheduler.Schedule(func(ctx context.Context) error {
-			return r.fetchBrokerCatalog(ctx, existingBroker.GUID, desiredBroker)
+			return r.fetchBrokerCatalog(ctx, existingBroker.GUID, desiredBroker, brokerProxyName)
 		}); err != nil {
 			log.C(ctx).WithError(err).Error("resyncJob - could not refetch broker catalog in platform")
 		}
@@ -139,7 +143,7 @@ func (r *resyncJob) getBrokersFromSM(ctx context.Context) ([]*platform.ServiceBr
 	return brokersFromSM, nil
 }
 
-func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform string, brokerInSM *platform.ServiceBroker) error {
+func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform string, brokerInSM *platform.ServiceBroker, brokerProxyName string) error {
 	if f, isFetcher := r.platformClient.(platform.CatalogFetcher); isFetcher {
 		logger := log.C(ctx)
 		logger.WithFields(logBroker(brokerInSM)).Infof("resyncJob refetching catalog for broker...")
@@ -169,7 +173,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 		updateRequest := &platform.UpdateServiceBrokerRequest{
 			ID:        brokerInSM.GUID,
 			GUID:      brokerGUIDInPlatform,
-			Name:      r.brokerProxyName(brokerInSM),
+			Name:      brokerProxyName,
 			BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 			Username:  username,
 			Password:  password,
@@ -184,7 +188,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 	return nil
 }
 
-func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *platform.ServiceBroker) error {
+func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *platform.ServiceBroker, brokerProxyName string) error {
 	logger := log.C(ctx)
 	logger.WithFields(logBroker(brokerInSM)).Info("resyncJob creating proxy for broker in platform...")
 
@@ -204,7 +208,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 
 	createRequest := &platform.CreateServiceBrokerRequest{
 		ID:        brokerInSM.GUID,
-		Name:      r.brokerProxyName(brokerInSM),
+		Name:      brokerProxyName,
 		BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 		Username:  username,
 		Password:  password,
@@ -219,7 +223,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 	return nil
 }
 
-func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPlatform string, brokerInSM *platform.ServiceBroker) error {
+func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPlatform string, brokerInSM *platform.ServiceBroker, brokerProxyName string) error {
 	logger := log.C(ctx)
 
 	logger.WithFields(logBroker(brokerInSM)).Info("resyncJob updating broker registration in platform...")
@@ -247,7 +251,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 	updateRequest := &platform.UpdateServiceBrokerRequest{
 		ID:        brokerInSM.GUID,
 		GUID:      brokerGUIDInPlatform,
-		Name:      r.brokerProxyName(brokerInSM),
+		Name:      brokerProxyName,
 		BrokerURL: r.smPath + "/" + brokerInSM.GUID,
 		Username:  username,
 		Password:  password,
@@ -278,10 +282,6 @@ func (r *resyncJob) deleteBrokerRegistration(ctx context.Context, broker *platfo
 
 	logger.WithFields(logBroker(broker)).Infof("resyncJob successfully deleted proxy broker from platform with name [%s]", deleteRequest.Name)
 	return nil
-}
-
-func (r *resyncJob) brokerProxyName(broker *platform.ServiceBroker) string {
-	return fmt.Sprintf("%s%s-%s", r.options.BrokerPrefix, broker.Name, broker.GUID)
 }
 
 func (r *resyncJob) activateBrokerCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) {

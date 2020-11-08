@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
+	"strings"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
@@ -40,6 +41,8 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformCatalogFetcher     *platformfakes.FakeCatalogFetcher
 		fakePlatformBrokerClient       *platformfakes.FakeBrokerClient
 		fakePlatformVisibilitiesClient *platformfakes.FakeVisibilityClient
+		fakeBrokerPlatformNameProvider *platformfakes.FakeBrokerPlatformNameProvider
+		fakePlatformClient             *platformfakes.FakeClient
 
 		reconcileSettings *reconcile.Settings
 		reconciler        *reconcile.Reconciler
@@ -58,9 +61,12 @@ var _ = Describe("Reconcile brokers", func() {
 		platformBrokerProxy2             *platform.ServiceBroker
 		platformOrphanBrokerProxy        *platform.ServiceBroker
 		platformOrphanBrokerProxyRenamed *platform.ServiceBroker
+
+		brokerNameInNextFuncCall string
 	)
 
 	stubCreateBrokerToSucceed := func(ctx context.Context, r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+		brokerNameInNextFuncCall = r.Name
 		return &platform.ServiceBroker{
 			GUID:      r.Name,
 			Name:      r.Name,
@@ -82,9 +88,26 @@ var _ = Describe("Reconcile brokers", func() {
 		fakePlatformBrokerClient.UpdateBrokerReturns(broker, nil)
 	}
 
+	stubPlatformOpsToSucceedWithNameProvider := func() {
+		fakePlatformBrokerClient.DeleteBrokerReturns(nil)
+		fakePlatformBrokerClient.CreateBrokerStub = stubCreateBrokerToSucceed
+		fakePlatformBrokerClient.UpdateBrokerStub = func(ctx context.Context, request *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+			brokerNameInNextFuncCall = request.Name
+			return &platform.ServiceBroker{
+				GUID:      request.ID,
+				Name:      brokerNameInNextFuncCall,
+				BrokerURL: "some-url.com",
+			}, nil
+		}
+		fakePlatformCatalogFetcher.FetchStub = func(ctx context.Context, request *platform.UpdateServiceBrokerRequest) error {
+			brokerNameInNextFuncCall = request.Name
+			return nil
+		}
+	}
+
 	BeforeEach(func() {
 		fakeSMClient = &smfakes.FakeClient{}
-		fakePlatformClient := &platformfakes.FakeClient{}
+		fakePlatformClient = &platformfakes.FakeClient{}
 
 		fakePlatformBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakePlatformCatalogFetcher = &platformfakes.FakeCatalogFetcher{}
@@ -959,6 +982,55 @@ var _ = Describe("Reconcile brokers", func() {
 					Expect(updateBrokerRequest.Username).To(BeEmpty())
 					Expect(updateBrokerRequest.Password).To(BeEmpty())
 				})
+			})
+		})
+	})
+
+	Describe("with platform name provider", func() {
+		var expectedName string
+		BeforeEach(func() {
+			brokerNameInNextFuncCall = ""
+			expectedName = "sm-" + strings.ToLower(smbroker1.Name) + "-" + smbroker1.ID
+
+			fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
+			fakeBrokerPlatformNameProvider.GetBrokerPlatformNameStub = func(brokerName string) string {
+				return strings.ToLower(brokerName)
+			}
+
+			platformClient := struct {
+				*platformfakes.FakeCatalogFetcher
+				*platformfakes.FakeClient
+				*platformfakes.FakeBrokerPlatformNameProvider
+			}{
+				FakeCatalogFetcher:             fakePlatformCatalogFetcher,
+				FakeClient:                     fakePlatformClient,
+				FakeBrokerPlatformNameProvider: fakeBrokerPlatformNameProvider,
+			}
+
+			reconciler = &reconcile.Reconciler{
+				Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
+			}
+		})
+		Context("resyncTakenOverBroker", func() {
+			It("changes the broker name according to the name provider function", func() {
+				fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smbroker1}, nil)
+				fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker1}, nil)
+
+				stubPlatformOpsToSucceedWithNameProvider()
+				reconciler.Resyncer.Resync(context.TODO())
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedName))
+			})
+		})
+
+		Context("resyncNotTakenOverBroker", func() {
+			It("changes the broker name according to the name provider function", func() {
+				//  platform and sm return different brokers
+				fakeSMClient.GetBrokersReturns([]*types.ServiceBroker{smbroker1}, nil)
+				fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker2}, nil)
+
+				stubPlatformOpsToSucceedWithNameProvider()
+				reconciler.Resyncer.Resync(context.TODO())
+				Expect(brokerNameInNextFuncCall).To(Equal(expectedName))
 			})
 		})
 	})
