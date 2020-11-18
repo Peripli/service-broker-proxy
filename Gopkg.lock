@@ -32,7 +32,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:f31ac25892fca9e1a8441efe2ce5b2285f104a90279a183f001e71eb9934cc93"
+  digest = "1:4aefdb6c5ec107674e2bc9989e67d4134149e9058f800fcdf8e86f62ef3d0f61"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -82,8 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "700d4b92ac9159ce165c6faea87a1fd5009f75c8"
-  version = "v0.16.10"
+  revision = "5f130a0cd920ff5235a772256a50359221781ac9"
+  version = "v0.16.11"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
@@ -289,7 +289,7 @@
   revision = "0794cb1f47ee444eda9624f952ab8a370bec22de"
 
 [[projects]]
-  digest = "1:8d029fb6638c2f922b8b5a33aef0f07a44542a97a0cf89bf871dd837f6b3252d"
+  digest = "1:31d6e66ab882fae8534e01407a9cd6c036a51706a04adfe6912efaaf18989d20"
   name = "github.com/klauspost/compress"
   packages = [
     "flate",
@@ -297,8 +297,8 @@
     "zlib",
   ]
   pruneopts = "UT"
-  revision = "456984a7ed625447418279c10e2a8b6e357aa267"
-  version = "v1.11.2"
+  revision = "ff4a4acf3be7ac7b0b1c3381000e0216eb9e956f"
+  version = "v1.11.3"
 
 [[projects]]
   digest = "1:09cb61dc19af93deae01587e2fdb1c081e0bf48f1a5ad5fa24f48750dc57dce8"
@@ -531,12 +531,12 @@
   version = "v1.6.1"
 
 [[projects]]
-  digest = "1:ba1f9f7c24257683efc7f6fe8336340fb861751aa1eda0c17ed4a9723a8fe0be"
+  digest = "1:b1d385674ad9e7c0a8f42129978ae6205befb277fc1750582beab3c3e41ba0a0"
   name = "github.com/tidwall/gjson"
   packages = ["."]
   pruneopts = "UT"
-  revision = "45d8d3b98f86305c48ae80455ebd56773195ec72"
-  version = "v1.6.1"
+  revision = "5100d6926a4bea3753fc72352fca70654f04cedc"
+  version = "v1.6.3"
 
 [[projects]]
   digest = "1:eed1c98b70dcc500db2484f998bf64ae5ec159d95fd412ba6833a65081d8b4d5"
@@ -561,6 +561,19 @@
   pruneopts = "UT"
   revision = "79e91a7eec3a55412e56e0116504baf268d259fa"
   version = "v1.1.2"
+
+[[projects]]
+  digest = "1:46b32b8bb81eff9edd36937c2f7e486221fd3f93f17045385971f966e697f971"
+  name = "github.com/ulule/limiter"
+  packages = [
+    ".",
+    "drivers/middleware/stdlib",
+    "drivers/store/common",
+    "drivers/store/memory",
+  ]
+  pruneopts = "UT"
+  revision = "38b2a440be905c8be884fd5e114dc893a64e5d81"
+  version = "v2.2.2"
 
 [[projects]]
   digest = "1:c468422f334a6b46a19448ad59aaffdfc0a36b08fdcc1c749a0b29b6453d7e59"
@@ -645,7 +658,7 @@
     "pbkdf2",
   ]
   pruneopts = "UT"
-  revision = "9e8e0b390897c84cad53ebe9ed2d1d331a5394d9"
+  revision = "c1f2f97bffc9c53fc40a1a28a5b460094c0050d9"
 
 [[projects]]
   branch = "master"
@@ -661,7 +674,7 @@
     "publicsuffix",
   ]
   pruneopts = "UT"
-  revision = "ff519b6c91021e6316e1df005bc19f266994ddda"
+  revision = "69a78807bb2bb6d1599c68698c6b009505012083"
 
 [[projects]]
   branch = "master"
@@ -672,18 +685,18 @@
     "internal",
   ]
   pruneopts = "UT"
-  revision = "5d25da1a8d43b66f2898c444f899c7bcfd6a407e"
+  revision = "9fd604954f58d391cab0f7f49affb0a6aa864086"
 
 [[projects]]
   branch = "master"
-  digest = "1:464e63d528295644cab298e007fb5866a1f5f81e4e3437ea2389ca10ae039c23"
+  digest = "1:9a9dc02aee4fb5c43b17d3349577c77e1838d16473f6caf7bade035d3b1dc89a"
   name = "golang.org/x/sys"
   packages = [
     "internal/unsafeheader",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "da207088b7d1961c44ec61e9dc15a73745693ab6"
+  revision = "ba5294a509c715d7fea0f9022a3d0ca21f64942a"
 
 [[projects]]
   digest = "1:b8df5da6a9ef5cfef65d10ed33dbb877cbff969a0cee4934e5603eb405b2eb8f"
