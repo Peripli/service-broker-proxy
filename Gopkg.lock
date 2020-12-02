@@ -32,7 +32,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:4aefdb6c5ec107674e2bc9989e67d4134149e9058f800fcdf8e86f62ef3d0f61"
+  digest = "1:4d9dddbb8fda98111a7c0156a0e1b6737ac207d7cb89fff9be1ae57ed499f0a9"
   name = "github.com/Peripli/service-manager"
   packages = [
     "api",
@@ -82,8 +82,8 @@
     "test/tls_settings",
   ]
   pruneopts = "NT"
-  revision = "5f130a0cd920ff5235a772256a50359221781ac9"
-  version = "v0.16.11"
+  revision = "7d6d894b80e7ccbf92e1d23e954c5b8899589b81"
+  version = "v0.18.0"
 
 [[projects]]
   digest = "1:f780d408067189c4c42b53f7bb24ebf8fd2a1e4510b813ed6e79dd6563e38cc5"
