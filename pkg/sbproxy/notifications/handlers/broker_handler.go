@@ -104,11 +104,11 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 		return
 	}
 
-	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerProxyName)
+	log.C(ctx).Infof("Attempting to find platform broker with name %s in platform...", brokerToCreate.Resource.Name)
 
-	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
+	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToCreate.Resource.Name)
 	if err != nil {
-		log.C(ctx).Debugf("Could not find platform broker in platform with name %s: %s", brokerProxyName, err)
+		log.C(ctx).Debugf("Could not find platform broker in platform with name %s: %s", brokerToCreate.Resource.Name, err)
 	}
 
 	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
@@ -129,7 +129,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 
 		credentialResponse, err := bnh.SMClient.PutCredentials(ctx, credentials)
 		if err != nil {
-			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerProxyName, err)
+			log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 			return
 		}
 

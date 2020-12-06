@@ -74,20 +74,33 @@ var _ = Describe("Broker Handler", func() {
 		Expect(credentialsID).ToNot(BeEmpty())
 	}
 
-	setupBrokerNameProvider := func() {
+	setupBrokerNameProvider := func(isCreate bool) {
 		brokerNameInNextFuncCall = ""
 		expectedBrokerName = brokerProxyName(brokerHandler.ProxyPrefix, "broker-name", smBrokerID)
 
 		fakeBrokerPlatformNameProvider.GetBrokerPlatformNameStub = mockGetBrokerPlatformNameFunc
 
-		fakeBrokerClient.GetBrokerByNameStub = func(ctx context.Context, name string) (*platform.ServiceBroker, error) {
-			brokerNameInNextFuncCall = name
-			return &platform.ServiceBroker{
-				GUID:      smBrokerID,
-				Name:      name,
-				BrokerURL: "some-url.com",
-			}, nil
+		if isCreate {
+			fakeBrokerClient.CreateBrokerStub = func(ctx context.Context, request *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+				brokerNameInNextFuncCall = request.Name
+				return &platform.ServiceBroker{
+					GUID:      smBrokerID,
+					Name:      request.Name,
+					BrokerURL: "some-url.com",
+				}, nil
+			}
+
+		} else {
+			fakeBrokerClient.GetBrokerByNameStub = func(ctx context.Context, name string) (*platform.ServiceBroker, error) {
+				brokerNameInNextFuncCall = name
+				return &platform.ServiceBroker{
+					GUID:      smBrokerID,
+					Name:      name,
+					BrokerURL: "some-url.com",
+				}, nil
+			}
 		}
+
 		fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
 
 		brokerClientWithNameProvider := struct {
@@ -471,7 +484,7 @@ var _ = Describe("Broker Handler", func() {
 					"additional": %s
 				}
 			}`, smBrokerID, brokerNameForNameProvider, brokerURL, catalog))
-				setupBrokerNameProvider()
+				setupBrokerNameProvider(true)
 			})
 
 			It("changes the broker name according to the name provider function", func() {
@@ -793,7 +806,7 @@ var _ = Describe("Broker Handler", func() {
 				"values": ["value5", "value6"]
 			}
 		}`, smBrokerID, brokerNameForNameProvider, brokerURL, catalog, smBrokerID, brokerNameForNameProvider, brokerURL, catalog))
-				setupBrokerNameProvider()
+				setupBrokerNameProvider(false)
 			})
 
 			It("changes the broker name according to the name provider function", func() {
@@ -972,7 +985,7 @@ var _ = Describe("Broker Handler", func() {
 				"additional": %s
 			}
 		}`, smBrokerID, brokerNameForNameProvider, brokerURL, catalog))
-				setupBrokerNameProvider()
+				setupBrokerNameProvider(false)
 			})
 
 			It("changes the broker name according to the name provider function", func() {
