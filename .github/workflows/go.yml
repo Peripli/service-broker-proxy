@@ -26,6 +26,10 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+      
+    - name: Get dependencies
+      run: |
+        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+        cd ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+        dep ensure --vendor-only -v  
 
-    - name: Test
-      run: make test
