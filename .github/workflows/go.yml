@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ master ]
     
-defaults:
-  run:
-    working-directory: ${{ github.workspace }}/src/github.com/${{ github.repository }}
-    
 jobs:
 
   build:
@@ -30,12 +26,15 @@ jobs:
         path: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
 
     - name: Get dependencies
+      working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
       run: |      
         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
         dep ensure --vendor-only -v        
 
     - name: Build
+      working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
       run: go build -v ./...
 
     - name: Test
+      working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
       run: go test -v ./...
