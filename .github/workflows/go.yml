@@ -21,7 +21,7 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
       with:
-        path:  $GOPATH/src/$GITHUB_REPOSITORY
+        path: $GOPATH/src/$GITHUB_REPOSITORY
 
     - name: Get dependencies
       run: |
