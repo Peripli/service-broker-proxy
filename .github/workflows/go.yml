@@ -9,7 +9,12 @@ on:
 jobs:
 
   build:
-    name: Build
+    name: Pipeline
+    env:
+      GOPATH: ${{ github.workspace }}
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
     runs-on: ubuntu-latest
     steps:
 
@@ -20,8 +25,6 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
-      with:
-        path:  /home/runner/go/${{ github.repository }}
 
     - name: Get dependencies
       run: |      
