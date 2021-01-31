@@ -26,10 +26,7 @@ BUILD_LDFLAGS =
 GO_BUILD = env CGO_ENABLED=0 GOOS=$(PLATFORM) GOARCH=$(ARCH) \
            go build $(GO_FLAGS) -ldflags '-s -w $(BUILD_LDFLAGS)' ./...
 
-build: gomod-vendor sbproxy
-
-gomod-vendor:
-	@go mod vendor
+build: sbproxy
 
 sbproxy:
 	$(GO_BUILD)

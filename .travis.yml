@@ -3,9 +3,6 @@ language: go
 go:
   - 1.11.x
 
-before_install:
-  - make dep-vendor
-
 install:
   - go get github.com/alecthomas/gometalinter
   - go get golang.org/x/tools/cmd/cover
