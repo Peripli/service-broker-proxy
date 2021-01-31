@@ -7,7 +7,7 @@ require (
 	github.com/InVisionApp/go-health v2.1.0+incompatible // indirect
 	github.com/InVisionApp/go-logger v1.0.1 // indirect
 	github.com/Kount/pq-timeouts v1.0.0 // indirect
-	github.com/Peripli/service-manager v0.18.7-0.20210121153144-b52d0698b1be
+	github.com/Peripli/service-manager v0.18.7-0.20210131140341-a199050d9407
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/benjamintf1/unmarshalledmatchers v1.0.0 // indirect
