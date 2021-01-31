@@ -48,4 +48,4 @@ clean-coverage:
 
 clean-vendor:
 	rm -rf vendor
-	@echo > go.mod
+	@echo > go.sum
