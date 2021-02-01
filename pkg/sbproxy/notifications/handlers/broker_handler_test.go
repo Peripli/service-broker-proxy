@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/sm/smfakes"
 	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/tidwall/sjson"
@@ -18,7 +19,11 @@ import (
 
 var _ = Describe("Broker Handler", func() {
 
-	const testNotificationID = "test-notification-id"
+	const (
+		testNotificationID = "test-notification-id"
+		testUser           = "test-user"
+		testPassword       = "test-password"
+	)
 
 	var ctx context.Context
 
@@ -45,8 +50,15 @@ var _ = Describe("Broker Handler", func() {
 		Expect(actualReq.ID).To(Equal(expectedReq.ID))
 		Expect(actualReq.Name).To(Equal(expectedReq.Name))
 		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
-		Expect(actualReq.Username).ToNot(BeEmpty())
-		Expect(actualReq.Password).ToNot(BeEmpty())
+		if brokerHandler.BrokerCredentialsEnabled {
+			Expect(actualReq.Username).ToNot(BeEmpty())
+			Expect(actualReq.Username).ToNot(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).ToNot(BeEmpty())
+			Expect(actualReq.Password).ToNot(BeEquivalentTo(testPassword))
+		} else {
+			Expect(actualReq.Username).To(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).To(BeEquivalentTo(testPassword))
+		}
 	}
 
 	assertUpdateBrokerRequest := func(actualReq, expectedReq *platform.UpdateServiceBrokerRequest) {
@@ -54,24 +66,40 @@ var _ = Describe("Broker Handler", func() {
 		Expect(actualReq.GUID).To(Equal(expectedReq.GUID))
 		Expect(actualReq.Name).To(Equal(expectedReq.Name))
 		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
-		Expect(actualReq.Username).ToNot(BeEmpty())
-		Expect(actualReq.Password).ToNot(BeEmpty())
+		if brokerHandler.BrokerCredentialsEnabled {
+			Expect(actualReq.Username).ToNot(BeEmpty())
+			Expect(actualReq.Username).ToNot(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).ToNot(BeEmpty())
+			Expect(actualReq.Password).ToNot(BeEquivalentTo(testPassword))
+		} else {
+			Expect(actualReq.Username).To(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).To(BeEquivalentTo(testPassword))
+		}
 	}
 
 	assertPutCredentialsRequest := func() {
-		Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(1))
-		_, credentials := fakeSMClient.PutCredentialsArgsForCall(0)
-		Expect(credentials.Username).ToNot(BeEmpty())
-		Expect(credentials.PasswordHash).ToNot(BeEmpty())
-		Expect(credentials.BrokerID).To(Equal(smBrokerID))
-		Expect(credentials.NotificationID).To(Equal(testNotificationID))
-		Expect(credentials.Active).To(Equal(false))
+		if brokerHandler.BrokerCredentialsEnabled {
+			Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(1))
+			_, credentials := fakeSMClient.PutCredentialsArgsForCall(0)
+			Expect(credentials.Username).ToNot(BeEmpty())
+			Expect(credentials.PasswordHash).ToNot(BeEmpty())
+			Expect(credentials.BrokerID).To(Equal(smBrokerID))
+			Expect(credentials.NotificationID).To(Equal(testNotificationID))
+			Expect(credentials.Active).To(Equal(false))
+		} else {
+			Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+		}
+
 	}
 
 	assertActivateCredentialsRequest := func() {
-		Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(1))
-		_, credentialsID := fakeSMClient.ActivateCredentialsArgsForCall(0)
-		Expect(credentialsID).ToNot(BeEmpty())
+		if brokerHandler.BrokerCredentialsEnabled {
+			Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(1))
+			_, credentialsID := fakeSMClient.ActivateCredentialsArgsForCall(0)
+			Expect(credentialsID).ToNot(BeEmpty())
+		} else {
+			Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
+		}
 	}
 
 	setupBrokerNameProvider := func(isCreate bool) {
@@ -154,14 +182,20 @@ var _ = Describe("Broker Handler", func() {
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
+		smSettings := sm.DefaultSettings()
+		smSettings.User = testUser
+		smSettings.Password = testPassword
+
 		brokerHandler = &handlers.BrokerResourceNotificationsHandler{
-			SMClient:        fakeSMClient,
-			BrokerClient:    fakeBrokerClient,
-			CatalogFetcher:  fakeCatalogFetcher,
-			ProxyPrefix:     "proxyPrefix",
-			SMPath:          "proxyPath",
-			BrokerBlacklist: []string{},
-			TakeoverEnabled: true,
+			SMClient:                 fakeSMClient,
+			SMSettings:               smSettings,
+			BrokerClient:             fakeBrokerClient,
+			CatalogFetcher:           fakeCatalogFetcher,
+			ProxyPrefix:              "proxyPrefix",
+			SMPath:                   "proxyPath",
+			BrokerBlacklist:          []string{},
+			TakeoverEnabled:          true,
+			BrokerCredentialsEnabled: true,
 		}
 
 		brokerNotification = &types.Notification{

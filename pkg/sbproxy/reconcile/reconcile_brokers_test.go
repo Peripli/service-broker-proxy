@@ -133,7 +133,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		reconcileSettings = reconcile.DefaultSettings()
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
+			Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, defaultSMSettings(), fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smbroker1 = &types.ServiceBroker{
@@ -1008,7 +1008,7 @@ var _ = Describe("Reconcile brokers", func() {
 			}
 
 			reconciler = &reconcile.Reconciler{
-				Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
+				Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, defaultSMSettings(), fakeSMAppHost, fakeProxyPathPattern),
 			}
 		})
 		Context("resyncTakenOverBroker", func() {
@@ -1035,3 +1035,11 @@ var _ = Describe("Reconcile brokers", func() {
 		})
 	})
 })
+
+func defaultSMSettings() *sm.Settings {
+	settings := sm.DefaultSettings()
+	settings.User = "test-sm-user"
+	settings.Password = "test-sm-password"
+
+	return settings
+}

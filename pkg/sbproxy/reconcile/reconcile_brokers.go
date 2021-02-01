@@ -148,26 +148,34 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 		logger := log.C(ctx)
 		logger.WithFields(logBroker(brokerInSM)).Infof("resyncJob refetching catalog for broker...")
 
-		username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
-		if err != nil {
-			return fmt.Errorf("could not generate broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
-		}
+		var username, password, passwordHash string
+		var err error
 
-		credentials := &types.BrokerPlatformCredential{
-			Username:     username,
-			PasswordHash: passwordHash,
-			BrokerID:     brokerInSM.GUID,
-		}
-
-		credentialsResponse, err := r.smClient.PutCredentials(ctx, credentials)
-		if err != nil {
-			if err != sm.ErrConflictingBrokerPlatformCredentials {
-				return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+		if r.options.BrokerCredentialsEnabled {
+			username, password, passwordHash, err = util.GenerateBrokerPlatformCredentials()
+			if err != nil {
+				return fmt.Errorf("could not generate broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
 			}
-			username = ""
-			password = ""
+
+			credentials := &types.BrokerPlatformCredential{
+				Username:     username,
+				PasswordHash: passwordHash,
+				BrokerID:     brokerInSM.GUID,
+			}
+
+			credentialsResponse, err := r.smClient.PutCredentials(ctx, credentials)
+			if err != nil {
+				if err != sm.ErrConflictingBrokerPlatformCredentials {
+					return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+				}
+				username = ""
+				password = ""
+			} else {
+				r.activateBrokerCredentials(ctx, credentialsResponse)
+			}
 		} else {
-			r.activateBrokerCredentials(ctx, credentialsResponse)
+			username = r.smSettings.User
+			password = r.smSettings.Password
 		}
 
 		updateRequest := &platform.UpdateServiceBrokerRequest{
@@ -192,18 +200,27 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 	logger := log.C(ctx)
 	logger.WithFields(logBroker(brokerInSM)).Info("resyncJob creating proxy for broker in platform...")
 
-	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
-	if err != nil {
-		return err
-	}
+	var username, password, passwordHash string
+	var err error
+	var credentialResponse *types.BrokerPlatformCredential
 
-	credentialResponse, err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
-		Username:     username,
-		PasswordHash: passwordHash,
-		BrokerID:     brokerInSM.GUID,
-	})
-	if err != nil {
-		return err
+	if r.options.BrokerCredentialsEnabled {
+		username, password, passwordHash, err = util.GenerateBrokerPlatformCredentials()
+		if err != nil {
+			return err
+		}
+
+		credentialResponse, err = r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
+			Username:     username,
+			PasswordHash: passwordHash,
+			BrokerID:     brokerInSM.GUID,
+		})
+		if err != nil {
+			return err
+		}
+	} else {
+		username = r.smSettings.User
+		password = r.smSettings.Password
 	}
 
 	createRequest := &platform.CreateServiceBrokerRequest{
@@ -219,7 +236,11 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 		return err
 	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob successfully created proxy for broker at platform under name [%s] accessible at [%s]", createRequest.Name, createRequest.BrokerURL)
-	r.activateBrokerCredentials(ctx, credentialResponse)
+
+	if r.options.BrokerCredentialsEnabled {
+		r.activateBrokerCredentials(ctx, credentialResponse)
+	}
+
 	return nil
 }
 
@@ -228,24 +249,32 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 
 	logger.WithFields(logBroker(brokerInSM)).Info("resyncJob updating broker registration in platform...")
 
-	username, password, passwordHash, err := util.GenerateBrokerPlatformCredentials()
-	if err != nil {
-		return err
-	}
+	var username, password, passwordHash string
+	var err error
 
-	credentialResponse, err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
-		Username:     username,
-		PasswordHash: passwordHash,
-		BrokerID:     brokerInSM.GUID,
-	})
-	if err != nil {
-		if err != sm.ErrConflictingBrokerPlatformCredentials {
-			return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+	if r.options.BrokerCredentialsEnabled {
+		username, password, passwordHash, err = util.GenerateBrokerPlatformCredentials()
+		if err != nil {
+			return err
 		}
-		username = ""
-		password = ""
+
+		credentialResponse, err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
+			Username:     username,
+			PasswordHash: passwordHash,
+			BrokerID:     brokerInSM.GUID,
+		})
+		if err != nil {
+			if err != sm.ErrConflictingBrokerPlatformCredentials {
+				return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
+			}
+			username = ""
+			password = ""
+		} else {
+			r.activateBrokerCredentials(ctx, credentialResponse)
+		}
 	} else {
-		r.activateBrokerCredentials(ctx, credentialResponse)
+		username = r.smSettings.User
+		password = r.smSettings.Password
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{

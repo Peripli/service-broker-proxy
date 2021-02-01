@@ -165,17 +165,19 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 	smPath := settings.Reconcile.URL + APIPrefix
 	proxyPathPattern := settings.Reconcile.LegacyURL + APIPrefix + "/%s"
 
-	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, smPath, proxyPathPattern)
+	resyncer := reconcile.NewResyncer(settings.Reconcile, platformClient, smClient, settings.Sm, smPath, proxyPathPattern)
 	consumer := &notifications.Consumer{
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
-				SMClient:        smClient,
-				BrokerClient:    platformClient.Broker(),
-				CatalogFetcher:  platformClient.CatalogFetcher(),
-				ProxyPrefix:     settings.Reconcile.BrokerPrefix,
-				SMPath:          smPath,
-				BrokerBlacklist: settings.Reconcile.BrokerBlacklist,
-				TakeoverEnabled: settings.Reconcile.TakeoverEnabled,
+				SMClient:                 smClient,
+				SMSettings:               settings.Sm,
+				BrokerClient:             platformClient.Broker(),
+				CatalogFetcher:           platformClient.CatalogFetcher(),
+				ProxyPrefix:              settings.Reconcile.BrokerPrefix,
+				SMPath:                   smPath,
+				BrokerBlacklist:          settings.Reconcile.BrokerBlacklist,
+				TakeoverEnabled:          settings.Reconcile.TakeoverEnabled,
+				BrokerCredentialsEnabled: settings.Reconcile.BrokerCredentialsEnabled,
 			},
 			types.VisibilityType: &handlers.VisibilityResourceNotificationsHandler{
 				VisibilityClient: platformClient.Visibility(),
