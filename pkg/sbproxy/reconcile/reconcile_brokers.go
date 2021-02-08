@@ -150,6 +150,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 
 		var username, password, passwordHash string
 		var err error
+		var credentialsResponse *types.BrokerPlatformCredential
 
 		if r.options.BrokerCredentialsEnabled {
 			username, password, passwordHash, err = util.GenerateBrokerPlatformCredentials()
@@ -163,7 +164,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 				BrokerID:     brokerInSM.GUID,
 			}
 
-			credentialsResponse, err := r.smClient.PutCredentials(ctx, credentials)
+			credentialsResponse, err = r.smClient.PutCredentials(ctx, credentials)
 			if err != nil {
 				if err != sm.ErrConflictingBrokerPlatformCredentials {
 					return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
@@ -191,7 +192,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during fetching catalog...")
 			return err
 		}
-		if len(username) > 0 && len(password) > 0 {
+		if r.options.BrokerCredentialsEnabled && len(username) > 0 && len(password) > 0 {
 			r.activateBrokerCredentials(ctx, credentialsResponse)
 		}
 		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
@@ -254,6 +255,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 
 	var username, password, passwordHash string
 	var err error
+	var credentialResponse *types.BrokerPlatformCredential
 
 	if r.options.BrokerCredentialsEnabled {
 		username, password, passwordHash, err = util.GenerateBrokerPlatformCredentials()
@@ -261,7 +263,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 			return err
 		}
 
-		credentialResponse, err := r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
+		credentialResponse, err = r.smClient.PutCredentials(ctx, &types.BrokerPlatformCredential{
 			Username:     username,
 			PasswordHash: passwordHash,
 			BrokerID:     brokerInSM.GUID,
@@ -293,7 +295,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker update")
 		return err
 	}
-	if len(username) > 0 && len(password) > 0 {
+	if r.options.BrokerCredentialsEnabled && len(username) > 0 && len(password) > 0 {
 		r.activateBrokerCredentials(ctx, credentialResponse)
 	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob successfully updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
