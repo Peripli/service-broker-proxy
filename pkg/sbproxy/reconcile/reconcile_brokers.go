@@ -191,6 +191,9 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 			logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during fetching catalog...")
 			return err
 		}
+		if len(username) > 0 && len(password) > 0 {
+			r.activateBrokerCredentials(ctx, credentialsResponse)
+		}
 		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
 	}
 	return nil
@@ -289,6 +292,9 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 	if err != nil {
 		logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during broker update")
 		return err
+	}
+	if len(username) > 0 && len(password) > 0 {
+		r.activateBrokerCredentials(ctx, credentialResponse)
 	}
 	logger.WithFields(logBroker(b)).Infof("resyncJob successfully updated broker registration at platform under name [%s] accessible at [%s]", updateRequest.Name, updateRequest.BrokerURL)
 	return nil
