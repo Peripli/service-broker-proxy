@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
-	github.com/Peripli/service-manager v0.18.7
+	github.com/Peripli/service-manager v0.18.8
 	github.com/antlr/antlr4 v0.0.0-20210202015141-4b649103f31e // indirect
 	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/cloudfoundry-community/go-cfenv v1.18.0 // indirect
@@ -18,6 +18,7 @@ require (
 	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20200527163240-4406bd2cb6b8 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onrik/logrus v0.8.0 // indirect
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.3
