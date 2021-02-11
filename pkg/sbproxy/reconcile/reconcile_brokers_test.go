@@ -133,7 +133,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		reconcileSettings = reconcile.DefaultSettings()
 		reconciler = &reconcile.Reconciler{
-			Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
+			Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, defaultSMSettings(), fakeSMAppHost, fakeProxyPathPattern),
 		}
 
 		smbroker1 = &types.ServiceBroker{
@@ -230,14 +230,16 @@ var _ = Describe("Reconcile brokers", func() {
 		reconcileDeleteCalledFor  []*platform.ServiceBroker
 		reconcileCatalogCalledFor []*platform.ServiceBroker
 		reconcileUpdateCalledFor  []*platform.ServiceBroker
+		putCredentialsCallCount   int
 	}
 
 	type testCase struct {
-		stubs           func()
-		platformBrokers func() ([]*platform.ServiceBroker, error)
-		smBrokers       func() ([]*types.ServiceBroker, error)
-		brokerBlacklist func() []string
-		takeoverEnabled bool
+		stubs                func()
+		platformBrokers      func() ([]*platform.ServiceBroker, error)
+		smBrokers            func() ([]*types.ServiceBroker, error)
+		brokerBlacklist      func() []string
+		takeoverEnabled      bool
+		credRotationDisabled bool
 
 		expectations func() expectations
 	}
@@ -318,6 +320,7 @@ var _ = Describe("Reconcile brokers", func() {
 						platformbroker2,
 					},
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					putCredentialsCallCount:   1,
 				}
 			},
 		}),
@@ -350,6 +353,7 @@ var _ = Describe("Reconcile brokers", func() {
 						platformbroker1,
 						platformbroker2,
 					},
+					putCredentialsCallCount: 2,
 				}
 			},
 		}),
@@ -379,6 +383,38 @@ var _ = Describe("Reconcile brokers", func() {
 					},
 					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					putCredentialsCallCount:   2,
+				}
+			},
+		}),
+
+		Entry("When broker is in SM and is missing from platform and cred rotation is disabled it should be created without triggering rotation", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					smbroker1,
+					smbroker2,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled:      true,
+			credRotationDisabled: true,
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []*platform.ServiceBroker{
+						platformbroker1,
+						platformbroker2,
+					},
+					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					putCredentialsCallCount:   0,
 				}
 			},
 		}),
@@ -407,6 +443,7 @@ var _ = Describe("Reconcile brokers", func() {
 					},
 					reconcileDeleteCalledFor:  []*platform.ServiceBroker{},
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{},
+					putCredentialsCallCount:   1,
 				}
 			},
 		}),
@@ -460,6 +497,38 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{
 						platformbroker1,
 					},
+					putCredentialsCallCount: 1,
+				}
+			},
+		}),
+
+		Entry("When broker is in SM and is also in platform and credentials rotation is disabled it should be catalog refetched and not trigger rotation", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{
+					platformbroker1,
+				}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					smbroker1,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled:      true,
+			credRotationDisabled: true,
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []*platform.ServiceBroker{},
+					reconcileDeleteCalledFor: []*platform.ServiceBroker{},
+					reconcileCatalogCalledFor: []*platform.ServiceBroker{
+						platformbroker1,
+					},
+					putCredentialsCallCount: 0,
 				}
 			},
 		}),
@@ -490,6 +559,39 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileUpdateCalledFor: []*platform.ServiceBroker{
 						platformBrokerProxy2,
 					},
+					putCredentialsCallCount: 1,
+				}
+			},
+		}),
+
+		Entry("When broker is updated and credentials rotation is disabled it should not trigger rotation", testCase{
+			stubs: func() {
+				stubPlatformOpsToSucceed()
+				stubPlatformUpdateBroker(platformBrokerProxy2)
+			},
+			platformBrokers: func() ([]*platform.ServiceBroker, error) {
+				return []*platform.ServiceBroker{
+					platformOrphanBrokerProxy,
+				}, nil
+			},
+			smBrokers: func() ([]*types.ServiceBroker, error) {
+				return []*types.ServiceBroker{
+					smOrphanBroker,
+				}, nil
+			},
+			brokerBlacklist: func() []string {
+				return []string{}
+			},
+			takeoverEnabled:      true,
+			credRotationDisabled: true,
+			expectations: func() expectations {
+				return expectations{
+					reconcileCreateCalledFor: []*platform.ServiceBroker{},
+					reconcileDeleteCalledFor: []*platform.ServiceBroker{},
+					reconcileUpdateCalledFor: []*platform.ServiceBroker{
+						platformBrokerProxy2,
+					},
+					putCredentialsCallCount: 0,
 				}
 			},
 		}),
@@ -520,6 +622,7 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileUpdateCalledFor: []*platform.ServiceBroker{
 						platformBrokerProxy2,
 					},
+					putCredentialsCallCount: 1,
 				}
 			},
 		}),
@@ -604,6 +707,7 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileUpdateCalledFor: []*platform.ServiceBroker{
 						platformBrokerProxy,
 					},
+					putCredentialsCallCount: 1,
 				}
 			},
 		}),
@@ -638,6 +742,7 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileUpdateCalledFor: []*platform.ServiceBroker{
 						platformBrokerProxy,
 					},
+					putCredentialsCallCount: 1,
 				}
 			},
 		}),
@@ -672,6 +777,7 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileUpdateCalledFor: []*platform.ServiceBroker{
 						platformBrokerProxy,
 					},
+					putCredentialsCallCount: 1,
 				}
 			},
 		}),
@@ -832,6 +938,7 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{
 						platformbroker2,
 					},
+					putCredentialsCallCount: 2,
 				}
 			},
 		}),
@@ -847,6 +954,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 		reconcileSettings.BrokerBlacklist = t.brokerBlacklist()
 		reconcileSettings.TakeoverEnabled = t.takeoverEnabled
+		reconcileSettings.BrokerCredentialsEnabled = !t.credRotationDisabled
 		reconciler.Resyncer.Resync(context.TODO())
 
 		invocations := append([]map[string][][]interface{}{}, fakeSMClient.Invocations(), fakePlatformCatalogFetcher.Invocations(), fakePlatformBrokerClient.Invocations())
@@ -890,6 +998,8 @@ var _ = Describe("Reconcile brokers", func() {
 			}))
 		}
 
+		Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(expected.putCredentialsCallCount))
+
 		Expect(fakePlatformCatalogFetcher.FetchCallCount()).To(Equal(len(expected.reconcileCatalogCalledFor)))
 		var calledFetchCatalogBrokers []*platform.UpdateServiceBrokerRequest
 		for index := range expected.reconcileCatalogCalledFor {
@@ -897,6 +1007,13 @@ var _ = Describe("Reconcile brokers", func() {
 			Expect(updateServiceBrokerRequest.Username).ToNot(BeEmpty())
 			Expect(updateServiceBrokerRequest.Password).ToNot(BeEmpty())
 
+			if t.credRotationDisabled {
+				Expect(updateServiceBrokerRequest.Username).To(BeEquivalentTo("test-sm-user"))
+				Expect(updateServiceBrokerRequest.Password).To(BeEquivalentTo("test-sm-password"))
+			} else {
+				Expect(updateServiceBrokerRequest.Username).NotTo(BeEquivalentTo("test-sm-user"))
+				Expect(updateServiceBrokerRequest.Password).NotTo(BeEquivalentTo("test-sm-password"))
+			}
 			updateServiceBrokerRequest.Username = ""
 			updateServiceBrokerRequest.Password = ""
 
@@ -1008,7 +1125,7 @@ var _ = Describe("Reconcile brokers", func() {
 			}
 
 			reconciler = &reconcile.Reconciler{
-				Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, fakeSMAppHost, fakeProxyPathPattern),
+				Resyncer: reconcile.NewResyncer(reconcileSettings, platformClient, fakeSMClient, defaultSMSettings(), fakeSMAppHost, fakeProxyPathPattern),
 			}
 		})
 		Context("resyncTakenOverBroker", func() {
@@ -1035,3 +1152,11 @@ var _ = Describe("Reconcile brokers", func() {
 		})
 	})
 })
+
+func defaultSMSettings() *sm.Settings {
+	settings := sm.DefaultSettings()
+	settings.User = "test-sm-user"
+	settings.Password = "test-sm-password"
+
+	return settings
+}

@@ -18,7 +18,11 @@ import (
 
 var _ = Describe("Broker Handler", func() {
 
-	const testNotificationID = "test-notification-id"
+	const (
+		testNotificationID = "test-notification-id"
+		testUser           = "test-user"
+		testPassword       = "test-password"
+	)
 
 	var ctx context.Context
 
@@ -45,8 +49,15 @@ var _ = Describe("Broker Handler", func() {
 		Expect(actualReq.ID).To(Equal(expectedReq.ID))
 		Expect(actualReq.Name).To(Equal(expectedReq.Name))
 		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
-		Expect(actualReq.Username).ToNot(BeEmpty())
-		Expect(actualReq.Password).ToNot(BeEmpty())
+		if brokerHandler.BrokerCredentialsEnabled {
+			Expect(actualReq.Username).ToNot(BeEmpty())
+			Expect(actualReq.Username).ToNot(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).ToNot(BeEmpty())
+			Expect(actualReq.Password).ToNot(BeEquivalentTo(testPassword))
+		} else {
+			Expect(actualReq.Username).To(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).To(BeEquivalentTo(testPassword))
+		}
 	}
 
 	assertUpdateBrokerRequest := func(actualReq, expectedReq *platform.UpdateServiceBrokerRequest) {
@@ -54,8 +65,15 @@ var _ = Describe("Broker Handler", func() {
 		Expect(actualReq.GUID).To(Equal(expectedReq.GUID))
 		Expect(actualReq.Name).To(Equal(expectedReq.Name))
 		Expect(actualReq.BrokerURL).To(Equal(expectedReq.BrokerURL))
-		Expect(actualReq.Username).ToNot(BeEmpty())
-		Expect(actualReq.Password).ToNot(BeEmpty())
+		if brokerHandler.BrokerCredentialsEnabled {
+			Expect(actualReq.Username).ToNot(BeEmpty())
+			Expect(actualReq.Username).ToNot(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).ToNot(BeEmpty())
+			Expect(actualReq.Password).ToNot(BeEquivalentTo(testPassword))
+		} else {
+			Expect(actualReq.Username).To(BeEquivalentTo(testUser))
+			Expect(actualReq.Password).To(BeEquivalentTo(testPassword))
+		}
 	}
 
 	assertPutCredentialsRequest := func() {
@@ -155,13 +173,16 @@ var _ = Describe("Broker Handler", func() {
 		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
 		brokerHandler = &handlers.BrokerResourceNotificationsHandler{
-			SMClient:        fakeSMClient,
-			BrokerClient:    fakeBrokerClient,
-			CatalogFetcher:  fakeCatalogFetcher,
-			ProxyPrefix:     "proxyPrefix",
-			SMPath:          "proxyPath",
-			BrokerBlacklist: []string{},
-			TakeoverEnabled: true,
+			SMClient:                 fakeSMClient,
+			DefaultBrokerUsername:    testUser,
+			DefaultBrokerPassword:    testPassword,
+			BrokerClient:             fakeBrokerClient,
+			CatalogFetcher:           fakeCatalogFetcher,
+			ProxyPrefix:              "proxyPrefix",
+			SMPath:                   "proxyPath",
+			BrokerBlacklist:          []string{},
+			TakeoverEnabled:          true,
+			BrokerCredentialsEnabled: true,
 		}
 
 		brokerNotification = &types.Notification{
@@ -435,6 +456,26 @@ var _ = Describe("Broker Handler", func() {
 					assertPutCredentialsRequest()
 					assertActivateCredentialsRequest()
 				})
+
+				When("credentials rotation is not active", func() {
+					BeforeEach(func() {
+						brokerHandler.BrokerCredentialsEnabled = false
+					})
+
+					It("invokes create broker with the correct arguments and does not rotate credentials", func() {
+						Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(0))
+						brokerHandler.OnCreate(ctx, brokerNotification)
+
+						Expect(fakeBrokerClient.CreateBrokerCallCount()).To(Equal(1))
+
+						callCtx, callRequest := fakeBrokerClient.CreateBrokerArgsForCall(0)
+
+						Expect(callCtx).To(Equal(ctx))
+						assertCreateBrokerRequest(callRequest, expectedCreateBrokerRequest)
+						Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+						Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
+					})
+				})
 			})
 		})
 
@@ -639,10 +680,16 @@ var _ = Describe("Broker Handler", func() {
 			})
 		})
 
-		Context("when the broker name is updated", func() {
-			oldBrokerName, newBrokerName := "old-broker", "new-broker"
-			BeforeEach(func() {
-				brokerNotification.Payload = json.RawMessage(fmt.Sprintf(`
+		var brokerNameUpdateTest = func(enableCredRotation bool) {
+			When(fmt.Sprintf("credentials rotation: %v", enableCredRotation), func() {
+				BeforeEach(func() {
+					brokerHandler.BrokerCredentialsEnabled = enableCredRotation
+				})
+
+				Context("when the broker name is updated", func() {
+					oldBrokerName, newBrokerName := "old-broker", "new-broker"
+					BeforeEach(func() {
+						brokerNotification.Payload = json.RawMessage(fmt.Sprintf(`
 		{
 			"old": {
 				"resource": {
@@ -678,42 +725,54 @@ var _ = Describe("Broker Handler", func() {
 			}
 		}`, smBrokerID, oldBrokerName, brokerURL, catalog, smBrokerID, newBrokerName, brokerURL, catalog))
 
-				fakeBrokerClient.GetBrokerByNameStub = func(_ context.Context, name string) (*platform.ServiceBroker, error) {
-					if name != brokerProxyName(brokerHandler.ProxyPrefix, oldBrokerName, smBrokerID) {
-						return nil, fmt.Errorf("could not find broker with name %s", name)
-					}
-					return &platform.ServiceBroker{
-						GUID:      smBrokerID,
-						Name:      brokerProxyName(brokerHandler.ProxyPrefix, name, smBrokerID),
-						BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
-					}, nil
-				}
-				fakeBrokerClient.UpdateBrokerReturns(nil, nil)
-				fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
+						fakeBrokerClient.GetBrokerByNameStub = func(_ context.Context, name string) (*platform.ServiceBroker, error) {
+							if name != brokerProxyName(brokerHandler.ProxyPrefix, oldBrokerName, smBrokerID) {
+								return nil, fmt.Errorf("could not find broker with name %s", name)
+							}
+							return &platform.ServiceBroker{
+								GUID:      smBrokerID,
+								Name:      brokerProxyName(brokerHandler.ProxyPrefix, name, smBrokerID),
+								BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
+							}, nil
+						}
+						fakeBrokerClient.UpdateBrokerReturns(nil, nil)
+						fakeSMClient.PutCredentialsReturns(brokerPlatformCredential, nil)
+					})
+
+					It("Should update the broker name in the platform", func() {
+						var updateRequest *platform.UpdateServiceBrokerRequest
+						fakeBrokerClient.UpdateBrokerStub = func(_ context.Context, request *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+							updateRequest = request
+							return &platform.ServiceBroker{
+								Name:      request.Name,
+								BrokerURL: request.BrokerURL,
+								GUID:      request.GUID,
+							}, nil
+						}
+						brokerHandler.OnUpdate(ctx, brokerNotification)
+						expectedReq := &platform.UpdateServiceBrokerRequest{
+							ID:        smBrokerID,
+							GUID:      smBrokerID,
+							Name:      brokerProxyName(brokerHandler.ProxyPrefix, newBrokerName, smBrokerID),
+							BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
+						}
+						assertUpdateBrokerRequest(updateRequest, expectedReq)
+						if enableCredRotation {
+							assertPutCredentialsRequest()
+							assertActivateCredentialsRequest()
+						} else {
+							Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(0))
+							Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
+						}
+
+					})
+				})
 			})
 
-			It("Should update the broker name in the platform", func() {
-				var updateRequest *platform.UpdateServiceBrokerRequest
-				fakeBrokerClient.UpdateBrokerStub = func(_ context.Context, request *platform.UpdateServiceBrokerRequest) (*platform.ServiceBroker, error) {
-					updateRequest = request
-					return &platform.ServiceBroker{
-						Name:      request.Name,
-						BrokerURL: request.BrokerURL,
-						GUID:      request.GUID,
-					}, nil
-				}
-				brokerHandler.OnUpdate(ctx, brokerNotification)
-				expectedReq := &platform.UpdateServiceBrokerRequest{
-					ID:        smBrokerID,
-					GUID:      smBrokerID,
-					Name:      brokerProxyName(brokerHandler.ProxyPrefix, newBrokerName, smBrokerID),
-					BrokerURL: brokerHandler.SMPath + "/" + smBrokerID,
-				}
-				assertUpdateBrokerRequest(updateRequest, expectedReq)
-				assertPutCredentialsRequest()
-				assertActivateCredentialsRequest()
-			})
-		})
+		}
+
+		brokerNameUpdateTest(true)
+		brokerNameUpdateTest(false)
 
 		Context("when a proxy registration for the SM broker exists in the platform", func() {
 			BeforeEach(func() {
