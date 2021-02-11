@@ -170,7 +170,8 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 		Handlers: map[types.ObjectType]notifications.ResourceNotificationHandler{
 			types.ServiceBrokerType: &handlers.BrokerResourceNotificationsHandler{
 				SMClient:                 smClient,
-				SMSettings:               settings.Sm,
+				DefaultBrokerUsername:    settings.Sm.User,
+				DefaultBrokerPassword:    settings.Sm.Password,
 				BrokerClient:             platformClient.Broker(),
 				CatalogFetcher:           platformClient.CatalogFetcher(),
 				ProxyPrefix:              settings.Reconcile.BrokerPrefix,

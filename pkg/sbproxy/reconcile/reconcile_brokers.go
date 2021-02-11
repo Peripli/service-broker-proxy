@@ -175,8 +175,8 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 				r.activateBrokerCredentials(ctx, credentialsResponse)
 			}
 		} else {
-			username = r.smSettings.User
-			password = r.smSettings.Password
+			username = r.defaultBrokerUsername
+			password = r.defaultBrokerPassword
 		}
 
 		updateRequest := &platform.UpdateServiceBrokerRequest{
@@ -223,8 +223,8 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 			return err
 		}
 	} else {
-		username = r.smSettings.User
-		password = r.smSettings.Password
+		username = r.defaultBrokerUsername
+		password = r.defaultBrokerPassword
 	}
 
 	createRequest := &platform.CreateServiceBrokerRequest{
@@ -278,8 +278,8 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 			r.activateBrokerCredentials(ctx, credentialResponse)
 		}
 	} else {
-		username = r.smSettings.User
-		password = r.smSettings.Password
+		username = r.defaultBrokerUsername
+		password = r.defaultBrokerPassword
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{

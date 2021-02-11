@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/sm/smfakes"
 	"github.com/Peripli/service-manager/pkg/types"
 	"github.com/tidwall/sjson"
@@ -173,13 +172,10 @@ var _ = Describe("Broker Handler", func() {
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
-		smSettings := sm.DefaultSettings()
-		smSettings.User = testUser
-		smSettings.Password = testPassword
-
 		brokerHandler = &handlers.BrokerResourceNotificationsHandler{
 			SMClient:                 fakeSMClient,
-			SMSettings:               smSettings,
+			DefaultBrokerUsername:    testUser,
+			DefaultBrokerPassword:    testPassword,
 			BrokerClient:             fakeBrokerClient,
 			CatalogFetcher:           fakeCatalogFetcher,
 			ProxyPrefix:              "proxyPrefix",

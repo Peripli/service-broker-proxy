@@ -77,7 +77,8 @@ type BrokerResourceNotificationsHandler struct {
 	BrokerClient   platform.BrokerClient
 	CatalogFetcher platform.CatalogFetcher
 
-	SMSettings *sm.Settings
+	DefaultBrokerUsername string
+	DefaultBrokerPassword string
 
 	ProxyPrefix string
 	SMPath      string
@@ -130,8 +131,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 			NotificationID: notification.ID,
 		}
 	} else {
-		username = bnh.SMSettings.User
-		password = bnh.SMSettings.Password
+		username = bnh.DefaultBrokerUsername
+		password = bnh.DefaultBrokerPassword
 	}
 
 	var credentialResponse *types.BrokerPlatformCredential
@@ -261,8 +262,8 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 			NotificationID: notification.ID,
 		}
 	} else {
-		username = bnh.SMSettings.User
-		password = bnh.SMSettings.Password
+		username = bnh.DefaultBrokerUsername
+		password = bnh.DefaultBrokerPassword
 	}
 
 	updateRequest := &platform.UpdateServiceBrokerRequest{
