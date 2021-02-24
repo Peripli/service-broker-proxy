@@ -44,6 +44,7 @@ var ErrBrokerPlatformCredentialsNotFound = errors.New("credentials not found")
 type Client interface {
 	GetBrokers(ctx context.Context) ([]*types.ServiceBroker, error)
 	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
+	GetVisibilitiesByPlan(ctx context.Context, planID string) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 	GetServiceOfferings(ctx context.Context) ([]*types.ServiceOffering, error)
 	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)
@@ -115,6 +116,24 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Vi
 
 	params := map[string]string{
 		"fieldQuery": "ready eq true",
+	}
+	if c.visibilitiesPageSize > 0 {
+		params["max_items"] = strconv.Itoa(c.visibilitiesPageSize)
+	}
+	result := make([]*types.Visibility, 0)
+	err := c.listAll(ctx, c.getURL(web.VisibilitiesURL), params, &result)
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting visibilities from Service Manager")
+	}
+
+	return result, nil
+}
+
+func (c *ServiceManagerClient) GetVisibilitiesByPlan(ctx context.Context, planID string) ([]*types.Visibility, error) {
+	log.C(ctx).Debugf("Getting visibilities for proxy for plan %s from Service Manager at %s", planID, c.url)
+
+	params := map[string]string{
+		"fieldQuery": fmt.Sprintf("service_plan_id eq %s", planID),
 	}
 	if c.visibilitiesPageSize > 0 {
 		params["max_items"] = strconv.Itoa(c.visibilitiesPageSize)

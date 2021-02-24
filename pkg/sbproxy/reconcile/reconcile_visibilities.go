@@ -134,6 +134,27 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[st
 	return result, nil
 }
 
+func (r *resyncJob) getVisibilitiesFromSMByPlan(ctx context.Context, plan brokerPlan) ([]*platform.Visibility, error) {
+	logger := log.C(ctx)
+	logger.Infof("resyncJob getting visibilities for plan %s from Service Manager...", plan.ID)
+
+	visibilities, err := r.smClient.GetVisibilitiesByPlan(ctx, plan.ID)
+	if err != nil {
+		return nil, err
+	}
+	logger.Infof("resyncJob successfully retrieved %d visibilities from Service Manager", len(visibilities))
+
+	result := make([]*platform.Visibility, 0)
+
+	for _, visibility := range visibilities {
+		converted := r.convertSMVisibility(visibility, plan)
+		result = append(result, converted...)
+	}
+	logger.Infof("resyncJob successfully converted %d Service Manager visibilities to %d platform visibilities", len(visibilities), len(result))
+
+	return result, nil
+}
+
 func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan brokerPlan) []*platform.Visibility {
 	scopeLabelKey := r.platformClient.Visibility().VisibilityScopeLabelKey()
 	shouldBePublic := visibility.PlatformID == "" || len(visibility.Labels[scopeLabelKey]) == 0

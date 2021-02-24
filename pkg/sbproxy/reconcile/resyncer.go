@@ -72,18 +72,6 @@ func (r *resyncJob) process(ctx context.Context) {
 		return
 	}
 
-	plansFromSM, err := r.getSMPlans(ctx, smBrokers)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-
-	smVisibilities, err := r.getVisibilitiesFromSM(ctx, plansFromSM) // fetch as soon as possible
-	if err != nil {
-		logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
-		return
-	}
-
 	// get all the registered brokers from the platform
 	logger.Info("resyncJob getting brokers from platform...")
 	platformBrokers, err := r.platformClient.Broker().GetBrokers(ctx)
@@ -95,7 +83,21 @@ func (r *resyncJob) process(ctx context.Context) {
 
 	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
 	r.resetPlatformCache(ctx)
-	r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
+
+	plansFromSM, err := r.getSMPlans(ctx, smBrokers)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	for _, plan := range plansFromSM {
+		smVisibilities, err := r.getVisibilitiesFromSMByPlan(ctx, plan)
+		if err != nil {
+			logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
+			return
+		}
+		r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
+	}
 }
 
 func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
