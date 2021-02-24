@@ -204,7 +204,15 @@ func (fake *FakeVisibilityClient) GetVisibilitiesByBrokers(arg1 context.Context,
 		return ret.result1, ret.result2
 	}
 	fakeReturns := fake.getVisibilitiesByBrokersReturns
-	return fakeReturns.result1, fakeReturns.result2
+	visibilities := []*platform.Visibility{}
+	for _, visibility := range fakeReturns.result1 {
+		for _, brokerName := range arg2 {
+			if brokerName == visibility.PlatformBrokerName {
+				visibilities = append(visibilities, visibility)
+			}
+		}
+	}
+	return visibilities, fakeReturns.result2
 }
 
 func (fake *FakeVisibilityClient) GetVisibilitiesByBrokersCallCount() int {

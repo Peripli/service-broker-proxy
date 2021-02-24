@@ -35,8 +35,8 @@ func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []
 		return
 	}
 
-	errorOccured := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
-	if errorOccured {
+	errorOccurred := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
+	if errorOccurred {
 		log.C(ctx).Error("Could not reconcile visibilities")
 	}
 }
@@ -63,7 +63,7 @@ func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 	return names
 }
 
-func (r *resyncJob) getSMBrokerPlans(ctx context.Context, offerings map[string]*types.ServiceOffering, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
+func (r *resyncJob) getSMBrokerPlans(ctx context.Context, offerings map[string]*types.ServiceOffering, smBrokers []*platform.ServiceBroker) (map[string]map[string]brokerPlan, error) {
 	log.C(ctx).Info("resyncJob getting service plans from Service Manager")
 	plans, err := r.smClient.GetPlans(ctx)
 	if err != nil {
@@ -76,7 +76,7 @@ func (r *resyncJob) getSMBrokerPlans(ctx context.Context, offerings map[string]*
 		brokerMap[broker.GUID] = broker
 	}
 
-	brokerPlans := make(map[string]brokerPlan, len(plans))
+	brokerPlans := make(map[string]map[string]brokerPlan, len(plans))
 	for _, plan := range plans {
 		service := offerings[plan.ServiceOfferingID]
 		if service == nil {
@@ -86,7 +86,13 @@ func (r *resyncJob) getSMBrokerPlans(ctx context.Context, offerings map[string]*
 		if broker == nil {
 			continue
 		}
-		brokerPlans[plan.ID] = brokerPlan{
+
+		plansMap, foundPlansMap := brokerPlans[broker.GUID]
+		if !foundPlansMap {
+			plansMap = make(map[string]brokerPlan)
+			brokerPlans[broker.GUID] = plansMap
+		}
+		plansMap[plan.ID] = brokerPlan{
 			ServicePlan: plan,
 			broker:      broker,
 		}
@@ -112,8 +118,11 @@ func (r *resyncJob) getSMServiceOfferings(ctx context.Context) (map[string]*type
 func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[string]brokerPlan) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
-
-	visibilities, err := r.smClient.GetVisibilities(ctx)
+	planIDs := make([]string, 0, len(smPlansMap))
+	for planID := range smPlansMap {
+		planIDs = append(planIDs, planID)
+	}
+	visibilities, err := r.smClient.GetVisibilities(ctx, planIDs)
 	if err != nil {
 		return nil, err
 	}

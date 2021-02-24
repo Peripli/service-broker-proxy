@@ -342,7 +342,7 @@ func (fake *FakeClient) GetServiceOfferingsReturnsOnCall(i int, result1 []*types
 	}{result1, result2}
 }
 
-func (fake *FakeClient) GetVisibilities(arg1 context.Context) ([]*types.Visibility, error) {
+func (fake *FakeClient) GetVisibilities(arg1 context.Context, planIDs []string) ([]*types.Visibility, error) {
 	fake.getVisibilitiesMutex.Lock()
 	ret, specificReturn := fake.getVisibilitiesReturnsOnCall[len(fake.getVisibilitiesArgsForCall)]
 	fake.getVisibilitiesArgsForCall = append(fake.getVisibilitiesArgsForCall, struct {
@@ -357,7 +357,15 @@ func (fake *FakeClient) GetVisibilities(arg1 context.Context) ([]*types.Visibili
 		return ret.result1, ret.result2
 	}
 	fakeReturns := fake.getVisibilitiesReturns
-	return fakeReturns.result1, fakeReturns.result2
+	visibilities := []*types.Visibility{}
+	for _, visibility := range fakeReturns.result1 {
+		for _, planID := range planIDs {
+			if planID == visibility.ServicePlanID {
+				visibilities = append(visibilities, visibility)
+			}
+		}
+	}
+	return visibilities, fakeReturns.result2
 }
 
 func (fake *FakeClient) GetVisibilitiesCallCount() int {
