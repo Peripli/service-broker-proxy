@@ -96,7 +96,9 @@ func (r *resyncJob) process(ctx context.Context) {
 			logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
 			return
 		}
-		r.reconcileVisibilities(ctx, smVisibilities, smBrokers)
+		if len(smVisibilities) > 0 {
+			r.reconcileVisibilities(ctx, smVisibilities, []*platform.ServiceBroker{plan.broker})
+		}
 	}
 }
 
