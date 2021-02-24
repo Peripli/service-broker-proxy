@@ -74,6 +74,20 @@ type FakeClient struct {
 		result1 []*types.Visibility
 		result2 error
 	}
+	GetVisibilitiesByPlanStub        func(context.Context, string) ([]*types.Visibility, error)
+	getVisibilitiesByPlanMutex       sync.RWMutex
+	getVisibilitiesByPlanArgsForCall []struct {
+		arg1 context.Context
+		arg2 string
+	}
+	getVisibilitiesByPlanReturns struct {
+		result1 []*types.Visibility
+		result2 error
+	}
+	getVisibilitiesByPlanReturnsOnCall map[int]struct {
+		result1 []*types.Visibility
+		result2 error
+	}
 	PutCredentialsStub        func(context.Context, *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)
 	putCredentialsMutex       sync.RWMutex
 	putCredentialsArgsForCall []struct {
@@ -99,15 +113,16 @@ func (fake *FakeClient) ActivateCredentials(arg1 context.Context, arg2 string) e
 		arg1 context.Context
 		arg2 string
 	}{arg1, arg2})
+	stub := fake.ActivateCredentialsStub
+	fakeReturns := fake.activateCredentialsReturns
 	fake.recordInvocation("ActivateCredentials", []interface{}{arg1, arg2})
 	fake.activateCredentialsMutex.Unlock()
-	if fake.ActivateCredentialsStub != nil {
-		return fake.ActivateCredentialsStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
 	}
-	fakeReturns := fake.activateCredentialsReturns
 	return fakeReturns.result1
 }
 
@@ -159,15 +174,16 @@ func (fake *FakeClient) GetBrokers(arg1 context.Context) ([]*types.ServiceBroker
 	fake.getBrokersArgsForCall = append(fake.getBrokersArgsForCall, struct {
 		arg1 context.Context
 	}{arg1})
+	stub := fake.GetBrokersStub
+	fakeReturns := fake.getBrokersReturns
 	fake.recordInvocation("GetBrokers", []interface{}{arg1})
 	fake.getBrokersMutex.Unlock()
-	if fake.GetBrokersStub != nil {
-		return fake.GetBrokersStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.getBrokersReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -222,15 +238,16 @@ func (fake *FakeClient) GetPlans(arg1 context.Context) ([]*types.ServicePlan, er
 	fake.getPlansArgsForCall = append(fake.getPlansArgsForCall, struct {
 		arg1 context.Context
 	}{arg1})
+	stub := fake.GetPlansStub
+	fakeReturns := fake.getPlansReturns
 	fake.recordInvocation("GetPlans", []interface{}{arg1})
 	fake.getPlansMutex.Unlock()
-	if fake.GetPlansStub != nil {
-		return fake.GetPlansStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.getPlansReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -285,15 +302,16 @@ func (fake *FakeClient) GetServiceOfferings(arg1 context.Context) ([]*types.Serv
 	fake.getServiceOfferingsArgsForCall = append(fake.getServiceOfferingsArgsForCall, struct {
 		arg1 context.Context
 	}{arg1})
+	stub := fake.GetServiceOfferingsStub
+	fakeReturns := fake.getServiceOfferingsReturns
 	fake.recordInvocation("GetServiceOfferings", []interface{}{arg1})
 	fake.getServiceOfferingsMutex.Unlock()
-	if fake.GetServiceOfferingsStub != nil {
-		return fake.GetServiceOfferingsStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.getServiceOfferingsReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -348,15 +366,16 @@ func (fake *FakeClient) GetVisibilities(arg1 context.Context) ([]*types.Visibili
 	fake.getVisibilitiesArgsForCall = append(fake.getVisibilitiesArgsForCall, struct {
 		arg1 context.Context
 	}{arg1})
+	stub := fake.GetVisibilitiesStub
+	fakeReturns := fake.getVisibilitiesReturns
 	fake.recordInvocation("GetVisibilities", []interface{}{arg1})
 	fake.getVisibilitiesMutex.Unlock()
-	if fake.GetVisibilitiesStub != nil {
-		return fake.GetVisibilitiesStub(arg1)
+	if stub != nil {
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.getVisibilitiesReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -405,6 +424,71 @@ func (fake *FakeClient) GetVisibilitiesReturnsOnCall(i int, result1 []*types.Vis
 	}{result1, result2}
 }
 
+func (fake *FakeClient) GetVisibilitiesByPlan(arg1 context.Context, arg2 string) ([]*types.Visibility, error) {
+	fake.getVisibilitiesByPlanMutex.Lock()
+	ret, specificReturn := fake.getVisibilitiesByPlanReturnsOnCall[len(fake.getVisibilitiesByPlanArgsForCall)]
+	fake.getVisibilitiesByPlanArgsForCall = append(fake.getVisibilitiesByPlanArgsForCall, struct {
+		arg1 context.Context
+		arg2 string
+	}{arg1, arg2})
+	stub := fake.GetVisibilitiesByPlanStub
+	fakeReturns := fake.getVisibilitiesByPlanReturns
+	fake.recordInvocation("GetVisibilitiesByPlan", []interface{}{arg1, arg2})
+	fake.getVisibilitiesByPlanMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeClient) GetVisibilitiesByPlanCallCount() int {
+	fake.getVisibilitiesByPlanMutex.RLock()
+	defer fake.getVisibilitiesByPlanMutex.RUnlock()
+	return len(fake.getVisibilitiesByPlanArgsForCall)
+}
+
+func (fake *FakeClient) GetVisibilitiesByPlanCalls(stub func(context.Context, string) ([]*types.Visibility, error)) {
+	fake.getVisibilitiesByPlanMutex.Lock()
+	defer fake.getVisibilitiesByPlanMutex.Unlock()
+	fake.GetVisibilitiesByPlanStub = stub
+}
+
+func (fake *FakeClient) GetVisibilitiesByPlanArgsForCall(i int) (context.Context, string) {
+	fake.getVisibilitiesByPlanMutex.RLock()
+	defer fake.getVisibilitiesByPlanMutex.RUnlock()
+	argsForCall := fake.getVisibilitiesByPlanArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeClient) GetVisibilitiesByPlanReturns(result1 []*types.Visibility, result2 error) {
+	fake.getVisibilitiesByPlanMutex.Lock()
+	defer fake.getVisibilitiesByPlanMutex.Unlock()
+	fake.GetVisibilitiesByPlanStub = nil
+	fake.getVisibilitiesByPlanReturns = struct {
+		result1 []*types.Visibility
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeClient) GetVisibilitiesByPlanReturnsOnCall(i int, result1 []*types.Visibility, result2 error) {
+	fake.getVisibilitiesByPlanMutex.Lock()
+	defer fake.getVisibilitiesByPlanMutex.Unlock()
+	fake.GetVisibilitiesByPlanStub = nil
+	if fake.getVisibilitiesByPlanReturnsOnCall == nil {
+		fake.getVisibilitiesByPlanReturnsOnCall = make(map[int]struct {
+			result1 []*types.Visibility
+			result2 error
+		})
+	}
+	fake.getVisibilitiesByPlanReturnsOnCall[i] = struct {
+		result1 []*types.Visibility
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error) {
 	fake.putCredentialsMutex.Lock()
 	ret, specificReturn := fake.putCredentialsReturnsOnCall[len(fake.putCredentialsArgsForCall)]
@@ -412,15 +496,16 @@ func (fake *FakeClient) PutCredentials(arg1 context.Context, arg2 *types.BrokerP
 		arg1 context.Context
 		arg2 *types.BrokerPlatformCredential
 	}{arg1, arg2})
+	stub := fake.PutCredentialsStub
+	fakeReturns := fake.putCredentialsReturns
 	fake.recordInvocation("PutCredentials", []interface{}{arg1, arg2})
 	fake.putCredentialsMutex.Unlock()
-	if fake.PutCredentialsStub != nil {
-		return fake.PutCredentialsStub(arg1, arg2)
+	if stub != nil {
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	fakeReturns := fake.putCredentialsReturns
 	return fakeReturns.result1, fakeReturns.result2
 }
 
@@ -482,6 +567,8 @@ func (fake *FakeClient) Invocations() map[string][][]interface{} {
 	defer fake.getServiceOfferingsMutex.RUnlock()
 	fake.getVisibilitiesMutex.RLock()
 	defer fake.getVisibilitiesMutex.RUnlock()
+	fake.getVisibilitiesByPlanMutex.RLock()
+	defer fake.getVisibilitiesByPlanMutex.RUnlock()
 	fake.putCredentialsMutex.RLock()
 	defer fake.putCredentialsMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
