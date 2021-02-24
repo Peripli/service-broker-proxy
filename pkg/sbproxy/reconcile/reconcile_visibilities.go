@@ -147,6 +147,9 @@ func (r *resyncJob) getVisibilitiesFromSMByPlan(ctx context.Context, plan broker
 	result := make([]*platform.Visibility, 0)
 
 	for _, visibility := range visibilities {
+		if !visibility.Ready {
+			continue
+		}
 		converted := r.convertSMVisibility(visibility, plan)
 		result = append(result, converted...)
 	}
