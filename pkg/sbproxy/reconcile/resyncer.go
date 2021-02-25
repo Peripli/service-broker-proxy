@@ -89,11 +89,15 @@ func (r *resyncJob) process(ctx context.Context) {
 
 	r.reconcileBrokers(ctx, platformBrokers, allBrokers)
 	r.resetPlatformCache(ctx)
+	r.reconcileAllVisibilities(ctx, allBrokers, allBrokersPlans)
+}
 
+func (r *resyncJob) reconcileAllVisibilities(ctx context.Context, allBrokers []*platform.ServiceBroker, allBrokersPlans map[string]map[string]brokerPlan) {
+	logger := log.C(ctx)
 	if r.options.VisibilityBrokerChunkSize > 0 {
 		brokerChunks := chunkSlice(allBrokers, r.options.VisibilityBrokerChunkSize)
 		for _, brokers := range brokerChunks {
-			visibilities, err := getBrokersVisibilities(ctx, r, brokers, allBrokersPlans)
+			visibilities, err := r.getBrokersVisibilities(ctx, brokers, allBrokersPlans)
 			if err != nil {
 				logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
 				return
@@ -101,7 +105,7 @@ func (r *resyncJob) process(ctx context.Context) {
 			r.reconcileVisibilities(ctx, visibilities, brokers)
 		}
 	} else {
-		visibilities, err := getBrokersVisibilities(ctx, r, allBrokers, allBrokersPlans)
+		visibilities, err := r.getBrokersVisibilities(ctx, allBrokers, allBrokersPlans)
 		if err != nil {
 			logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
 			return
@@ -109,6 +113,7 @@ func (r *resyncJob) process(ctx context.Context) {
 		r.reconcileVisibilities(ctx, visibilities, allBrokers)
 	}
 }
+
 func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]map[string]brokerPlan, error) {
 	smOfferings, err := r.getSMServiceOfferings(ctx)
 	if err != nil {
@@ -132,7 +137,7 @@ func (r *resyncJob) resetPlatformCache(ctx context.Context) {
 	}
 }
 
-func getBrokersVisibilities(ctx context.Context, r *resyncJob, brokers []*platform.ServiceBroker, brokersPlans map[string]map[string]brokerPlan) ([]*platform.Visibility, error) {
+func (r *resyncJob) getBrokersVisibilities(ctx context.Context, brokers []*platform.ServiceBroker, brokersPlans map[string]map[string]brokerPlan) ([]*platform.Visibility, error) {
 	plans := make(map[string]brokerPlan)
 	for _, broker := range brokers {
 		for planID, plan := range brokersPlans[broker.GUID] {
@@ -151,7 +156,7 @@ func chunkSlice(slice []*platform.ServiceBroker, chunkSize int) [][]*platform.Se
 	for i := 0; i < len(slice); i += chunkSize {
 		end := i + chunkSize
 
-		// necessary check to avoid slicing beyond slice capacity
+		// check to avoid slicing beyond slice capacity
 		if end > len(slice) {
 			end = len(slice)
 		}
