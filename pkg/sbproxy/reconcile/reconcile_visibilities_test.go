@@ -807,7 +807,7 @@ var _ = Describe("Reconcile visibilities", func() {
 
 		Entry("When visibilities from SM cannot be fetched - no reconcilation is done", testCase{
 			stubs: func() {
-				fakeSMClient.GetVisibilitiesCalls(func(ctx context.Context) ([]*types.Visibility, error) {
+				fakeSMClient.GetVisibilitiesCalls(func(ctx context.Context, planIDs []string) ([]*types.Visibility, error) {
 					return nil, fmt.Errorf("error")
 				})
 			},
@@ -959,7 +959,17 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakeVisibilityClient.VisibilityScopeLabelKeyReturns(scopeKey)
 
 		if t.platformVisibilities != nil {
-			fakeVisibilityClient.GetVisibilitiesByBrokersReturns(t.platformVisibilities(), nil)
+			fakeVisibilityClient.GetVisibilitiesByBrokersStub = func(ctx context.Context, names []string) ([]*platform.Visibility, error) {
+				var visibilities []*platform.Visibility
+				for _, visibility := range t.platformVisibilities() {
+					for _, brokerName := range names {
+						if brokerName == visibility.PlatformBrokerName {
+							visibilities = append(visibilities, visibility)
+						}
+					}
+				}
+				return visibilities, nil
+			}
 		}
 
 		if t.stubs != nil {
