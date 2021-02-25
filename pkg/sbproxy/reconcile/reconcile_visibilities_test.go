@@ -362,6 +362,64 @@ var _ = Describe("Reconcile visibilities", func() {
 			},
 		}),
 
+		Entry("When visibilities in platform and in SM are not the same - should reconcile", testCase{
+			platformVisibilities: func() []*platform.Visibility {
+				return []*platform.Visibility{
+					{
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[0].CatalogID,
+						Labels:             map[string]string{scopeKey: "value2"},
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+					{
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[0].CatalogID,
+						Labels:             map[string]string{scopeKey: "value3"},
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+				}
+			},
+			smVisibilities: func() []*types.Visibility {
+				return []*types.Visibility{
+					{
+						Base: types.Base{
+							Labels: types.Labels{
+								scopeKey: []string{"value0", "value1"},
+							},
+						},
+						PlatformID:    "platformID",
+						ServicePlanID: smBrokers[0].Services[0].Plans[0].ID,
+					},
+				}
+			},
+			enablePlanVisibilityCalledFor: func() []*platform.Visibility {
+				return []*platform.Visibility{
+					{
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[0].CatalogID,
+						Labels:             map[string]string{scopeKey: "value0"},
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+					{
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[0].CatalogID,
+						Labels:             map[string]string{scopeKey: "value1"},
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+				}
+			},
+			disablePlanVisibilityCalledFor: func() []*platform.Visibility {
+				return []*platform.Visibility{
+					{
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[0].CatalogID,
+						Labels:             map[string]string{scopeKey: "value2"},
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+					{
+						CatalogPlanID:      smBrokers[0].Services[0].Plans[0].CatalogID,
+						Labels:             map[string]string{scopeKey: "value3"},
+						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
+					},
+				}
+			},
+		}),
+
 		Entry("When VisibilityBrokerChunkSize>0 && NumberOfBrokers<VisibilityBrokerChunkSize && visibilities in platform and in SM are not the same - should reconcile all brokers visibilities", testCase{
 			platformVisibilities: func() []*platform.Visibility {
 				return []*platform.Visibility{
@@ -959,10 +1017,10 @@ var _ = Describe("Reconcile visibilities", func() {
 		fakeVisibilityClient.VisibilityScopeLabelKeyReturns(scopeKey)
 
 		if t.platformVisibilities != nil {
-			fakeVisibilityClient.GetVisibilitiesByBrokersStub = func(ctx context.Context, names []string) ([]*platform.Visibility, error) {
+			fakeVisibilityClient.GetVisibilitiesByBrokersStub = func(ctx context.Context, brokerNames []string) ([]*platform.Visibility, error) {
 				var visibilities []*platform.Visibility
 				for _, visibility := range t.platformVisibilities() {
-					for _, brokerName := range names {
+					for _, brokerName := range brokerNames {
 						if brokerName == visibility.PlatformBrokerName {
 							visibilities = append(visibilities, visibility)
 						}

@@ -35,7 +35,7 @@ import (
 )
 
 // to match the desired broker state coming from the Service Manager (desiredBrokers).
-func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers []*platform.ServiceBroker, desiredBrokers []*platform.ServiceBroker) {
+func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desiredBrokers []*platform.ServiceBroker) {
 	brokerKeyMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		return getBrokerKey(broker), true
 	})
