@@ -362,7 +362,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			},
 		}),
 
-		Entry("When visibilities in platform and in SM are not the same - should reconcile", testCase{
+		Entry("When VisibilityBrokerChunkSize>0 && visibilities in platform and in SM are not the same - should reconcile all brokers visibilities", testCase{
 			platformVisibilities: func() []*platform.Visibility {
 				return []*platform.Visibility{
 					{
@@ -416,6 +416,16 @@ var _ = Describe("Reconcile visibilities", func() {
 						Labels:             map[string]string{scopeKey: "value3"},
 						PlatformBrokerName: brokerProxyName(smBrokers[0].Name, smBrokers[0].ID),
 					},
+				}
+			},
+			prepareClientWithPlatformNameProvider: func() {
+				smBrokers = generateSMBrokers(3, 4, 100)
+				platformBrokers = generatePlatformBrokersFor(smBrokers, nil)
+				settings := reconcile.DefaultSettings()
+				settings.MaxParallelRequests = maxParallelRequests
+				settings.VisibilityBrokerChunkSize = 2
+				reconciler = &reconcile.Reconciler{
+					Resyncer: reconcile.NewResyncer(settings, fakePlatformClient, fakeSMClient, defaultSMSettings(), fakeSMAppHost, fakeProxyPathPattern),
 				}
 			},
 		}),
