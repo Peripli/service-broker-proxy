@@ -26,19 +26,19 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-func (r *resyncJob) reconcileVisibilities(ctx context.Context, plans map[string]brokerPlan) {
+func (r *resyncJob) reconcileVisibilities(ctx context.Context, smPlans map[string]brokerPlan, smBrokers []*platform.ServiceBroker) {
 	logger := log.C(ctx)
 	if r.options.VisibilityBrokerChunkSize == 0 {
-		err := r.reconcilePlansVisibilities(ctx, false, plans)
+		err := r.reconcilePlansVisibilities(ctx, false, smPlans, smBrokers)
 		if err != nil {
 			logger.WithError(err).Error("an error occurred while reconciling visibilities")
 			return
 		}
 	} else {
-		chunks := getBrokerChunks(plans, r.options.VisibilityBrokerChunkSize)
+		chunks := getBrokerChunks(smBrokers, r.options.VisibilityBrokerChunkSize)
 		for _, brokersChunk := range chunks {
-			plansChunk := getBrokersPlans(brokersChunk, plans)
-			err := r.reconcilePlansVisibilities(ctx, true, plansChunk)
+			plansChunk := getBrokersPlans(brokersChunk, smPlans)
+			err := r.reconcilePlansVisibilities(ctx, true, plansChunk, brokersChunk)
 			if err != nil {
 				logger.WithError(err).Error("an error occurred while reconciling visibilities")
 				return
@@ -119,10 +119,9 @@ func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, useServicePlanFie
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
 	var planIDs []string
-	if !useServicePlanFieldQuery {
-		planIDs = nil
-	} else {
-		planIDs = make([]string, 0, len(smPlansMap))
+	if useServicePlanFieldQuery {
+		//initialise the planIDs array. if the array is nil than r.smClient.GetVisibilities will fetch all the visibilities without service_plan_id fieldQuery
+		planIDs = []string{}
 		for _, plan := range smPlansMap {
 			planIDs = append(planIDs, plan.ID)
 		}
@@ -291,8 +290,7 @@ func (r *resyncJob) convertVisListToMap(list []*platform.Visibility) map[string]
 }
 
 //if planIDs is nil or empty all visibilities will be reconciled
-func (r *resyncJob) reconcilePlansVisibilities(ctx context.Context, useServicePlanFieldQuery bool, smPlans map[string]brokerPlan) error {
-	smBrokers := getBrokers(smPlans)
+func (r *resyncJob) reconcilePlansVisibilities(ctx context.Context, useServicePlanFieldQuery bool, smPlans map[string]brokerPlan, smBrokers []*platform.ServiceBroker) error {
 	smVisibilities, err := r.getVisibilitiesFromSM(ctx, useServicePlanFieldQuery, smPlans)
 	if err != nil {
 		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from SM")
@@ -323,20 +321,6 @@ func mapToLabels(m map[string]string) types.Labels {
 	return labels
 }
 
-func getBrokers(plans map[string]brokerPlan) []*platform.ServiceBroker {
-	brokersMap := map[string]*platform.ServiceBroker{}
-	for _, plan := range plans {
-		if plan.broker != nil {
-			brokersMap[plan.broker.GUID] = plan.broker
-		}
-	}
-	var brokers []*platform.ServiceBroker
-	for _, broker := range brokersMap {
-		brokers = append(brokers, broker)
-	}
-	return brokers
-}
-
 func getBrokersPlans(brokers []*platform.ServiceBroker, brokersPlans map[string]brokerPlan) map[string]brokerPlan {
 	plans := make(map[string]brokerPlan)
 	for _, broker := range brokers {
@@ -349,8 +333,7 @@ func getBrokersPlans(brokers []*platform.ServiceBroker, brokersPlans map[string]
 	return plans
 }
 
-func getBrokerChunks(plans map[string]brokerPlan, chunkSize int) [][]*platform.ServiceBroker {
-	brokers := getBrokers(plans)
+func getBrokerChunks(brokers []*platform.ServiceBroker, chunkSize int) [][]*platform.ServiceBroker {
 	var chunks [][]*platform.ServiceBroker
 	for i := 0; i < len(brokers); i += chunkSize {
 		end := i + chunkSize

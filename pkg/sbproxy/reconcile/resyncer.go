@@ -88,7 +88,7 @@ func (r *resyncJob) process(ctx context.Context) {
 
 	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
 	r.resetPlatformCache(ctx)
-	r.reconcileVisibilities(ctx, smPlans)
+	r.reconcileVisibilities(ctx, smPlans, smBrokers)
 }
 
 func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
