@@ -27,7 +27,7 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-func getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Context, r *resyncJob, brokers []*platform.ServiceBroker) ([]*platform.Visibility, error) {
+func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Context, brokers []*platform.ServiceBroker) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from platform")
 
@@ -98,7 +98,7 @@ func (r *resyncJob) getSMServiceOfferings(ctx context.Context) (map[string]*type
 func (r *resyncJob) reconcileVisibilities(ctx context.Context, plans map[string]brokerPlan) {
 	logger := log.C(ctx)
 	if r.options.VisibilityBrokerChunkSize == 0 {
-		err := reconcileVisibilities(ctx, r, false, plans)
+		err := r.reconcilePlansVisibilities(ctx, false, plans)
 		if err != nil {
 			logger.WithError(err).Error("an error occurred while reconciling visibilities")
 			return
@@ -107,7 +107,7 @@ func (r *resyncJob) reconcileVisibilities(ctx context.Context, plans map[string]
 		chunks := getBrokerChunks(plans, r.options.VisibilityBrokerChunkSize)
 		for _, brokersChunk := range chunks {
 			plansChunk := getBrokersPlans(brokersChunk, plans)
-			err := reconcileVisibilities(ctx, r, true, plansChunk)
+			err := r.reconcilePlansVisibilities(ctx, true, plansChunk)
 			if err != nil {
 				logger.WithError(err).Error("an error occurred while reconciling visibilities")
 				return
@@ -244,7 +244,7 @@ func (r *resyncJob) convertVisListToMap(list []*platform.Visibility) map[string]
 	return result
 }
 
-func reconcileServiceVisibilities(ctx context.Context, r *resyncJob, platformVis, smVis []*platform.Visibility) bool {
+func (r *resyncJob) reconcileServiceVisibilities(ctx context.Context, platformVis, smVis []*platform.Visibility) bool {
 	logger := log.C(ctx)
 	logger.Info("resyncJob reconciling platform and Service Manager visibilities...")
 
@@ -275,21 +275,21 @@ func reconcileServiceVisibilities(ctx context.Context, r *resyncJob, platformVis
 }
 
 //if planIDs is nil or empty all visibilities will be reconciled
-func reconcileVisibilities(ctx context.Context, r *resyncJob, useServicePlanFieldQuery bool, smPlans map[string]brokerPlan) error {
+func (r *resyncJob) reconcilePlansVisibilities(ctx context.Context, useServicePlanFieldQuery bool, smPlans map[string]brokerPlan) error {
 	smBrokers := getBrokers(smPlans)
-	smVisibilities, err := getSMVisibilities(ctx, r, useServicePlanFieldQuery, smPlans)
+	smVisibilities, err := r.getSMVisibilities(ctx, useServicePlanFieldQuery, smPlans)
 	if err != nil {
 		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from SM")
 		return nil
 	}
 	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
-	platformVisibilities, err := getPlatformVisibilitiesByBrokersFromPlatform(ctx, r, smBrokers)
+	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
 	if err != nil {
 		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from platform")
 		return nil
 	}
 
-	errorOccurred := reconcileServiceVisibilities(ctx, r, platformVisibilities, smVisibilities)
+	errorOccurred := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
 	if errorOccurred {
 		log.C(ctx).Error("Could not reconcile visibilities")
 	}
@@ -297,7 +297,7 @@ func reconcileVisibilities(ctx context.Context, r *resyncJob, useServicePlanFiel
 	return nil
 }
 
-func getSMVisibilities(ctx context.Context, r *resyncJob, useServicePlanFieldQuery bool, plans map[string]brokerPlan) ([]*platform.Visibility, error) {
+func (r *resyncJob) getSMVisibilities(ctx context.Context, useServicePlanFieldQuery bool, plans map[string]brokerPlan) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
 	var planIDs []string
