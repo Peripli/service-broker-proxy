@@ -94,23 +94,18 @@ func (r *resyncJob) process(ctx context.Context) {
 
 func (r *resyncJob) reconcileAllVisibilities(ctx context.Context, allBrokers []*platform.ServiceBroker, allBrokersPlans map[string]map[string]brokerPlan) {
 	logger := log.C(ctx)
-	if r.options.VisibilityBrokerChunkSize > 0 {
-		brokerChunks := chunkSlice(allBrokers, r.options.VisibilityBrokerChunkSize)
-		for _, brokers := range brokerChunks {
-			visibilities, err := r.getBrokersVisibilities(ctx, brokers, allBrokersPlans)
-			if err != nil {
-				logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
-				return
-			}
-			r.reconcileVisibilities(ctx, visibilities, brokers)
-		}
-	} else {
-		visibilities, err := r.getBrokersVisibilities(ctx, allBrokers, allBrokersPlans)
+	chunkSize := r.options.VisibilityBrokerChunkSize
+	if chunkSize == 0 {
+		chunkSize = len(allBrokers)
+	}
+	brokerChunks := chunkSlice(allBrokers, r.options.VisibilityBrokerChunkSize)
+	for _, brokers := range brokerChunks {
+		visibilities, err := r.getBrokersVisibilities(ctx, brokers, allBrokersPlans)
 		if err != nil {
 			logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
 			return
 		}
-		r.reconcileVisibilities(ctx, visibilities, allBrokers)
+		r.reconcileVisibilities(ctx, visibilities, brokers)
 	}
 }
 
