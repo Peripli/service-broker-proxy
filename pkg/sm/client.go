@@ -113,12 +113,16 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.Service
 // GetVisibilities returns plan visibilities from Service Manager
 func (c *ServiceManagerClient) GetVisibilities(ctx context.Context, planIDs []string) ([]*types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.url)
-	if planIDs == nil || len(planIDs) == 0 {
-		return nil, fmt.Errorf("error getting visibilities from Service Manager. plan IDs must be provided")
-	}
-	plansStr := "('" + strings.Join(planIDs, "','") + "')"
-	params := map[string]string{
-		"fieldQuery": "ready eq true and service_plan_id in " + plansStr,
+	var params map[string]string
+	if planIDs != nil && len(planIDs) > 0 {
+		plansStr := "('" + strings.Join(planIDs, "','") + "')"
+		params = map[string]string{
+			"fieldQuery": "ready eq true and service_plan_id in " + plansStr,
+		}
+	} else {
+		params = map[string]string{
+			"fieldQuery": "ready eq true",
+		}
 	}
 	if c.visibilitiesPageSize > 0 {
 		params["max_items"] = strconv.Itoa(c.visibilitiesPageSize)

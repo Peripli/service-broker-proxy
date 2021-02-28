@@ -2,7 +2,6 @@ package reconcile
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -67,13 +66,13 @@ func (r *resyncJob) process(ctx context.Context) {
 		return
 	}
 
-	allBrokers, err := r.getBrokersFromSM(ctx)
+	smBrokers, err := r.getBrokersFromSM(ctx)
 	if err != nil {
 		logger.WithError(err).Error("an error occurred while obtaining brokers from Service Manager")
 		return
 	}
 
-	allBrokersPlans, err := r.getSMPlans(ctx, allBrokers)
+	smPlans, err := r.getSMPlans(ctx, smBrokers)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -87,38 +86,21 @@ func (r *resyncJob) process(ctx context.Context) {
 	}
 	logger.Infof("resyncJob successfully retrieved %d brokers from platform", len(platformBrokers))
 
-	r.reconcileBrokers(ctx, platformBrokers, allBrokers)
+	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
 	r.resetPlatformCache(ctx)
-	r.reconcileAllVisibilities(ctx, allBrokers, allBrokersPlans)
+	r.reconcileVisibilities(ctx, smPlans)
 }
 
-func (r *resyncJob) reconcileAllVisibilities(ctx context.Context, allBrokers []*platform.ServiceBroker, allBrokersPlans map[string]map[string]brokerPlan) {
-	logger := log.C(ctx)
-	chunkSize := r.options.VisibilityBrokerChunkSize
-	if chunkSize == 0 {
-		chunkSize = len(allBrokers)
-	}
-	brokerChunks := chunkSlice(allBrokers, r.options.VisibilityBrokerChunkSize)
-	for _, brokers := range brokerChunks {
-		visibilities, err := r.getBrokersVisibilities(ctx, brokers, allBrokersPlans)
-		if err != nil {
-			logger.WithError(err).Error("an error occurred while obtaining visibilities from Service Manager")
-			return
-		}
-		r.reconcileVisibilities(ctx, visibilities, brokers)
-	}
-}
-
-func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]map[string]brokerPlan, error) {
+func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
 	smOfferings, err := r.getSMServiceOfferings(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error occurred while obtaining service offerings from Service Manager")
 	}
-	brokerPlans, err := r.getSMBrokerPlans(ctx, smOfferings, smBrokers)
+	smPlans, err := r.getSMBrokerPlans(ctx, smOfferings, smBrokers)
 	if err != nil {
 		return nil, errors.Wrap(err, "an error occurred while obtaining plans from Service Manager")
 	}
-	return brokerPlans, nil
+	return smPlans, nil
 }
 
 func (r *resyncJob) resetPlatformCache(ctx context.Context) {
@@ -130,34 +112,4 @@ func (r *resyncJob) resetPlatformCache(ctx context.Context) {
 			return
 		}
 	}
-}
-
-func (r *resyncJob) getBrokersVisibilities(ctx context.Context, brokers []*platform.ServiceBroker, brokersPlans map[string]map[string]brokerPlan) ([]*platform.Visibility, error) {
-	plans := make(map[string]brokerPlan)
-	for _, broker := range brokers {
-		for planID, plan := range brokersPlans[broker.GUID] {
-			plans[planID] = plan
-		}
-	}
-	smVisibilities, err := r.getVisibilitiesFromSM(ctx, plans)
-	if err != nil {
-		return nil, fmt.Errorf("an error occurred while obtaining visibilities from Service Manager")
-	}
-	return smVisibilities, nil
-}
-
-func chunkSlice(slice []*platform.ServiceBroker, chunkSize int) [][]*platform.ServiceBroker {
-	var chunks [][]*platform.ServiceBroker
-	for i := 0; i < len(slice); i += chunkSize {
-		end := i + chunkSize
-
-		// check to avoid slicing beyond slice capacity
-		if end > len(slice) {
-			end = len(slice)
-		}
-
-		chunks = append(chunks, slice[i:end])
-	}
-
-	return chunks
 }
