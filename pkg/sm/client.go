@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -43,7 +44,7 @@ var ErrBrokerPlatformCredentialsNotFound = errors.New("credentials not found")
 //go:generate counterfeiter . Client
 type Client interface {
 	GetBrokers(ctx context.Context) ([]*types.ServiceBroker, error)
-	GetVisibilities(ctx context.Context) ([]*types.Visibility, error)
+	GetVisibilities(ctx context.Context, planIDs []string) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 	GetServiceOfferings(ctx context.Context) ([]*types.ServiceOffering, error)
 	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)
@@ -110,11 +111,18 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.Service
 }
 
 // GetVisibilities returns plan visibilities from Service Manager
-func (c *ServiceManagerClient) GetVisibilities(ctx context.Context) ([]*types.Visibility, error) {
+func (c *ServiceManagerClient) GetVisibilities(ctx context.Context, planIDs []string) ([]*types.Visibility, error) {
 	log.C(ctx).Debugf("Getting visibilities for proxy from Service Manager at %s", c.url)
-
-	params := map[string]string{
-		"fieldQuery": "ready eq true",
+	var params map[string]string
+	if planIDs != nil {
+		plansStr := "('" + strings.Join(planIDs, "','") + "')"
+		params = map[string]string{
+			"fieldQuery": "ready eq true and service_plan_id in " + plansStr,
+		}
+	} else {
+		params = map[string]string{
+			"fieldQuery": "ready eq true",
+		}
 	}
 	if c.visibilitiesPageSize > 0 {
 		params["max_items"] = strconv.Itoa(c.visibilitiesPageSize)

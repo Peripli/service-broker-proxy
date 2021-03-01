@@ -18,6 +18,7 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 	"strings"
 
@@ -26,18 +27,24 @@ import (
 	"github.com/Peripli/service-manager/pkg/types"
 )
 
-// reconcileVisibilities handles the reconciliation of the service visibilities
-func (r *resyncJob) reconcileVisibilities(ctx context.Context, smVisibilities []*platform.Visibility, smBrokers []*platform.ServiceBroker) {
-	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
-	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
-	if err != nil {
-		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from platform")
-		return
-	}
-
-	errorOccured := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
-	if errorOccured {
-		log.C(ctx).Error("Could not reconcile visibilities")
+func (r *resyncJob) reconcileVisibilities(ctx context.Context, smPlans map[string]brokerPlan, smBrokers []*platform.ServiceBroker) {
+	logger := log.C(ctx)
+	if r.options.VisibilityBrokerChunkSize == 0 {
+		err := r.reconcilePlansVisibilities(ctx, false, smPlans, smBrokers)
+		if err != nil {
+			logger.WithError(err).Error("an error occurred while reconciling visibilities")
+			return
+		}
+	} else {
+		chunks := getBrokerChunks(smBrokers, r.options.VisibilityBrokerChunkSize)
+		for _, brokersChunk := range chunks {
+			plansChunk := getBrokersPlans(brokersChunk, smPlans)
+			err := r.reconcilePlansVisibilities(ctx, true, plansChunk, brokersChunk)
+			if err != nil {
+				logger.WithError(err).Error("an error occurred while reconciling visibilities")
+				return
+			}
+		}
 	}
 }
 
@@ -109,11 +116,18 @@ func (r *resyncJob) getSMServiceOfferings(ctx context.Context) (map[string]*type
 	return result, nil
 }
 
-func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, smPlansMap map[string]brokerPlan) ([]*platform.Visibility, error) {
+func (r *resyncJob) getVisibilitiesFromSM(ctx context.Context, useServicePlanFieldQuery bool, smPlansMap map[string]brokerPlan) ([]*platform.Visibility, error) {
 	logger := log.C(ctx)
 	logger.Info("resyncJob getting visibilities from Service Manager...")
-
-	visibilities, err := r.smClient.GetVisibilities(ctx)
+	var planIDs []string
+	if useServicePlanFieldQuery {
+		//initialise the planIDs array. if the array is nil than r.smClient.GetVisibilities will fetch all the visibilities without service_plan_id fieldQuery
+		planIDs = []string{}
+		for _, plan := range smPlansMap {
+			planIDs = append(planIDs, plan.ID)
+		}
+	}
+	visibilities, err := r.smClient.GetVisibilities(ctx, planIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -276,6 +290,26 @@ func (r *resyncJob) convertVisListToMap(list []*platform.Visibility) map[string]
 	return result
 }
 
+//if planIDs is nil or empty all visibilities will be reconciled
+func (r *resyncJob) reconcilePlansVisibilities(ctx context.Context, useServicePlanFieldQuery bool, smPlans map[string]brokerPlan, smBrokers []*platform.ServiceBroker) error {
+	smVisibilities, err := r.getVisibilitiesFromSM(ctx, useServicePlanFieldQuery, smPlans)
+	if err != nil {
+		return fmt.Errorf("an error occurred while loading visibilities from SM")
+	}
+	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
+	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
+	if err != nil {
+		return fmt.Errorf("an error occurred while loading visibilities from platform")
+	}
+
+	errorOccurred := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
+	if errorOccurred {
+		return fmt.Errorf("could not reconcile visibilities")
+	}
+
+	return nil
+}
+
 func mapToLabels(m map[string]string) types.Labels {
 	labels := types.Labels{}
 	for k, v := range m {
@@ -284,6 +318,34 @@ func mapToLabels(m map[string]string) types.Labels {
 		}
 	}
 	return labels
+}
+
+func getBrokersPlans(brokers []*platform.ServiceBroker, brokersPlans map[string]brokerPlan) map[string]brokerPlan {
+	plans := make(map[string]brokerPlan)
+	for _, broker := range brokers {
+		for planID, plan := range brokersPlans {
+			if plan.broker != nil && plan.broker.GUID == broker.GUID {
+				plans[planID] = plan
+			}
+		}
+	}
+	return plans
+}
+
+func getBrokerChunks(brokers []*platform.ServiceBroker, chunkSize int) [][]*platform.ServiceBroker {
+	var chunks [][]*platform.ServiceBroker
+	for i := 0; i < len(brokers); i += chunkSize {
+		end := i + chunkSize
+
+		// check to avoid slicing beyond slice capacity
+		if end > len(brokers) {
+			end = len(brokers)
+		}
+
+		chunks = append(chunks, brokers[i:end])
+	}
+
+	return chunks
 }
 
 type brokerPlan struct {

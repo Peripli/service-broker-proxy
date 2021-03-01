@@ -61,10 +61,11 @@ type FakeClient struct {
 		result1 []*types.ServiceOffering
 		result2 error
 	}
-	GetVisibilitiesStub        func(context.Context) ([]*types.Visibility, error)
+	GetVisibilitiesStub        func(context.Context, []string) ([]*types.Visibility, error)
 	getVisibilitiesMutex       sync.RWMutex
 	getVisibilitiesArgsForCall []struct {
 		arg1 context.Context
+		arg2 []string
 	}
 	getVisibilitiesReturns struct {
 		result1 []*types.Visibility
@@ -342,16 +343,22 @@ func (fake *FakeClient) GetServiceOfferingsReturnsOnCall(i int, result1 []*types
 	}{result1, result2}
 }
 
-func (fake *FakeClient) GetVisibilities(arg1 context.Context) ([]*types.Visibility, error) {
+func (fake *FakeClient) GetVisibilities(arg1 context.Context, arg2 []string) ([]*types.Visibility, error) {
+	var arg2Copy []string
+	if arg2 != nil {
+		arg2Copy = make([]string, len(arg2))
+		copy(arg2Copy, arg2)
+	}
 	fake.getVisibilitiesMutex.Lock()
 	ret, specificReturn := fake.getVisibilitiesReturnsOnCall[len(fake.getVisibilitiesArgsForCall)]
 	fake.getVisibilitiesArgsForCall = append(fake.getVisibilitiesArgsForCall, struct {
 		arg1 context.Context
-	}{arg1})
-	fake.recordInvocation("GetVisibilities", []interface{}{arg1})
+		arg2 []string
+	}{arg1, arg2Copy})
+	fake.recordInvocation("GetVisibilities", []interface{}{arg1, arg2Copy})
 	fake.getVisibilitiesMutex.Unlock()
 	if fake.GetVisibilitiesStub != nil {
-		return fake.GetVisibilitiesStub(arg1)
+		return fake.GetVisibilitiesStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2
@@ -366,17 +373,17 @@ func (fake *FakeClient) GetVisibilitiesCallCount() int {
 	return len(fake.getVisibilitiesArgsForCall)
 }
 
-func (fake *FakeClient) GetVisibilitiesCalls(stub func(context.Context) ([]*types.Visibility, error)) {
+func (fake *FakeClient) GetVisibilitiesCalls(stub func(context.Context, []string) ([]*types.Visibility, error)) {
 	fake.getVisibilitiesMutex.Lock()
 	defer fake.getVisibilitiesMutex.Unlock()
 	fake.GetVisibilitiesStub = stub
 }
 
-func (fake *FakeClient) GetVisibilitiesArgsForCall(i int) context.Context {
+func (fake *FakeClient) GetVisibilitiesArgsForCall(i int) (context.Context, []string) {
 	fake.getVisibilitiesMutex.RLock()
 	defer fake.getVisibilitiesMutex.RUnlock()
 	argsForCall := fake.getVisibilitiesArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeClient) GetVisibilitiesReturns(result1 []*types.Visibility, result2 error) {

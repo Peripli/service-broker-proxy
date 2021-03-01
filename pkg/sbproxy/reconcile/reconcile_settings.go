@@ -25,25 +25,27 @@ const DefaultProxyBrokerPrefix = "sm-"
 
 // Settings type represents the sbproxy settings
 type Settings struct {
-	LegacyURL                string   `mapstructure:"legacy_url"`
-	MaxParallelRequests      int      `mapstructure:"max_parallel_requests"`
-	URL                      string   `mapstructure:"url"`
-	BrokerPrefix             string   `mapstructure:"broker_prefix"`
-	BrokerBlacklist          []string `mapstructure:"broker_blacklist"`
-	TakeoverEnabled          bool     `mapstructure:"takeover_enabled"`
-	BrokerCredentialsEnabled bool     `mapstructure:"broker_credentials_enabled"`
+	LegacyURL                 string   `mapstructure:"legacy_url"`
+	MaxParallelRequests       int      `mapstructure:"max_parallel_requests"`
+	URL                       string   `mapstructure:"url"`
+	BrokerPrefix              string   `mapstructure:"broker_prefix"`
+	BrokerBlacklist           []string `mapstructure:"broker_blacklist"`
+	TakeoverEnabled           bool     `mapstructure:"takeover_enabled"`
+	BrokerCredentialsEnabled  bool     `mapstructure:"broker_credentials_enabled"`
+	VisibilityBrokerChunkSize int      `mapstructure:"visibility_broker_chunk_size"`
 }
 
 // DefaultSettings creates default proxy settings
 func DefaultSettings() *Settings {
 	return &Settings{
-		LegacyURL:                "",
-		MaxParallelRequests:      5,
-		URL:                      "",
-		BrokerPrefix:             DefaultProxyBrokerPrefix,
-		BrokerBlacklist:          []string{},
-		TakeoverEnabled:          true,
-		BrokerCredentialsEnabled: true,
+		LegacyURL:                 "",
+		MaxParallelRequests:       5,
+		URL:                       "",
+		BrokerPrefix:              DefaultProxyBrokerPrefix,
+		BrokerBlacklist:           []string{},
+		TakeoverEnabled:           true,
+		BrokerCredentialsEnabled:  true,
+		VisibilityBrokerChunkSize: 0,
 	}
 }
 

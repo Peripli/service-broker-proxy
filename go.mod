@@ -6,7 +6,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/Peripli/service-manager v0.18.8
 	github.com/antlr/antlr4 v0.0.0-20210202015141-4b649103f31e // indirect
-	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/cloudfoundry-community/go-cfenv v1.18.0 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
 	github.com/fatih/structs v1.1.0
@@ -28,8 +27,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/tidwall/gjson v1.6.8
 	github.com/tidwall/sjson v1.1.5
-	github.com/ugorji/go v1.1.4 // indirect
-	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
 	golang.org/x/oauth2 v0.0.0-20210201163806-010130855d6c // indirect

@@ -566,7 +566,7 @@ var _ = Describe("Client", func() {
 			expectations: &common.HTTPExpectations{
 				URL: path.Join(smURL, web.VisibilitiesURL),
 				Params: map[string]string{
-					"fieldQuery": "ready eq true",
+					"fieldQuery": "ready eq true and service_plan_id in ('180dd7fb-1c6e-41fe-95ee-aefb51513032')",
 					"max_items":  strconv.Itoa(VisibilitiesPageSize),
 				},
 				Headers: map[string]string{
@@ -603,7 +603,7 @@ var _ = Describe("Client", func() {
 
 	DescribeTable("GETVisibilities", func(t testCase) {
 		client := newClient(&t)
-		resp, err := client.GetVisibilities(testContextWithCorrelationID(CorrelationIDValue))
+		resp, err := client.GetVisibilities(testContextWithCorrelationID(CorrelationIDValue), []string{"180dd7fb-1c6e-41fe-95ee-aefb51513032"})
 		assertResponse(&t, resp, err)
 	}, visibilitiesEntries...)
 
