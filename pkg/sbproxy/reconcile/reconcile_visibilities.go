@@ -18,6 +18,7 @@ package reconcile
 
 import (
 	"context"
+	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 	"strings"
 
@@ -293,19 +294,17 @@ func (r *resyncJob) convertVisListToMap(list []*platform.Visibility) map[string]
 func (r *resyncJob) reconcilePlansVisibilities(ctx context.Context, useServicePlanFieldQuery bool, smPlans map[string]brokerPlan, smBrokers []*platform.ServiceBroker) error {
 	smVisibilities, err := r.getVisibilitiesFromSM(ctx, useServicePlanFieldQuery, smPlans)
 	if err != nil {
-		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from SM")
-		return nil
+		return fmt.Errorf("an error occurred while loading visibilities from SM")
 	}
 	log.C(ctx).Infof("Calling platform API to fetch actual platform visibilities")
 	platformVisibilities, err := r.getPlatformVisibilitiesByBrokersFromPlatform(ctx, smBrokers)
 	if err != nil {
-		log.C(ctx).WithError(err).Error("An error occurred while loading visibilities from platform")
-		return nil
+		return fmt.Errorf("an error occurred while loading visibilities from platform")
 	}
 
 	errorOccurred := r.reconcileServiceVisibilities(ctx, platformVisibilities, smVisibilities)
 	if errorOccurred {
-		log.C(ctx).Error("Could not reconcile visibilities")
+		return fmt.Errorf("could not reconcile visibilities")
 	}
 
 	return nil
