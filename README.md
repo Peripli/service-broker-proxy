@@ -1,4 +1,4 @@
-# Service Broker Proxy
+# Service Broker Proxy 
 
 [![Build Status](https://github.com/Peripli/service-broker-proxy/workflows/Go/badge.svg)](https://github.com/Peripli/service-broker-proxy/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Peripli/service-broker-proxy)](https://goreportcard.com/report/github.com/Peripli/service-broker-proxy)
