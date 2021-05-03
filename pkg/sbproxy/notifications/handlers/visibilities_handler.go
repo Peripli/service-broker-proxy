@@ -110,13 +110,13 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 
 	platformBrokerName := utils.BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
 
-	err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels())
-	if err != nil {
+	if err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels()); err != nil {
 		logger.Error(err)
+
 		// if broker is missing, creating it by resync all brokers
 		if _, err := vnh.BrokerClient.GetBrokerByName(ctx, platformBrokerName); err != nil && strings.Contains(strings.ToLower(err.Error()), "not found") {
 			vnh.Resyncer.Resync(ctx, false)
-			if err = vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels()); err != nil {
+			if err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels()); err != nil {
 				logger.Error(err)
 			}
 		}

@@ -27,6 +27,8 @@ var _ = Describe("Visibility Handler", func() {
 	var ctx context.Context
 
 	var fakeVisibilityClient *platformfakes.FakeVisibilityClient
+	var fakeBrokerClient *platformfakes.FakeBrokerClient
+
 	var fakeBrokerPlatformNameProvider *platformfakes.FakeBrokerPlatformNameProvider
 	var visibilityHandler *handlers.VisibilityResourceNotificationsHandler
 
@@ -130,10 +132,12 @@ var _ = Describe("Visibility Handler", func() {
 		anotherCatalogPlanID = "anotherCatalogPlanID"
 
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
+		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
 		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
 		visibilityHandler = &handlers.VisibilityResourceNotificationsHandler{
 			VisibilityClient: fakeVisibilityClient,
+			BrokerClient:     fakeBrokerClient,
 		}
 	})
 
