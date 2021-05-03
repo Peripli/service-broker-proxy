@@ -7,8 +7,6 @@ import (
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/utils"
 	"github.com/Peripli/service-manager/pkg/util/slice"
-	"strings"
-
 	"github.com/Peripli/service-manager/storage/interceptors"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -114,7 +112,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 		logger.Error(err)
 
 		// if broker is missing, creating it by resync all brokers
-		if _, err := vnh.BrokerClient.GetBrokerByName(ctx, platformBrokerName); err != nil && strings.Contains(strings.ToLower(err.Error()), "not found") {
+		if _, err := vnh.BrokerClient.GetBrokerByName(ctx, platformBrokerName); err != nil {
 			vnh.Resyncer.Resync(ctx, false)
 			if err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels()); err != nil {
 				logger.Error(err)
