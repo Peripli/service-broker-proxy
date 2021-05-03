@@ -19,6 +19,7 @@ package reconcile_test
 import (
 	"context"
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/utils"
 	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications"
@@ -37,15 +38,15 @@ var _ = Describe("Reconciler", func() {
 			messages   chan *notifications.Message
 			ctx        context.Context
 			cancel     context.CancelFunc
-			resyncer   *fakeResyncer
-			consumer   *fakeConsumer
+			resyncer   *utils.FakeResyncer
+			consumer   *utils.FakeConsumer
 		)
 
 		BeforeEach(func() {
 			ctx, cancel = context.WithCancel(context.Background())
 			wg = &sync.WaitGroup{}
-			resyncer = &fakeResyncer{}
-			consumer = &fakeConsumer{}
+			resyncer = &utils.FakeResyncer{}
+			consumer = &utils.FakeConsumer{}
 
 			reconciler = &reconcile.Reconciler{
 				Resyncer: resyncer,
@@ -100,7 +101,7 @@ var _ = Describe("Reconciler", func() {
 				close(messages)
 				reconciler.Reconcile(ctx, messages, wg)
 				wg.Wait()
-				Expect(consumer.consumedNotifications).To(Equal(ns))
+				Expect(consumer.GetConsumedNotifications()).To(Equal(ns))
 				close(done)
 			}, timeout)
 		})
@@ -140,37 +141,3 @@ var _ = Describe("Reconciler", func() {
 		})
 	})
 })
-
-type fakeResyncer struct {
-	mutex       sync.Mutex
-	resyncCount int
-}
-
-func (r *fakeResyncer) Resync(ctx context.Context, resyncVisibilities bool) {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	r.resyncCount++
-}
-
-func (r *fakeResyncer) GetResyncCount() int {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-	return r.resyncCount
-}
-
-type fakeConsumer struct {
-	mutex                 sync.Mutex
-	consumedNotifications []*types.Notification
-}
-
-func (c *fakeConsumer) Consume(ctx context.Context, notification *types.Notification) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.consumedNotifications = append(c.consumedNotifications, notification)
-}
-
-func (c *fakeConsumer) GetConsumedNotifications() []*types.Notification {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	return c.consumedNotifications
-}

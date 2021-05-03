@@ -28,6 +28,7 @@ var _ = Describe("Visibility Handler", func() {
 
 	var fakeVisibilityClient *platformfakes.FakeVisibilityClient
 	var fakeBrokerClient *platformfakes.FakeBrokerClient
+	var fakeResyncer *utils.FakeResyncer
 
 	var fakeBrokerPlatformNameProvider *platformfakes.FakeBrokerPlatformNameProvider
 	var visibilityHandler *handlers.VisibilityResourceNotificationsHandler
@@ -133,11 +134,13 @@ var _ = Describe("Visibility Handler", func() {
 
 		fakeVisibilityClient = &platformfakes.FakeVisibilityClient{}
 		fakeBrokerClient = &platformfakes.FakeBrokerClient{}
+		fakeResyncer = &utils.FakeResyncer{}
 		fakeBrokerPlatformNameProvider = &platformfakes.FakeBrokerPlatformNameProvider{}
 
 		visibilityHandler = &handlers.VisibilityResourceNotificationsHandler{
 			VisibilityClient: fakeVisibilityClient,
 			BrokerClient:     fakeBrokerClient,
+			Resyncer:         fakeResyncer,
 		}
 	})
 
@@ -282,13 +285,25 @@ var _ = Describe("Visibility Handler", func() {
 		Context("when the notification payload is valid", func() {
 			Context("when an error occurs while enabling access", func() {
 				BeforeEach(func() {
-					fakeVisibilityClient.EnableAccessForPlanReturns(fmt.Errorf("error"))
-					fakeBrokerClient.GetBrokerByNameReturns(nil, nil)
+					fakeVisibilityClient.EnableAccessForPlanReturnsOnCall(0, fmt.Errorf("error"))
 				})
 
-				It("logs an error", func() {
+				It("logs an error and quits if the broker was found in platform", func() {
 					VerifyErrorLogged(func() {
+						fakeBrokerClient.GetBrokerByNameReturns(nil, nil)
 						visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
+					})
+				})
+
+				Context("the error is due to broker not found in platform", func() {
+					BeforeEach(func() {
+						fakeBrokerClient.GetBrokerByNameReturns(nil, fmt.Errorf("error"))
+						fakeVisibilityClient.EnableAccessForPlanReturnsOnCall(1, nil)
+					})
+					It("succeeds with enabling access after reconcile", func() {
+						visibilityHandler.OnCreate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
+						Expect(fakeResyncer.GetResyncCount()).Should(Equal(1))
+						Expect(fakeVisibilityClient.EnableAccessForPlanCallCount()).To(Equal(2))
 					})
 				})
 			})
