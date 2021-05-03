@@ -955,7 +955,7 @@ var _ = Describe("Reconcile brokers", func() {
 		reconcileSettings.BrokerBlacklist = t.brokerBlacklist()
 		reconcileSettings.TakeoverEnabled = t.takeoverEnabled
 		reconcileSettings.BrokerCredentialsEnabled = !t.credRotationDisabled
-		reconciler.Resyncer.Resync(context.TODO())
+		reconciler.Resyncer.Resync(context.TODO(), true)
 
 		invocations := append([]map[string][][]interface{}{}, fakeSMClient.Invocations(), fakePlatformCatalogFetcher.Invocations(), fakePlatformBrokerClient.Invocations())
 		verifyInvocationsUseSameCorrelationID(invocations)
@@ -1075,7 +1075,7 @@ var _ = Describe("Reconcile brokers", func() {
 					stubPlatformOpsToSucceed()
 					stubPlatformUpdateBroker(platformBrokerProxy2)
 
-					reconciler.Resyncer.Resync(context.TODO())
+					reconciler.Resyncer.Resync(context.TODO(), true)
 
 					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 					_, updateBrokerRequest := fakePlatformBrokerClient.UpdateBrokerArgsForCall(0)
@@ -1092,7 +1092,7 @@ var _ = Describe("Reconcile brokers", func() {
 
 					stubPlatformOpsToSucceed()
 
-					reconciler.Resyncer.Resync(context.TODO())
+					reconciler.Resyncer.Resync(context.TODO(), true)
 
 					Expect(fakeSMClient.ActivateCredentialsCallCount()).To(Equal(0))
 					_, updateBrokerRequest := fakePlatformCatalogFetcher.FetchArgsForCall(0)
@@ -1134,7 +1134,7 @@ var _ = Describe("Reconcile brokers", func() {
 				fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker1}, nil)
 
 				stubPlatformOpsToSucceedWithNameProvider()
-				reconciler.Resyncer.Resync(context.TODO())
+				reconciler.Resyncer.Resync(context.TODO(), true)
 				Expect(brokerNameInNextFuncCall).To(Equal(expectedName))
 			})
 		})
@@ -1146,7 +1146,7 @@ var _ = Describe("Reconcile brokers", func() {
 				fakePlatformBrokerClient.GetBrokersReturns([]*platform.ServiceBroker{platformbroker2}, nil)
 
 				stubPlatformOpsToSucceedWithNameProvider()
-				reconciler.Resyncer.Resync(context.TODO())
+				reconciler.Resyncer.Resync(context.TODO(), true)
 				Expect(brokerNameInNextFuncCall).To(Equal(expectedName))
 			})
 		})

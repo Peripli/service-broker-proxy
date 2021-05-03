@@ -1,8 +1,7 @@
-package handlers_test
+package utils
 
 import (
 	"github.com/Peripli/service-broker-proxy/pkg/platform/platformfakes"
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
 	"github.com/Peripli/service-manager/pkg/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -71,7 +70,7 @@ var _ = Describe("Handlers Helpers", func() {
 			})
 
 			It("generates correct labels", func() {
-				labelsToAdd, labelsToRemove := handlers.LabelChangesToLabels(labelChanges)
+				labelsToAdd, labelsToRemove := LabelChangesToLabels(labelChanges)
 
 				Expect(labelsToAdd).To(Equal(expectedLabelsToAdd))
 				Expect(labelsToRemove).To(Equal(expectedLabelsToRemove))
@@ -84,7 +83,7 @@ var _ = Describe("Handlers Helpers", func() {
 			brokerID := "1234"
 			fakeBrokerPlatformNameProvider := &platformfakes.FakeBrokerPlatformNameProvider{}
 			fakeBrokerPlatformNameProvider.GetBrokerPlatformNameReturns(returnName)
-			newName := handlers.BrokerProxyName(fakeBrokerPlatformNameProvider, "name", brokerID, "")
+			newName := BrokerProxyName(fakeBrokerPlatformNameProvider, "name", brokerID, "")
 			Expect(newName).To(Equal(returnName + "-" + brokerID))
 		})
 	})

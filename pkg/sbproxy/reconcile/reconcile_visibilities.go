@@ -19,7 +19,7 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/utils"
 	"strings"
 
 	"github.com/Peripli/service-broker-proxy/pkg/platform"
@@ -65,7 +65,7 @@ func (r *resyncJob) getPlatformVisibilitiesByBrokersFromPlatform(ctx context.Con
 func (r *resyncJob) brokerNames(brokers []*platform.ServiceBroker) []string {
 	names := make([]string, 0, len(brokers))
 	for _, broker := range brokers {
-		names = append(names, handlers.BrokerProxyName(r.platformClient, broker.Name, broker.GUID, r.options.BrokerPrefix))
+		names = append(names, utils.BrokerProxyName(r.platformClient, broker.Name, broker.GUID, r.options.BrokerPrefix))
 	}
 	return names
 }
@@ -157,7 +157,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan bro
 			{
 				Public:             true,
 				CatalogPlanID:      smPlan.CatalogID,
-				PlatformBrokerName: handlers.BrokerProxyName(r.platformClient, smPlan.broker.Name, smPlan.broker.GUID, r.options.BrokerPrefix),
+				PlatformBrokerName: utils.BrokerProxyName(r.platformClient, smPlan.broker.Name, smPlan.broker.GUID, r.options.BrokerPrefix),
 				Labels:             map[string]string{},
 			},
 		}
@@ -169,7 +169,7 @@ func (r *resyncJob) convertSMVisibility(visibility *types.Visibility, smPlan bro
 		result = append(result, &platform.Visibility{
 			Public:             false,
 			CatalogPlanID:      smPlan.CatalogID,
-			PlatformBrokerName: handlers.BrokerProxyName(r.platformClient, smPlan.broker.Name, smPlan.broker.GUID, r.options.BrokerPrefix),
+			PlatformBrokerName: utils.BrokerProxyName(r.platformClient, smPlan.broker.Name, smPlan.broker.GUID, r.options.BrokerPrefix),
 			Labels:             map[string]string{scopeLabelKey: scope},
 		})
 	}

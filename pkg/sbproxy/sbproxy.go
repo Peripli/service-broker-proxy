@@ -184,6 +184,8 @@ func New(ctx context.Context, cancel context.CancelFunc, environment env.Environ
 				VisibilityClient: platformClient.Visibility(),
 				ProxyPrefix:      settings.Reconcile.BrokerPrefix,
 				BrokerBlacklist:  settings.Reconcile.BrokerBlacklist,
+				BrokerClient:     platformClient.Broker(),
+				Resyncer:         resyncer,
 			},
 		},
 	}

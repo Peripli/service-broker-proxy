@@ -146,7 +146,7 @@ type fakeResyncer struct {
 	resyncCount int
 }
 
-func (r *fakeResyncer) Resync(ctx context.Context) {
+func (r *fakeResyncer) Resync(ctx context.Context, resyncVisibilities bool) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.resyncCount++

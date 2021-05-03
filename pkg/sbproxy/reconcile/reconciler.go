@@ -34,7 +34,7 @@ type Consumer interface {
 
 // Resyncer provides functionality for triggering a resync on the platform
 type Resyncer interface {
-	Resync(ctx context.Context)
+	Resync(ctx context.Context, resyncVisibilities bool)
 }
 
 // TimestampedError contains an error and a timestamp in time.RFC3339Nano format
@@ -78,7 +78,7 @@ func (r *Reconciler) process(ctx context.Context, messages <-chan *notifications
 			if m.Resync {
 				// discard any pending change notifications as we will do a full resync
 				drain(messages)
-				r.Resyncer.Resync(ctx)
+				r.Resyncer.Resync(ctx, true)
 			} else {
 				r.Consumer.Consume(ctx, m.Notification)
 			}

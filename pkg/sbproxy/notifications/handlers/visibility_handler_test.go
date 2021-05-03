@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/utils"
 
 	"github.com/Peripli/service-manager/test/common"
 
@@ -521,7 +522,7 @@ var _ = Describe("Visibility Handler", func() {
 					fakeVisibilityClient.EnableAccessForPlanReturns(nil)
 					fakeVisibilityClient.DisableAccessForPlanReturns(nil)
 
-					labelsToAdd, labelsToRemove = handlers.LabelChangesToLabels(unmarshalLabelChanges(labelChanges))
+					labelsToAdd, labelsToRemove = utils.LabelChangesToLabels(unmarshalLabelChanges(labelChanges))
 					expectedEnableAccessRequests = []*platform.ModifyPlanAccessRequest{
 						{
 							BrokerName:    brokerProxyName(visibilityHandler.ProxyPrefix, smBrokerName, smBrokerID),

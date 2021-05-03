@@ -38,7 +38,7 @@ type resyncJob struct {
 
 // Resync reconciles the state of the proxy brokers and visibilities at the platform
 // with the brokers provided by the Service Manager
-func (r *resyncJob) Resync(ctx context.Context) {
+func (r *resyncJob) Resync(ctx context.Context, resyncVisibilities bool) {
 	resyncContext, taskID, err := createResyncContext(ctx)
 	if err != nil {
 		log.C(ctx).WithError(err).Error("could not create resync job context")
@@ -46,7 +46,7 @@ func (r *resyncJob) Resync(ctx context.Context) {
 	}
 	log.C(ctx).Infof("Starting resync job %s...", taskID)
 	start := time.Now()
-	r.process(resyncContext)
+	r.process(resyncContext, resyncVisibilities)
 	log.C(ctx).Infof("Finished resync job %s in %v", taskID, time.Since(start))
 }
 
@@ -59,7 +59,7 @@ func createResyncContext(ctx context.Context) (context.Context, string, error) {
 	return log.ContextWithLogger(ctx, entry), correlationID.String(), nil
 }
 
-func (r *resyncJob) process(ctx context.Context) {
+func (r *resyncJob) process(ctx context.Context, resyncVisibilities bool) {
 	logger := log.C(ctx)
 	if r.platformClient.Broker() == nil || r.platformClient.Visibility() == nil {
 		logger.Error("platform must be able to handle both brokers and visibilities. Cannot perform reconciliation")
@@ -88,7 +88,10 @@ func (r *resyncJob) process(ctx context.Context) {
 
 	r.reconcileBrokers(ctx, platformBrokers, smBrokers)
 	r.resetPlatformCache(ctx)
-	r.reconcileVisibilities(ctx, smPlans, smBrokers)
+
+	if resyncVisibilities {
+		r.reconcileVisibilities(ctx, smPlans, smBrokers)
+	}
 }
 
 func (r *resyncJob) getSMPlans(ctx context.Context, smBrokers []*platform.ServiceBroker) (map[string]brokerPlan, error) {
