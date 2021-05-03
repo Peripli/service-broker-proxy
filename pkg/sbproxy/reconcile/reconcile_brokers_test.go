@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"strings"
+	"sync"
 
 	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
 
@@ -63,9 +64,13 @@ var _ = Describe("Reconcile brokers", func() {
 		platformOrphanBrokerProxyRenamed *platform.ServiceBroker
 
 		brokerNameInNextFuncCall string
+
+		stubMuetx sync.Mutex
 	)
 
 	stubCreateBrokerToSucceed := func(ctx context.Context, r *platform.CreateServiceBrokerRequest) (*platform.ServiceBroker, error) {
+		stubMuetx.Lock()
+		defer stubMuetx.Unlock()
 		brokerNameInNextFuncCall = r.Name
 		return &platform.ServiceBroker{
 			GUID:      r.Name,
