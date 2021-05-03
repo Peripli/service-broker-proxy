@@ -283,6 +283,7 @@ var _ = Describe("Visibility Handler", func() {
 			Context("when an error occurs while enabling access", func() {
 				BeforeEach(func() {
 					fakeVisibilityClient.EnableAccessForPlanReturns(fmt.Errorf("error"))
+					fakeBrokerClient.GetBrokerByNameReturns(nil, nil)
 				})
 
 				It("logs an error", func() {
