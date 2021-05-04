@@ -1034,7 +1034,7 @@ var _ = Describe("Reconcile visibilities", func() {
 			t.stubs()
 		}
 
-		reconciler.Resyncer.Resync(context.TODO())
+		reconciler.Resyncer.Resync(context.TODO(), true)
 
 		invocations := append([]map[string][][]interface{}{}, fakeSMClient.Invocations(), fakePlatformClient.Invocations(), fakePlatformCatalogFetcher.Invocations(), fakePlatformBrokerClient.Invocations(), fakeVisibilityClient.Invocations())
 		verifyInvocationsUseSameCorrelationID(invocations)

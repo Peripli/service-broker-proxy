@@ -19,7 +19,7 @@ package reconcile
 import (
 	"context"
 	"fmt"
-	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/notifications/handlers"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/utils"
 	"github.com/Peripli/service-broker-proxy/pkg/sm"
 	"github.com/Peripli/service-broker-proxy/pkg/util"
 	"github.com/Peripli/service-manager/pkg/types"
@@ -79,7 +79,7 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 
 func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, scheduler *TaskScheduler, desiredBroker *platform.ServiceBroker, brokerKeyMap map[string]*platform.ServiceBroker) {
 	platformBroker, shouldBeTakenOver := brokerKeyMap[getBrokerKey(desiredBroker)]
-	brokerProxyName := handlers.BrokerProxyName(r.platformClient, desiredBroker.Name, desiredBroker.GUID, r.options.BrokerPrefix)
+	brokerProxyName := utils.BrokerProxyName(r.platformClient, desiredBroker.Name, desiredBroker.GUID, r.options.BrokerPrefix)
 
 	if shouldBeTakenOver {
 		if r.options.TakeoverEnabled {
@@ -99,7 +99,7 @@ func (r *resyncJob) resyncNotTakenOverBroker(ctx context.Context, scheduler *Tas
 }
 
 func (r *resyncJob) resyncTakenOverBroker(ctx context.Context, scheduler *TaskScheduler, desiredBroker *platform.ServiceBroker, existingBroker *platform.ServiceBroker) {
-	brokerProxyName := handlers.BrokerProxyName(r.platformClient, desiredBroker.Name, desiredBroker.GUID, r.options.BrokerPrefix)
+	brokerProxyName := utils.BrokerProxyName(r.platformClient, desiredBroker.Name, desiredBroker.GUID, r.options.BrokerPrefix)
 	// if broker name has been changed in the platform or broker proxy URL should be updated
 	if existingBroker.Name != brokerProxyName || !strings.HasPrefix(existingBroker.BrokerURL, r.smPath) {
 		if err := scheduler.Schedule(func(ctx context.Context) error {

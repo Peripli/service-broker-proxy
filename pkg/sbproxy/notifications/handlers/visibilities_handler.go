@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/reconcile"
+	"github.com/Peripli/service-broker-proxy/pkg/sbproxy/utils"
 	"github.com/Peripli/service-manager/pkg/util/slice"
-
 	"github.com/Peripli/service-manager/storage/interceptors"
 
 	"github.com/Peripli/service-manager/pkg/log"
@@ -73,6 +73,8 @@ type VisibilityResourceNotificationsHandler struct {
 
 	ProxyPrefix     string
 	BrokerBlacklist []string
+	BrokerClient    platform.BrokerClient
+	Resyncer        reconcile.Resyncer
 }
 
 // OnCreate creates visibilities from the specified notification payload by invoking the proper platform clients
@@ -104,11 +106,18 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
+	platformBrokerName := utils.BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
 
-	err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels())
-	if err != nil {
+	if err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels()); err != nil {
 		logger.Error(err)
+
+		// if broker is missing, creating it by resync all brokers
+		if _, err := vnh.BrokerClient.GetBrokerByName(ctx, platformBrokerName); err != nil {
+			vnh.Resyncer.Resync(ctx, false)
+			if err := vnh.enableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels()); err != nil {
+				logger.Error(err)
+			}
+		}
 	}
 }
 
@@ -142,9 +151,9 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := BrokerProxyName(vnh.VisibilityClient, oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID, vnh.ProxyPrefix)
+	platformBrokerName := utils.BrokerProxyName(vnh.VisibilityClient, oldVisibilityPayload.Additional.BrokerName, oldVisibilityPayload.Additional.BrokerID, vnh.ProxyPrefix)
 
-	labelsToAdd, labelsToRemove := LabelChangesToLabels(visibilityPayload.LabelChanges)
+	labelsToAdd, labelsToRemove := utils.LabelChangesToLabels(visibilityPayload.LabelChanges)
 
 	if oldVisibilityPayload.Additional.ServicePlan.CatalogID != newVisibilityPayload.Additional.ServicePlan.CatalogID {
 		logger.Infof("The catalog plan ID has been modified")
@@ -262,7 +271,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 		return
 	}
 
-	platformBrokerName := BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
+	platformBrokerName := utils.BrokerProxyName(vnh.VisibilityClient, v.Additional.BrokerName, v.Additional.BrokerID, vnh.ProxyPrefix)
 	err := vnh.disableAccessForPlan(ctx, platformBrokerName, v.Additional.ServicePlan.CatalogID, v.Resource.GetLabels())
 	if err != nil {
 		logger.Error(err)
