@@ -358,7 +358,6 @@ var _ = Describe("Reconcile brokers", func() {
 						platformbroker1,
 						platformbroker2,
 					},
-					putCredentialsCallCount: 2,
 				}
 			},
 		}),
@@ -502,7 +501,6 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{
 						platformbroker1,
 					},
-					putCredentialsCallCount: 1,
 				}
 			},
 		}),
@@ -533,7 +531,6 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{
 						platformbroker1,
 					},
-					putCredentialsCallCount: 0,
 				}
 			},
 		}),
@@ -943,7 +940,7 @@ var _ = Describe("Reconcile brokers", func() {
 					reconcileCatalogCalledFor: []*platform.ServiceBroker{
 						platformbroker2,
 					},
-					putCredentialsCallCount: 2,
+					putCredentialsCallCount: 1,
 				}
 			},
 		}),
@@ -1009,16 +1006,9 @@ var _ = Describe("Reconcile brokers", func() {
 		var calledFetchCatalogBrokers []*platform.UpdateServiceBrokerRequest
 		for index := range expected.reconcileCatalogCalledFor {
 			_, updateServiceBrokerRequest := fakePlatformCatalogFetcher.FetchArgsForCall(index)
-			Expect(updateServiceBrokerRequest.Username).ToNot(BeEmpty())
-			Expect(updateServiceBrokerRequest.Password).ToNot(BeEmpty())
+			Expect(updateServiceBrokerRequest.Username).To(BeEmpty())
+			Expect(updateServiceBrokerRequest.Password).To(BeEmpty())
 
-			if t.credRotationDisabled {
-				Expect(updateServiceBrokerRequest.Username).To(BeEquivalentTo("test-sm-user"))
-				Expect(updateServiceBrokerRequest.Password).To(BeEquivalentTo("test-sm-password"))
-			} else {
-				Expect(updateServiceBrokerRequest.Username).NotTo(BeEquivalentTo("test-sm-user"))
-				Expect(updateServiceBrokerRequest.Password).NotTo(BeEquivalentTo("test-sm-password"))
-			}
 			updateServiceBrokerRequest.Username = ""
 			updateServiceBrokerRequest.Password = ""
 
