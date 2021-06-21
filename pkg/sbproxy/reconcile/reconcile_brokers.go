@@ -148,52 +148,18 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 		logger := log.C(ctx)
 		logger.WithFields(logBroker(brokerInSM)).Infof("resyncJob refetching catalog for broker...")
 
-		var username, password, passwordHash string
-		var err error
-		var credentialsResponse *types.BrokerPlatformCredential
-
-		if r.options.BrokerCredentialsEnabled {
-			username, password, passwordHash, err = util.GenerateBrokerPlatformCredentials()
-			if err != nil {
-				return fmt.Errorf("could not generate broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
-			}
-
-			credentials := &types.BrokerPlatformCredential{
-				Username:     username,
-				PasswordHash: passwordHash,
-				BrokerID:     brokerInSM.GUID,
-			}
-
-			credentialsResponse, err = r.smClient.PutCredentials(ctx, credentials)
-			if err != nil {
-				if err != sm.ErrConflictingBrokerPlatformCredentials {
-					return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
-				}
-				username = ""
-				password = ""
-			} else {
-				r.activateBrokerCredentials(ctx, credentialsResponse)
-			}
-		} else {
-			username = r.defaultBrokerUsername
-			password = r.defaultBrokerPassword
-		}
-
 		updateRequest := &platform.UpdateServiceBrokerRequest{
 			ID:        brokerInSM.GUID,
 			GUID:      brokerGUIDInPlatform,
 			Name:      brokerProxyName,
 			BrokerURL: r.smPath + "/" + brokerInSM.GUID,
-			Username:  username,
-			Password:  password,
+			Username:  "",
+			Password:  "",
 		}
 
 		if err := f.Fetch(ctx, updateRequest); err != nil {
 			logger.WithFields(logBroker(brokerInSM)).WithError(err).Error("Error during fetching catalog...")
 			return err
-		}
-		if r.options.BrokerCredentialsEnabled && len(username) > 0 && len(password) > 0 {
-			r.activateBrokerCredentials(ctx, credentialsResponse)
 		}
 		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
 	}
