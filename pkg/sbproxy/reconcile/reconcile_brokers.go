@@ -171,8 +171,6 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 				}
 				username = ""
 				password = ""
-			} else {
-				r.activateBrokerCredentials(ctx, credentialsResponse)
 			}
 		} else {
 			username = r.defaultBrokerUsername
@@ -195,7 +193,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 		if r.options.BrokerCredentialsEnabled && len(username) > 0 && len(password) > 0 {
 			r.activateBrokerCredentials(ctx, credentialsResponse)
 		}
-		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully refetched catalog for broker")
+		logger.WithFields(logBroker(brokerInSM)).Info("resyncJob successfully re-fetched catalog for broker")
 	}
 	return nil
 }
@@ -274,8 +272,6 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 			}
 			username = ""
 			password = ""
-		} else {
-			r.activateBrokerCredentials(ctx, credentialResponse)
 		}
 	} else {
 		username = r.defaultBrokerUsername
