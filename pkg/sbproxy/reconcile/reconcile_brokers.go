@@ -164,7 +164,7 @@ func (r *resyncJob) fetchBrokerCatalog(ctx context.Context, brokerGUIDInPlatform
 				BrokerID:     brokerInSM.GUID,
 			}
 
-			credentialsResponse, err = r.smClient.PutCredentials(ctx, credentials)
+			credentialsResponse, err = r.smClient.PutCredentials(ctx, credentials, false)
 			if err != nil {
 				if err != sm.ErrConflictingBrokerPlatformCredentials {
 					return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
@@ -216,7 +216,7 @@ func (r *resyncJob) createBrokerRegistration(ctx context.Context, brokerInSM *pl
 			Username:     username,
 			PasswordHash: passwordHash,
 			BrokerID:     brokerInSM.GUID,
-		})
+		}, true)
 		if err != nil {
 			return err
 		}
@@ -265,7 +265,7 @@ func (r *resyncJob) updateBrokerRegistration(ctx context.Context, brokerGUIDInPl
 			Username:     username,
 			PasswordHash: passwordHash,
 			BrokerID:     brokerInSM.GUID,
-		})
+		}, false)
 		if err != nil {
 			if err != sm.ErrConflictingBrokerPlatformCredentials {
 				return fmt.Errorf("could not update broker platform credentials for broker (%s): %s", brokerInSM.Name, err)
