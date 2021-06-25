@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
-	github.com/Peripli/service-manager v0.19.3
+	github.com/Peripli/service-manager v0.20.0
 	github.com/antlr/antlr4 v0.0.0-20210202015141-4b649103f31e // indirect
 	github.com/cloudfoundry-community/go-cfenv v1.18.0 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect

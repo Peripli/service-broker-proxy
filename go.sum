@@ -54,6 +54,8 @@ github.com/Peripli/service-manager v0.19.1 h1:Jbx737i7ePZ4K+XxK7r4p2b6HLZxTzMvti
 github.com/Peripli/service-manager v0.19.1/go.mod h1:FtRJlibH3yLD1v/JCp6yTBx+m2GDpodxnwmawl756Fo=
 github.com/Peripli/service-manager v0.19.3 h1:n7khqBL8+EgPD593xIyF7svicNSmr50R3v/eqDUBwK4=
 github.com/Peripli/service-manager v0.19.3/go.mod h1:FtRJlibH3yLD1v/JCp6yTBx+m2GDpodxnwmawl756Fo=
+github.com/Peripli/service-manager v0.20.0 h1:VlUTtkhq97ph/QvoHHCVEjskvHq8pEnvBA4bZ8xssc8=
+github.com/Peripli/service-manager v0.20.0/go.mod h1:FtRJlibH3yLD1v/JCp6yTBx+m2GDpodxnwmawl756Fo=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
