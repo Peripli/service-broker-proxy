@@ -142,7 +142,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 		log.C(ctx).Infof("Could not find platform broker in platform with name %s. Attempting to create a SM proxy registration...", brokerProxyName)
 
 		if bnh.BrokerCredentialsEnabled {
-			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, true)
 			if err != nil {
 				log.C(ctx).Debugf("Could not register broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 				return
@@ -174,7 +174,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 				return
 			}
 			if bnh.BrokerCredentialsEnabled {
-				credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+				credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, true)
 				if err != nil {
 					log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerToCreate.Resource.Name, err)
 					return
@@ -282,7 +282,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		log.C(ctx).Infof("Broker %s was renamed to %s. Triggering broker update...", brokerProxyNameBefore, brokerProxyNameAfter)
 
 		if bnh.BrokerCredentialsEnabled {
-			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, false)
 			if err != nil {
 				log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)
 				return
@@ -302,7 +302,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 	} else if bnh.CatalogFetcher != nil {
 		log.C(ctx).Infof("Refetching catalog for broker with name %s...", brokerProxyNameAfter)
 		if bnh.BrokerCredentialsEnabled {
-			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials)
+			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, false)
 
 			if err != nil {
 				log.C(ctx).Debugf("Could not update broker platform credentials for broker (%s): %s", brokerAfterUpdate.Resource.Name, err)

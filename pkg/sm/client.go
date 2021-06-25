@@ -47,7 +47,7 @@ type Client interface {
 	GetVisibilities(ctx context.Context, planIDs []string) ([]*types.Visibility, error)
 	GetPlans(ctx context.Context) ([]*types.ServicePlan, error)
 	GetServiceOfferings(ctx context.Context) ([]*types.ServiceOffering, error)
-	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error)
+	PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential, force bool) (*types.BrokerPlatformCredential, error)
 	ActivateCredentials(ctx context.Context, credentialsID string) error
 }
 
@@ -167,7 +167,7 @@ func (c *ServiceManagerClient) GetServiceOfferings(ctx context.Context) ([]*type
 }
 
 //PutCredentials sends new broker platform credentials to Service Manager
-func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential) (*types.BrokerPlatformCredential, error) {
+func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *types.BrokerPlatformCredential, force bool) (*types.BrokerPlatformCredential, error) {
 	log.C(ctx).Debugf("Putting credentials in Service Manager at %s", c.url)
 
 	body, err := json.Marshal(credentials)
@@ -181,6 +181,11 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 	}
 
 	req.Header.Add("Content-Type", "application/json")
+	if force {
+		values := req.URL.Query()
+		values.Set("force", "true")
+		req.URL.RawQuery = values.Encode()
+	}
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
