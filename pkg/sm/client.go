@@ -182,7 +182,9 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 
 	req.Header.Add("Content-Type", "application/json")
 	if force {
-		req.URL.Query().Set("force", "true")
+		values := req.URL.Query()
+		values.Set("force", "true")
+		req.URL.RawQuery = values.Encode()
 	}
 
 	response, err := c.httpClient.Do(req)
