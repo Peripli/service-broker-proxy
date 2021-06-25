@@ -78,7 +78,7 @@ var _ = Describe("Broker Handler", func() {
 
 	assertPutCredentialsRequest := func() {
 		Expect(fakeSMClient.PutCredentialsCallCount()).To(Equal(1))
-		_, credentials := fakeSMClient.PutCredentialsArgsForCall(0)
+		_, credentials, _ := fakeSMClient.PutCredentialsArgsForCall(0)
 		Expect(credentials.Username).ToNot(BeEmpty())
 		Expect(credentials.PasswordHash).ToNot(BeEmpty())
 		Expect(credentials.BrokerID).To(Equal(smBrokerID))
