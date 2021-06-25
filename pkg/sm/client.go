@@ -175,16 +175,15 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 		return nil, err
 	}
 
-	putCredentialsURL := c.getURL(web.BrokerPlatformCredentialsURL)
-	if force {
-		putCredentialsURL += "?force=true"
-	}
-	req, err := http.NewRequest(http.MethodPut, putCredentialsURL, bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPut, c.getURL(web.BrokerPlatformCredentialsURL), bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Content-Type", "application/json")
+	if force {
+		req.URL.Query().Set("force", "true")
+	}
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
