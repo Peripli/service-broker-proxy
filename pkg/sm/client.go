@@ -175,17 +175,17 @@ func (c *ServiceManagerClient) PutCredentials(ctx context.Context, credentials *
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPut, c.getURL(web.BrokerPlatformCredentialsURL), bytes.NewBuffer(body))
+	reqURL := c.getURL(web.BrokerPlatformCredentialsURL)
+	if force {
+		log.C(ctx).Debugf("forcing credential rotation")
+		reqURL += "?force=true"
+	}
+	req, err := http.NewRequest(http.MethodPut, reqURL, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("Content-Type", "application/json")
-	if force {
-		values := req.URL.Query()
-		values.Set("force", "true")
-		req.URL.RawQuery = values.Encode()
-	}
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
