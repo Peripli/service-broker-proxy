@@ -36,9 +36,22 @@ import (
 
 // to match the desired broker state coming from the Service Manager (desiredBrokers).
 func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desiredBrokers []*platform.ServiceBroker) {
+	log.C(ctx).Infof("reconcile %v platform brokers and %v SM brokers", len(existingBrokers), len(desiredBrokers))
+
+	pavelMap := map[string]*platform.ServiceBroker{}
+	for _, broker := range existingBrokers {
+		tmp := broker
+		key := getBrokerKey(tmp)
+		log.C(ctx).Infof("key %s", key)
+		pavelMap[key] = broker
+	}
+	log.C(ctx).Infof("pavel brokers map %v", pavelMap)
+
 	brokerKeyMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		return getBrokerKey(broker), true
 	})
+	log.C(ctx).Infof("brokers map %v", brokerKeyMap)
+
 	proxyBrokerIDMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		brokerID := brokerIDFromURL(broker.BrokerURL)
 		if strings.HasPrefix(broker.BrokerURL, r.smPath) {
@@ -52,6 +65,8 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 		return "", false
 	})
 
+	log.C(ctx).Infof("taken over brokers map %v", proxyBrokerIDMap)
+
 	scheduler := NewScheduler(ctx, r.options.MaxParallelRequests)
 	for _, desiredBroker := range desiredBrokers {
 		desiredBroker := desiredBroker
@@ -59,8 +74,10 @@ func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desir
 		delete(proxyBrokerIDMap, desiredBroker.GUID)
 
 		if alreadyTakenOver {
+			log.C(ctx).Infof("%s already taken over", desiredBroker.GUID)
 			r.resyncTakenOverBroker(ctx, scheduler, desiredBroker, existingBroker)
 		} else {
+			log.C(ctx).Infof("%s not taken over??", desiredBroker.GUID)
 			r.resyncNotTakenOverBroker(ctx, scheduler, desiredBroker, brokerKeyMap)
 		}
 	}
