@@ -36,6 +36,15 @@ import (
 
 // to match the desired broker state coming from the Service Manager (desiredBrokers).
 func (r *resyncJob) reconcileBrokers(ctx context.Context, existingBrokers, desiredBrokers []*platform.ServiceBroker) {
+	log.C(ctx).Infof("reconcile %v platform brokers and %v SM brokers", len(existingBrokers), len(desiredBrokers))
+
+	pavelMap := map[string]*platform.ServiceBroker{}
+	for _, broker := range existingBrokers {
+		key := getBrokerKey(broker)
+		pavelMap[key] = broker
+	}
+	log.C(ctx).Infof("pavel brokers map %v", pavelMap)
+
 	brokerKeyMap := indexBrokers(existingBrokers, func(broker *platform.ServiceBroker) (string, bool) {
 		return getBrokerKey(broker), true
 	})
