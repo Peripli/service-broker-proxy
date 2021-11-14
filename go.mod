@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
-	github.com/Peripli/service-manager v0.20.5
+	github.com/Peripli/service-manager v0.21.7
 	github.com/antlr/antlr4 v0.0.0-20210202015141-4b649103f31e // indirect
 	github.com/cloudfoundry-community/go-cfenv v1.18.0 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible // indirect
@@ -25,7 +25,7 @@ require (
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/pflag v1.0.5
-	github.com/tidwall/gjson v1.6.8
+	github.com/tidwall/gjson v1.9.3
 	github.com/tidwall/sjson v1.1.5
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
