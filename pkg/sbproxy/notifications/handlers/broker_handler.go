@@ -31,9 +31,9 @@ type brokerWithAdditionalDetails struct {
 	Additional interceptors.BrokerAdditional `json:"additional"`
 }
 
-const ERROR_BROKER_MESSAGE = "could not extract broker payload"
-const ERROR_PLATFORM_BROKER_MESSAGE = "Attempting to find platform broker with name %s in platform..."
-const ERROR_BROKER_CREDENTIAL = "Could not update broker platform credentials for broker (%s): %s"
+const BROKER_PAYLOAD_ERROR = "could not extract broker payload"
+const FIND_BROKER_WITH_NAME_FORMAT = "Attempting to find platform broker with name %s in platform..."
+const PLATFORM_CREDENTIALS_UPDATE_ERROR = "Could not update broker platform credentials for broker (%s): %s"
 
 // Validate validates the broker payload
 func (bp brokerPayload) Validate(op types.NotificationOperation) error {
@@ -100,7 +100,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 
 	brokerPayload, err := bnh.unmarshalPayload(types.CREATED, payload)
 	if err != nil {
-		log.C(ctx).WithError(err).Error(ERROR_BROKER_MESSAGE)
+		log.C(ctx).WithError(err).Error(BROKER_PAYLOAD_ERROR)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 		return
 	}
 
-	log.C(ctx).Infof(ERROR_PLATFORM_BROKER_MESSAGE, brokerToCreate.Resource.Name)
+	log.C(ctx).Infof(FIND_BROKER_WITH_NAME_FORMAT, brokerToCreate.Resource.Name)
 
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToCreate.Resource.Name)
 	if err != nil {
@@ -180,7 +180,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnCreate(ctx context.Context, not
 			if bnh.BrokerCredentialsEnabled {
 				credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, true)
 				if err != nil {
-					log.C(ctx).Debugf(ERROR_BROKER_CREDENTIAL, brokerToCreate.Resource.Name, err)
+					log.C(ctx).Debugf(PLATFORM_CREDENTIALS_UPDATE_ERROR, brokerToCreate.Resource.Name, err)
 					return
 				}
 			}
@@ -217,7 +217,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 
 	brokerPayload, err := bnh.unmarshalPayload(types.MODIFIED, payload)
 	if err != nil {
-		log.C(ctx).WithError(err).Error(ERROR_BROKER_MESSAGE)
+		log.C(ctx).WithError(err).Error(BROKER_PAYLOAD_ERROR)
 		return
 	}
 
@@ -234,7 +234,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		return
 	}
 
-	log.C(ctx).Infof(ERROR_PLATFORM_BROKER_MESSAGE, brokerToFind)
+	log.C(ctx).Infof(FIND_BROKER_WITH_NAME_FORMAT, brokerToFind)
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerToFind)
 	if err != nil {
 		log.C(ctx).Errorf("Could not find broker with name %s in the platform: %s. No update will be attempted", brokerToFind, err)
@@ -288,7 +288,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 		if bnh.BrokerCredentialsEnabled {
 			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, false)
 			if err != nil {
-				log.C(ctx).Debugf(ERROR_BROKER_CREDENTIAL, brokerAfterUpdate.Resource.Name, err)
+				log.C(ctx).Debugf(PLATFORM_CREDENTIALS_UPDATE_ERROR, brokerAfterUpdate.Resource.Name, err)
 				return
 			}
 		}
@@ -309,7 +309,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnUpdate(ctx context.Context, not
 			credentialResponse, err = bnh.SMClient.PutCredentials(ctx, credentials, false)
 
 			if err != nil {
-				log.C(ctx).Debugf(ERROR_BROKER_CREDENTIAL, brokerAfterUpdate.Resource.Name, err)
+				log.C(ctx).Debugf(PLATFORM_CREDENTIALS_UPDATE_ERROR, brokerAfterUpdate.Resource.Name, err)
 				return
 			}
 		}
@@ -339,7 +339,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, not
 
 	brokerPayload, err := bnh.unmarshalPayload(types.DELETED, payload)
 	if err != nil {
-		log.C(ctx).WithError(err).Error(ERROR_BROKER_MESSAGE)
+		log.C(ctx).WithError(err).Error(BROKER_PAYLOAD_ERROR)
 		return
 	}
 
@@ -352,7 +352,7 @@ func (bnh *BrokerResourceNotificationsHandler) OnDelete(ctx context.Context, not
 		return
 	}
 
-	log.C(ctx).Infof(ERROR_PLATFORM_BROKER_MESSAGE, brokerProxyName)
+	log.C(ctx).Infof(FIND_BROKER_WITH_NAME_FORMAT, brokerProxyName)
 
 	existingBroker, err := bnh.BrokerClient.GetBrokerByName(ctx, brokerProxyName)
 	if err != nil {
