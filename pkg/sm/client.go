@@ -59,6 +59,8 @@ type ServiceManagerClient struct {
 	httpClient *http.Client
 }
 
+const QUERY_IS_READY = "ready eq true"
+
 // NewClient builds a new Service Manager Client from the provided configuration
 func NewClient(config *Settings) (*ServiceManagerClient, error) {
 	if err := config.Validate(); err != nil {
@@ -101,7 +103,7 @@ func (c *ServiceManagerClient) GetBrokers(ctx context.Context) ([]*types.Service
 
 	result := make([]*types.ServiceBroker, 0)
 	err := c.listAll(ctx, c.getURL(web.ServiceBrokersURL), map[string]string{
-		"fieldQuery": "ready eq true",
+		"fieldQuery": QUERY_IS_READY,
 	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting brokers from Service Manager")
@@ -121,7 +123,7 @@ func (c *ServiceManagerClient) GetVisibilities(ctx context.Context, planIDs []st
 		}
 	} else {
 		params = map[string]string{
-			"fieldQuery": "ready eq true",
+			"fieldQuery": QUERY_IS_READY,
 		}
 	}
 	if c.visibilitiesPageSize > 0 {
@@ -142,7 +144,7 @@ func (c *ServiceManagerClient) GetPlans(ctx context.Context) ([]*types.ServicePl
 
 	var result []*types.ServicePlan
 	err := c.listAll(ctx, c.getURL(web.ServicePlansURL), map[string]string{
-		"fieldQuery": "ready eq true",
+		"fieldQuery": QUERY_IS_READY,
 	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service plans from Service Manager")
@@ -157,7 +159,7 @@ func (c *ServiceManagerClient) GetServiceOfferings(ctx context.Context) ([]*type
 
 	var result []*types.ServiceOffering
 	err := c.listAll(ctx, c.getURL(web.ServiceOfferingsURL), map[string]string{
-		"fieldQuery": "ready eq true",
+		"fieldQuery": QUERY_IS_READY,
 	}, &result)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting service offerings from Service Manager")
