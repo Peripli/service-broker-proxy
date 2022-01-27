@@ -27,6 +27,8 @@ type visibilityWithAdditionalDetails struct {
 	Additional interceptors.VisibilityAdditional `json:"additional"`
 }
 
+const VISIBILITY_PAYLOAD_ERROR = "error validating visibility payload"
+
 // Validate validates the visibility payload
 func (vp visibilityPayload) Validate(op types.NotificationOperation) error {
 	switch op {
@@ -95,7 +97,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnCreate(ctx context.Context,
 	}
 
 	if err := visPayload.Validate(types.CREATED); err != nil {
-		logger.WithError(err).Error("error validating visibility payload")
+		logger.WithError(err).Error(VISIBILITY_PAYLOAD_ERROR)
 		return
 	}
 
@@ -139,7 +141,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 	}
 
 	if err := visibilityPayload.Validate(types.MODIFIED); err != nil {
-		logger.WithError(err).Error("error validating visibility payload")
+		logger.WithError(err).Error(VISIBILITY_PAYLOAD_ERROR)
 		return
 	}
 
@@ -260,7 +262,7 @@ func (vnh *VisibilityResourceNotificationsHandler) OnDelete(ctx context.Context,
 	}
 
 	if err := visibilityPayload.Validate(types.DELETED); err != nil {
-		logger.WithError(err).Error("error validating visibility payload")
+		logger.WithError(err).Error(VISIBILITY_PAYLOAD_ERROR)
 		return
 	}
 
