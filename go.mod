@@ -30,6 +30,5 @@ require (
 	golang.org/x/crypto v0.0.0-20220307211146-efcb8507fb70
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/oauth2 v0.0.0-20210201163806-010130855d6c // indirect
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	k8s.io/klog/v2 v2.5.0 // indirect
 )
