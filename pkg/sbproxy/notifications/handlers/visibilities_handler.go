@@ -179,12 +179,12 @@ func (vnh *VisibilityResourceNotificationsHandler) OnUpdate(ctx context.Context,
 
 	if err := vnh.enableServiceAccess(ctx, labelsToAdd, newVisibilityPayload, platformBrokerName); err != nil {
 		logger.Error(err)
-		return
+		//		return
 	}
 
 	if err := vnh.disableServiceAccess(ctx, labelsToRemove, newVisibilityPayload, platformBrokerName); err != nil {
 		logger.Error(err)
-		return
+		//		return
 	}
 }
 
