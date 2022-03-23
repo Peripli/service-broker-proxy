@@ -493,7 +493,18 @@ var _ = Describe("Visibility Handler", func() {
 					})
 				})
 			})
+			Context("when an error occurs while enabling access it should continue to disable", func() {
+				BeforeEach(func() {
+					fakeVisibilityClient.EnableAccessForPlanReturns(fmt.Errorf("error"))
+				})
 
+				It("logs an error", func() {
+					VerifyErrorLogged(func() {
+						visibilityHandler.OnUpdate(ctx, &types.Notification{Payload: json.RawMessage(visibilityNotificationPayload)})
+						Expect(fakeVisibilityClient.DisableAccessForPlanCallCount()).To(Equal(1))
+					})
+				})
+			})
 			Context("when an error occurs while disabling access", func() {
 				BeforeEach(func() {
 					fakeVisibilityClient.EnableAccessForPlanReturns(nil)
