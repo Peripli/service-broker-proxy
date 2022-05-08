@@ -42,7 +42,6 @@ func (r *resyncJob) reconcileVisibilities(ctx context.Context, smPlans map[strin
 			err := r.reconcilePlansVisibilities(ctx, true, plansChunk, brokersChunk)
 			if err != nil {
 				logger.WithError(err).Error("an error occurred while reconciling visibilities")
-				return
 			}
 		}
 	}
